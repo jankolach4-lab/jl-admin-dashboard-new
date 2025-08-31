@@ -1,0 +1,2756 @@
+<!-- Meta tags and title -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Qualifizierungs-Tool</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2563eb">
+<link rel="icon" type="image/svg+xml" href="icon-192x192.svg">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<link rel="apple-touch-icon" href="icon-192x192.svg">
+
+<!-- Stylesheet -->
+<style>
+  /* Global styles */
+  * { 
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+    line-height: 1.4;
+  }
+
+  .page-layout {
+    display: flex;
+    min-height: 100vh;
+  }
+
+  .sidebar {
+    width: 60px; 
+    background: #2563eb;
+    padding: 10px; 
+    color: white;
+    flex-shrink: 0;
+    position: fixed; 
+    top: 0; 
+    bottom: 0; 
+    left: 0; 
+    overflow-y: auto; 
+    z-index: 100; 
+  }
+
+  .sidebar-nav {
+    list-style: none;
+    padding: 0;
+    margin: 10px 0;
+  }
+
+  .sidebar-nav li {
+    margin: 10px 0;
+  }
+
+  .sidebar-nav a {
+    color: white;
+    text-decoration: none;
+    padding: 10px; 
+    display: flex;
+    justify-content: center; 
+    align-items: center; 
+    border-radius: 6px;
+    transition: background 0.2s;
+  }
+
+  .sidebar-nav a:hover {
+    background: rgba(255,255,255,0.1);
+  }
+
+  .sidebar-nav a.active {
+    background: rgba(255,255,255,0.2);
+  }
+
+  .sidebar-nav a svg {
+    width: 24px; 
+    height: 24px; 
+  }
+
+  .main-content {
+    flex: 1;
+    padding: 15px;
+    background: #f5f7fa;
+    overflow-y: auto;
+    margin-left: 60px; 
+    height: 100vh; 
+  }
+
+  .container {
+    max-width: 1000px;
+    margin: 0 auto;
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 50px); 
+    overflow-y: auto; 
+  }
+
+  .import-section {
+    margin-bottom: 15px;
+  }
+
+  .import-section h3 {
+    color: #2563eb;
+    margin-bottom: 20px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 1.3em;
+    margin: 0;
+    padding: 15px 0;
+    cursor: pointer;
+    position: relative;
+    padding-right: 15px;
+  }
+
+  .import-content {
+    display: none;
+  }
+
+  .import-section.expanded {
+    border-left: 4px solid #2563eb;
+  }
+
+  .import-section.expanded .import-content {
+    display: block;
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+
+  .import-content p {
+    margin-bottom: 15px;
+  }
+
+  .import-content .import-btn {
+    display: inline-block;
+    min-width: 200px;
+    margin: 10px auto;
+  }
+
+  .entry-section h2 {
+    color: #2563eb;
+    margin-bottom: 20px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 1.3em;
+    cursor: pointer;
+    position: relative;
+    padding-right: 15px;
+  }
+
+  .entry-section .entry-content {
+    display: none;
+  }
+
+  .entry-section.expanded .entry-content {
+    display: block;
+  }
+
+  h1 {
+    color: #000000; 
+    margin-bottom: 20px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 1.7em; 
+  }
+
+  h2, h3 {
+    color: #2563eb;
+    margin-bottom: 20px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 1.3em;
+  }
+
+  .form-group {
+    margin-bottom: 15px;
+    display: inline-block;
+    margin-right: 0;
+    width: calc(16.66% - 10px);
+  }
+
+  input, .status-select {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    margin-top: 6px;
+    transition: all 0.2s;
+    font-size: 14px;
+    background: #fafafa;
+  }
+
+  input:focus, .status-select:focus {
+    background: #ffffff;
+    border-color: #2563eb;
+    outline: none;
+    transform: translateY(-1px);
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+  }
+
+  button {
+    background: #2563eb;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin: 5px;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+  }
+
+  button:hover {
+    background: #1d4ed8;
+    transform: translateY(-1px);
+  }
+
+  .contact-list {
+    margin-top: 30px;
+    overflow-y: auto; 
+    flex: 1;
+    max-height: calc(100vh - 400px); 
+  }
+
+  .contact-card {
+    background: #ffffff;
+    border: none;
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    border-left: 4px solid transparent;
+  }
+
+  .contact-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.12);
+  }
+
+  .contact-info {
+    display: grid;
+    grid-template-columns: auto auto auto auto auto minmax(150px, 1fr) minmax(150px, 1fr);
+    gap: 10px;
+    align-items: center;
+    font-size: 14px;
+    margin-bottom: 5px;
+    text-align: left;
+    justify-content: start;
+  }
+
+  .contact-info p {
+    text-align: left;
+    justify-self: start;
+    margin-right: 0;
+    white-space: nowrap;
+  }
+
+  .unit-info {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 150px;
+  }
+
+  .unit-info p {
+    margin: 0;
+    padding: 0;
+    white-space: nowrap;
+    line-height: inherit;
+  }
+
+  .unit-info p:first-child {
+    margin-top: 0;
+  }
+
+  .delete-btn {
+    background: #ef4444;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    display: none; 
+    margin: 5px;
+  }
+
+  .contact-card.expanded .delete-btn {
+    display: block; 
+  }
+
+  .delete-btn:hover {
+    background: #dc2626;
+  }
+
+  .search-box {
+    margin-bottom: 20px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .street-filter-container {
+    margin: 15px 0;
+    text-align: center;
+    display: none; 
+  }
+
+  .street-filter {
+    width: 300px;
+    margin: 0;
+    padding: 8px 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    font-size: 14px;
+    background: white;
+  }
+
+  .street-filter:focus {
+    border-color: #2563eb;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+  }
+
+  .import-section,
+  .entry-section {
+    margin-bottom: 15px;
+  }
+
+  .residents-section {
+    margin-top: 12px;
+    padding: 15px;
+    border-radius: 8px;
+  }
+
+  .resident-entry {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 15px 0;
+    padding: 12px;
+    background: white;
+    border-radius: 8px;
+    border-bottom: 2px solid #2563eb; 
+    margin-bottom: 20px; 
+  }
+
+  .resident-entry:last-child {
+    border-bottom: none;
+  }
+
+  .unit-management {
+    margin-bottom: 15px;
+    padding: 10px 0;
+    border-bottom: 1px solid #eee;
+  }
+
+  .unit-btn {
+    font-size: 13px;
+    padding: 8px 16px;
+    margin: 5px;
+  }
+
+  .expanded {
+    border-left: 4px solid #2563eb;
+  }
+
+  .history-entry {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 8px;
+    margin: 2px 0;
+    border-radius: 4px;
+    font-size: 0.85em;
+    line-height: 1.1;
+    background: #f9fafb;
+    border-left: 1px solid #e5e7eb;
+  }
+
+  .history-status {
+    font-weight: 500;
+    font-size: 0.85em;
+  }
+
+  .history-date {
+    color: #6b7280;
+    font-size: 0.8em;
+    white-space: nowrap;
+  }
+
+  .delete-history {
+    padding: 1px 4px;
+    font-size: 11px;
+    color: #6b7280;
+    background: none;
+    border: none;
+    cursor: pointer;
+    opacity: 0.6;
+  }
+
+  .delete-history:hover {
+    opacity: 1;
+    color: #ef4444;
+  }
+
+  .status-history {
+    margin-top: 6px;
+    max-height: 150px;
+    overflow-y: auto;
+    border: 1px solid #e5e7eb;
+    border-radius: 4px;
+    padding: 3px;
+    background: #ffffff;
+  }
+
+  .delete-all-btn {
+    background: #ef4444;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  .delete-all-btn:hover {
+    background: #dc2626;
+    transform: translateY(-1px);
+  }
+
+  .status-filters {
+    margin: 15px 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 30px;
+    margin-bottom: 30px;
+    background: white;
+  }
+
+  .filter-btn,
+  .status-filters button {
+    background: #f1f5f9;
+    color: #64748b;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin: 3px;
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  .filter-btn.active,
+  .status-filters button.active {
+    background: #2563eb;
+    color: white;
+  }
+
+  .filter-btn:hover,
+  .status-filters button:hover {
+    background: #e2e8f0;
+    transform: translateY(-1px);
+  }
+
+  .filter-btn.active:hover,
+  .status-filters button.active:hover {
+    background: #1d4ed8;
+  }
+
+  input[id="plz"],
+  input[id="street_plz"] {
+    width: 80px;
+    max-width: 100%;
+  }
+
+  .contact-info.empty-status {
+    color: #9ca3af;
+  }
+
+  .entry-content {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+
+  .tab-buttons {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
+  #singleEntry, #streetEntry {
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  #contactForm, #streetForm {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .entry-section button[type="submit"] {
+    display: block;
+    margin: 20px auto;
+    min-width: 200px;
+  }
+
+  .file-input {
+    display: none;
+  }
+
+  #fileName {
+    display: block;
+    margin-top: 10px;
+    color: #6b7280;
+    font-size: 0.9em;
+  }
+
+  .statistics-section {
+    margin: 10px 0;
+    padding: 20px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  }
+
+  .calendar-section {
+    margin: 10px 0;
+    padding: 20px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  }
+
+  .calendar-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 0 10px;
+  }
+
+  .calendar-controls button {
+    background: #f1f5f9;
+    color: #64748b;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .calendar-controls button:hover {
+    background: #e2e8f0;
+    transform: translateY(-1px);
+  }
+
+  .calendar-controls h4 {
+    font-size: 1.2em;
+    color: #2563eb;
+    margin: 0;
+  }
+
+  .calendar-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    margin-bottom: 4px;
+  }
+
+  .calendar-weekdays div {
+    background: #f8fafc;
+    padding: 10px;
+    text-align: center;
+    font-weight: 600;
+    color: #64748b;
+    border-radius: 6px;
+  }
+
+  #calendarDays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+  }
+
+  .calendar-day {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 10px;
+    min-height: 100px;
+    position: relative;
+  }
+
+  .calendar-day .day-number {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    color: #64748b;
+    font-size: 0.9em;
+  }
+
+  .calendar-day.has-entries {
+    background: #f0f9ff;
+    border-color: #bae6fd;
+  }
+
+  .calendar-day.has-completions {
+    background: #dcfce7;
+    border-color: #86efac;
+  }
+
+  .calendar-day .day-stats {
+    margin-top: 25px;
+    font-size: 0.85em;
+  }
+
+  .calendar-day .qualis {
+    color: #0369a1;
+    margin-bottom: 4px;
+  }
+
+  .calendar-day .completions {
+    color: #15803d;
+  }
+
+  #calendar {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  }
+
+  .calendar-header {
+    cursor: pointer;
+    margin-bottom: 15px;
+  }
+
+  .statistics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 15px;
+    padding: 15px;
+  }
+
+  .stat-card {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: transform 0.2s ease;
+  }
+
+  .stat-card:hover {
+    transform: translateY(-2px);
+  }
+
+  .stat-number {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 8px;
+    color: #1f2937;
+  }
+
+  .stat-label {
+    font-size: 14px;
+    color: #4b5563;
+    margin-bottom: 5px;
+  }
+
+  .stat-percentage {
+    font-size: 12px;
+    color: #6b7280;
+  }
+
+  /* Status-specific background colors for stat cards */
+  .stat-card.status-offen {
+    background-color: #e5e7eb;
+    border-left: 4px solid #9ca3af;
+  }
+
+  .stat-card.status-nicht-angetroffen {
+    background-color: #fee2e2;
+    border-left: 4px solid #ef4444;
+  }
+
+  .stat-card.status-kein-eintritt {
+    background-color: #fef3c7;
+    border-left: 4px solid #f59e0b;
+  }
+
+  .stat-card.status-wiedervorlage {
+    background-color: #dbeafe;
+    border-left: 4px solid #3b82f6;
+  }
+
+  .stat-card.status-termin {
+    background-color: #dcfce7;
+    border-left: 4px solid #22c55e;
+  }
+
+  .stat-card.status-beraten {
+    background-color: #fef3c7;
+    border-left: 4px solid #f59e0b;
+  }
+
+  .stat-card.status-kein-interesse {
+    background-color: #fce7f3;
+    border-left: 4px solid #ec4899;
+  }
+
+  .stat-card.status-abschluss {
+    background-color: #ccfbf1;
+    border-left: 4px solid #14b8a6;
+  }
+
+  .stat-card.status-nicht-vermarktbar {
+    background-color: #fef2f2;
+    border-left: 4px solid #dc2626;
+  }
+
+  .stat-card.status-blacklist {
+    background-color: #292524;
+    border-left: 4px solid #1c1917;
+    color: white;
+  }
+
+  .stat-card.status-blacklist .stat-number,
+  .stat-card.status-blacklist .stat-label,
+  .stat-card.status-blacklist .stat-percentage {
+    color: white;
+  }
+
+  .status-history {
+    margin-top: 10px;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+
+  .history-entry {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 15px;
+    margin: 6px 0;
+    border-radius: 6px;
+  }
+
+  .history-status {
+    font-weight: 500;
+  }
+
+  .history-date {
+    color: #6b7280;
+    font-size: 0.9em;
+  }
+
+  /* New CSS rules */
+  .notes-section {
+    margin-top: 10px;
+  }
+
+  .notes-textarea {
+    width: 100%;
+    height: 4em; /* Makes textarea approximately 2 lines tall */
+    min-height: 4em;
+    padding: 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    resize: vertical;
+    font-family: inherit;
+    font-size: 14px;
+    line-height: 1.5;
+    background: #fafafa;
+    transition: all 0.2s ease;
+  }
+
+  .notes-textarea:focus {
+    background: #ffffff;
+    border-color: #2563eb;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+  }
+
+  .visit-recommendation-box {
+    background: white;
+    padding: 15px;
+    border-radius: 12px;
+    margin: 15px 0;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  }
+
+  .visit-recommendation-box h3 {
+    color: #2563eb;
+    margin: 0;
+    padding: 10px;
+    text-align: center;
+  }
+
+  #recommendationResults {
+    max-height: 400px;
+    overflow-y: auto;
+  }
+
+  .recommended-contact {
+    background: #f0f9ff;
+    padding: 15px;
+    margin: 10px 0;
+    border-radius: 8px;
+    border-left: 4px solid #3b82f6;
+  }
+
+  .last-visit-time {
+    color: #6b7280;
+    font-size: 0.9em;
+    margin-top: 5px;
+  }
+  
+  /* Add this CSS rule to define the highlight color for addresses with Abschluss status */
+  .contact-info.has-abschluss {
+    background-color: #dcfce7 !important; 
+    border-left: 4px solid #22c55e !important; 
+  }
+
+  .visit-recommendation-controls {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-bottom: 20px;
+  }
+
+  .recommendation-type-btn {
+    padding: 8px 16px;
+    border-radius: 6px;
+    background: #f1f5f9;
+    color: #64748b;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .recommendation-type-btn.active {
+    background: #2563eb;
+    color: white;
+  }
+
+  /* Add new style for inactive residents */
+  .inactive-resident {
+    color: red;
+    font-weight: bold;
+  }
+
+  .modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+  }
+
+  .modal-content {
+    background-color: #fefefe;
+    margin: 10% auto;
+    padding: 30px;
+    border-radius: 8px;
+    width: 500px;
+    text-align: left;
+  }
+
+  .modal-content h3 {
+    margin-bottom: 25px;
+    color: #2563eb;
+    font-size: 1.3em;
+  }
+
+  .modal-content > div {
+    margin-bottom: 20px;
+  }
+
+  .modal-content label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+  }
+
+  .modal-content input[type="number"] {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    margin-bottom: 5px;
+  }
+
+  .modal-content textarea {
+    width: 100%;
+    min-height: 100px;
+    padding: 8px;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    resize: vertical;
+  }
+
+  .modal-content .button-group {
+    margin-top: 25px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+  }
+
+  .modal-content input[type="checkbox"] {
+    margin-right: 8px;
+  }
+
+  .modal-content .checkbox-wrapper {
+    margin-bottom: 25px;
+    padding: 15px;
+    background: #f9fafb;
+    border-radius: 6px;
+   ! border: 1px solid #e5e7eb;
+  }
+
+  .status-onlineabschluss {
+    background-color: #d1fae5 !important; 
+    border-left: 4px solid #059669 !important; 
+  }
+  .contact-info.status-onlineabschluss {
+    background-color: #dbeafe !important; 
+    border-left: 4px solid #2563eb !important; 
+  }
+
+  /* Add to calendar controls area */
+  .calendar-summary {
+    text-align: center;
+    margin: 15px 0;
+    padding: 15px;
+    background: #f3f4f6;
+    border-radius: 8px;
+  }
+
+  .calendar-summary strong {
+    color: #2563eb;
+    font-size: 1.1em;
+  }
+
+  .forecast {
+    color: #059669;
+    margin-top: 8px;
+  }
+  
+  .status-abschl-anderer-vp {
+    background-color: #f0f9ff !important; 
+    border-left: 4px solid #60a5fa !important; 
+  }
+
+  .contact-info.status-abschl-anderer-vp {
+    background-color: #dbeafe !important; 
+    border-left: 4px solid #2563eb !important; 
+  }
+  
+  .we-correct-btn {
+    font-size: 13px;
+    padding: 8px 16px;
+    margin: 5px;
+  }
+
+  .we-corrections-history {
+    background-color: #f3f4f6;
+    padding: 8px;
+    margin-top: 8px;
+    border-radius: 4px;
+    font-size: 0.9em;
+  }
+
+  .we-correction-entry {
+    background-color: white;
+    padding: 8px;
+    margin-bottom: 4px;
+    border-radius: 4px;
+    border-left: 3px solid #f59e0b;
+    font-size: 0.85em;
+    line-height: 1.3;
+  }
+
+  .we-correction-entry p {
+    margin: 2px 0;
+  }
+
+  /* Add style for clickable correction entries */
+  .we-correction-entry {
+    cursor: pointer;
+  }
+
+  .we-correction-entry:hover {
+    background-color: #f3f4f6;
+  }
+
+  /* Add new styles for kein-interesse status */
+  .status-kein-interesse-red {
+    background-color: #fee2e2 !important; 
+    border-left: 4px solid #ef4444 !important; 
+  
+  }
+
+  /* Add new style for status-beraten */
+  .contact-info.status-beraten {
+    background-color: #fef9c3 !important; 
+    border-left: 4px solid #facc15 !important; 
+  }
+
+  /* Ensure this style has high specificity to override other status styles */
+  .contact-card .contact-info.status-beraten {
+    background-color: #fef9c3 !important;
+    border-left: 4px solid #facc15 !important;
+  }
+</style>
+
+<!-- HTML structure -->
+<div class="page-layout">
+  <nav class="sidebar">
+    <ul class="sidebar-nav">
+      <li><a href="#contacts" data-section="contacts" class="active" title="Kontaktliste">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="8" y1="6" x2="21" y2="6"/>
+          <line x1="8" y1="12" x2="21" y2="12"/>
+          <line x1="8" y1="18" x2="21" y2="18"/>
+          <line x1="3" y1="6" x2="3.01" y2="6"/>
+          <line x1="3" y1="12" x2="3.01" y2="12"/>
+          <line x1="3" y1="18" x2="3.01" y2="18"/>
+        </svg>
+      </a></li>
+      <li><a href="#import" data-section="import" title="Daten importieren">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="17 8 12 3 7 8"/>
+          <line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+      </a></li>
+      <li><a href="#add" data-section="add" title="Neue Adresse hinzufügen">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19"/>
+          <line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+      </a></li>
+      <li><a href="#stats" data-section="stats" title="Statistik anzeigen">
+        <div>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="20" x2="18" y2="10"/>
+            <line x1="12" y1="20" x2="12" y2="4"/>
+            <line x1="6" y1="20" x2="6" y2="14"/>
+          </svg>
+        </div>
+      </a></li>
+      <li><a href="#calendar" data-section="calendar" title="Aktivitätenkalender">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+          <line x1="16" y1="2" x2="16" y2="6"/>
+          <line x1="8" y1="2" x2="8" y2="6"/>
+          <line x1="3" y1="10" x2="21" y2="10"/>
+        </svg>
+      </a></li>
+      <li><a href="#recommendations" data-section="recommendations" title="Besuchsempfehlungen">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/>
+          <line x1="4" y1="22" x2="4" y2="15"/>
+        </svg>
+      </a></li>
+      <li><a href="#pdf-corrections" data-section="pdf-corrections" title="WE-Korrekturen exportieren">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="17 8 12 3 7 8"/>
+          <line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+      </a></li>
+      <li><a href="#" onclick="toggleFullscreen(event)" title="Vollbildmodus">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" class="fullscreen-expand"/>
+          <path d="M21 8V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3M3 8V5a2 2 0 0 0 2-2h3" class="fullscreen-collapse" style="display: none;"/>
+        </svg>
+      </a></li>
+    </ul>
+  </nav>
+  
+  <div class="main-content">
+    <div class="container">
+      <h1>Qualifizierungs-Tool</h1>
+
+      <!-- 1. Import section -->
+      <div class="import-section collapsed">
+        <h3 onclick="toggleImportSection()">Adressen importieren</h3>
+        <div class="import-content">
+          <p>Unterstütztes Format: Excel (XLSX, XLS)</p>
+          <p>Erforderliche Spalten: PLZ, Ort, Straße, Nr., Zusatz, WE</p>
+          <input type="file" id="fileInput" class="file-input" accept=".xlsx,.xls">
+          <span id="fileName"></span>
+          <div class="import-export-buttons">
+            <button onclick="document.getElementById('excelImport').click()" class="import-btn">Excel importieren</button>
+            <button onclick="exportToExcel()" class="import-btn">Excel exportieren</button>
+            <input type="file" id="excelImport" style="display: none" accept=".xlsx,.xls" onchange="importFromExcel(this.files[0])">
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. Entry section -->
+      <div class="entry-section collapsed">
+        <h2 onclick="toggleEntrySection()">Adresse hinzufügen</h2>
+        <div class="entry-content">
+          <div class="tab-buttons">
+            <button onclick="showForm('single')" id="singleBtn" class="active">Einzelne Adresse</button>
+            <button onclick="showForm('street')" id="streetBtn">Komplette Straße</button>
+          </div>
+
+          <div id="singleEntry">
+            <form id="contactForm" onsubmit="addContact(event)">
+              <div class="form-group">
+                <input type="text" id="plz" placeholder="PLZ" maxlength="5" pattern="\d{5}" required>
+              </div>
+              <div class="form-group">
+                <input type="text" id="ort" placeholder="Ort" required>
+              </div>
+              <div class="form-group">
+                <input type="text" id="strasse" placeholder="Straße" required>
+              </div>
+              <div class="form-group">
+                <input type="text" id="nummer" placeholder="Nr." required>
+              </div>
+              <div class="form-group">
+                <input type="text" id="zusatz" placeholder="Zusatz">
+              </div>
+              <div class="form-group">
+                <input type="text" id="we" placeholder="WE">
+              </div>
+              <button type="submit">Kontakt hinzufügen</button>
+            </form>
+          </div>
+
+          <div id="streetEntry" style="display: none;">
+            <form id="streetForm" onsubmit="addStreet(event)">
+              <div class="form-group">
+                <input type="text" id="street_plz" placeholder="PLZ" maxlength="5" pattern="\d{5}" required>
+              </div>
+              <div class="form-group">
+                <input type="text" id="street_ort" placeholder="Ort" required>
+              </div>
+              <div class="form-group">
+                <input type="text" id="street_strasse" placeholder="Straße" required>
+              </div>
+              <div class="form-group">
+                <input type="number" id="street_start" placeholder="Hausnr. von" required>
+              </div>
+              <div class="form-group">
+                <input type="number" id="street_end" placeholder="Hausnr. bis" required>
+              </div>
+              <button type="submit">Straße hinzufügen</button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. Calendar section -->
+      <div class="calendar-section">
+        <h3 class="calendar-header" onclick="toggleCalendar()">Aktivitäten-Kalender</h3>
+        <div id="calendar" style="display: none;">
+          <div class="calendar-controls">
+            <button onclick="previousMonth()">&lt;</button>
+            <h4 id="currentMonth"></h4>
+            <button onclick="nextMonth()">&gt;</button>
+          </div>
+          <div class="calendar-summary">
+            <strong>Summary</strong>
+            <p class="forecast">This is a forecast</p>
+          </div>
+          <div class="calendar-grid">
+            <div class="calendar-weekdays">
+              <div>Mo</div>
+              <div>Di</div>
+              <div>Mi</div>
+              <div>Do</div>
+              <div>Fr</div>
+              <div>Sa</div>
+              <div>So</div>
+            </div>
+            <div id="calendarDays"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. Statistics section -->
+      <div class="statistics-section">
+        <h3 class="statistics-header" onclick="toggleStatistics()">Statusauswertung</h3>
+        <div id="statusStats" style="display: none;">
+          <div class="statistics-grid" id="statsGrid">
+            <!-- Statistics will be inserted here dynamically -->
+          </div>
+        </div>
+      </div>
+
+      <!-- 5. Visit recommendation section -->
+      <div class="visit-recommendation-box">
+        <h3 onclick="toggleVisitRecommendation()">Besuchsempfehlung</h3>
+        <div id="visitRecommendationContent" style="display: none; padding: 15px;">
+          <div class="visit-recommendation-controls">
+            <button onclick="this.classList.add('active'); this.nextElementSibling.classList.remove('active'); document.querySelector('.time-selection').style.display = 'flex'; showVisitRecommendations()" class="recommendation-type-btn active!">Nach Besuchszeit</button>
+            <button onclick="this.classList.add('active'); this.previousElementSibling.classList.remove('active'); document.querySelector('.time-selection').style.display = 'none'; showInactiveRecommendations()" class="recommendation-type-btn">Inaktive Adressen (&gt; 3 Wochen)</button>
+          </div>
+          <div class="time-selection" style="display: flex; gap: 15px; align-items: center; justify-content: center; margin-bottom: 15px;">
+            <div>
+              <label for="startTime">Von:</label>
+              <input type="time" id="startTime" min="06:00" max="23:00" value="06:00">
+            </div>
+            <div>
+              <label for="endTime">Bis:</label>
+              <input type="time" id="endTime" min="06:00" max="23:00" value="23:00">
+            </div>
+            <button onclick="showVisitRecommendations()">Empfehlungen anzeigen</button>
+          </div>
+          <div id="recommendationResults"></div>
+        </div>
+      </div>
+
+      <div class="search-box">
+        <input type="text" id="searchInput" placeholder="Kontakte durchsuchen..." onkeyup="applyFilters()">
+        <button onclick="deleteAllContacts()" class="delete-all-btn">Alle Adressen löschen</button>
+        <button onclick="showDeleteByPLZDialog()" class="delete-all-btn" style="background: #ef4444;">Nach PLZ löschen</button>
+        <button onclick="showDeleteStreetDialog()" class="delete-all-btn" style="background: #ef4444;">Nach Straße löschen</button>
+      </div>
+
+      <!-- Status filters -->
+      <div class="status-filters">
+        <button onclick="filterByStatus('all')" class="filter-btn active">Alle</button>
+        <button onclick="filterByStatus('nicht-angetroffen')" class="filter-btn">Nicht angetroffen</button>
+        <button onclick="filterByStatus('kein-eintritt')" class="filter-btn">Kein Eintritt persönlich</button>
+        <button onclick="filterByStatus('wiedervorlage')" class="filter-btn">Wiedervorlage</button>
+        <button onclick="filterByStatus('termin')" class="filter-btn">Termin</button>
+        <button onclick="filterByStatus('beraten')" class="filter-btn">Bereits beraten</button>
+        <button onclick="filterByStatus('kein-interesse')" class="filter-btn">Kein Interesse</button>
+        <button onclick="filterByStatus('abschluss')" class="filter-btn">Abschluss</button>
+        <button onclick="filterByStatus('onlineabschluss')" class="filter-btn">Online/TS</button>
+        <button onclick="filterByStatus('abschl-anderer-vp')" class="filter-btn">Abschl. anderer VP</button>
+      </div>
+
+      <!-- Street filter -->
+      <div class="street-filter-container">
+        <select id="streetFilter" class="street-filter" onchange="applyFilters()">
+          <option value="all">Alle Straßen</option>
+        </select>
+      </div>
+
+      <!-- Contact list -->
+      <div class="contact-list" id="contactList">
+        <!-- Kontakte werden hier dynamisch eingefügt -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="deletePLZDialog" style="display:none" class="modal">
+  <div class="modal-content">
+    <h3>Adressen nach PLZ löschen</h3>
+    <input type="text" id="plzToDelete" placeholder="PLZ eingeben" maxlength="5" pattern="\d{5}">
+    <div class="button-group">
+      <button onclick="deleteByPLZ()">Löschen</button>
+      <button onclick="closeDeletePLZDialog()">Abbrechen</button>
+    </div>
+  </div>
+</div>
+
+<div id="deleteStreetDialog" style="display:none" class="modal">
+  <div class="modal-content">
+    <h3>Adressen nach Straße löschen</h3>
+    <select id="streetToDelete" multiple style="width: 100%; margin-bottom: 15px; height: 200px;">
+      <option value>Straßen auswählen</option>
+    </select>
+    <div class="button-group">
+      <button onclick="deleteByStreet()">Löschen</button>
+      <button onclick="closeDeleteStreetDialog()">Abbrechen</button>
+    </div>
+  </div>
+</div>
+
+<div id="weCorrectModal" class="modal">
+  <div class="modal-content">
+    <h3>Falsche WE melden</h3>
+    <div class="checkbox-wrapper">
+      <label>
+        <input type="checkbox" id="manualCurrentWe">
+        Manuelle Eingabe der aktuellen WE-Anzahl
+      </label>
+    </div>
+    <div class="checkbox-wrapper">
+      <label>
+        <input type="checkbox" id="hasGEE">
+        GEE/VGM vorhanden
+      </label>
+    </div>
+    <div>
+      <label for="currentWeCount">Aktuelle WE-Anzahl:</label>
+      <input type="number" id="currentWeCount">
+    </div>
+    <div>
+      <label for="correctedWeCount">Korrigierte WE-Anzahl:</label>
+      <input type="number" id="correctedWeCount">
+    </div>
+    <div>
+      <label for="weCorrectReason">Begründung:</label>
+      <textarea id="weCorrectReason" rows="4" placeholder="Bitte geben Sie den Grund für die WE-Korrektur an..."></textarea>
+    </div>
+    <div class="button-group">
+      <button onclick="closeWeCorrectModal()">Abbrechen</button>
+      <button onclick="saveWeCorrection()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+  function renderCalendar() {
+    const monthNames = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
+    document.getElementById('currentMonth').textContent = `${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
+  
+    const currentCompletions = getMonthStats(currentDate.getFullYear(), currentDate.getMonth());
+    const totalWorkdays = countWorkdaysInMonth(currentDate.getFullYear(), currentDate.getMonth());
+    const forecast = calculateForecast(currentCompletions, new Date(), totalWorkdays);
+  
+    const calendarDiv = document.getElementById('calendar');
+    let summaryDiv = calendarDiv.querySelector('.calendar-summary');
+    if (!summaryDiv) {
+      summaryDiv = document.createElement('div');
+      summaryDiv.className = 'calendar-summary';
+      calendarDiv.insertBefore(summaryDiv, calendarDiv.firstChild);
+    }
+  
+    summaryDiv.innerHTML = `
+      <div>Abschlüsse diesen Monat: <strong>${currentCompletions}</strong></div>
+      <div class="forecast">Forecast: <strong>${forecast}</strong> Abschlüsse</div>
+    `;
+  
+    const daysGrid = document.getElementById('calendarDays');
+    daysGrid.innerHTML = '';
+  
+    const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+    let firstDayIndex = firstDay.getDay();
+    firstDayIndex = firstDayIndex === 0 ? 6 : firstDayIndex - 1;
+  
+    for (let i = 0; i < firstDayIndex; i++) {
+      const emptyDay = document.createElement('div');
+      emptyDay.className = 'calendar-day';
+      daysGrid.appendChild(emptyDay);
+    }
+  
+    const lastDay = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+  
+    for (let day = 1; day <= lastDay.getDate(); day++) {
+      const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+      const dayOfWeek = date.getDay();
+  
+      const dayDiv = document.createElement('div');
+      dayDiv.className = 'calendar-day';
+  
+      const stats = getDayStats(date);
+  
+      if (stats.total > 0 || stats.completions > 0) {
+        dayDiv.classList.add('has-entries');
+        if (stats.completions > 0) {
+          dayDiv.classList.add('has-completions');
+        }
+        dayDiv.innerHTML = `
+          <div class="day-number">${day}</div>
+          <div class="day-stats">
+            <div class="qualis">${stats.total} Qualis</div>
+            <div class="completions">${stats.completions} Abschl.</div>
+          </div>
+        `;
+      } else {
+        dayDiv.innerHTML = `<div class="day-number">${day}</div>`;
+      }
+  
+      daysGrid.appendChild(dayDiv);
+    }
+  }
+  let contacts = JSON.parse(localStorage.getItem('contacts')) || [];
+  let currentFilter = 'all';
+  let currentDate = new Date();
+  async function importExcelFile(file) {
+    try {
+      const workbook = await readExcelFile(file);
+      const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(firstSheet, {
+        header: 1
+      });
+      for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        if (!row[0]) continue;
+        contacts.push({
+          id: Date.now() + i,
+          plz: row[0]?.toString() || '',
+          ort: row[1]?.toString() || '',
+          strasse: row[2]?.toString() || '',
+          nummer: row[3]?.toString() || '',
+          zusatz: row[4]?.toString() || '',
+          we: row[5]?.toString() || '',
+          residents: []
+        });
+      }
+      contacts = sortContacts(contacts);
+      saveContacts();
+      updateStreetFilter();
+      renderContacts();
+      alert(`Import erfolgreich: ${rows.length - 1} Adressen importiert`);
+    } catch (err) {
+      console.error('Import failed:', err);
+      alert('Fehler beim Import: ' + err.message);
+    }
+  }
+  function readExcelFile(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = e => {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, {
+            type: 'array'
+          });
+          resolve(workbook);
+        } catch (err) {
+          reject(err);
+        }
+      };
+      reader.onerror = err => reject(err);
+      reader.readAsArrayBuffer(file);
+    });
+  }
+  function filterByStatus(status) {
+    document.querySelector('.status-filters').innerHTML = `
+      <button onclick="filterByStatus('all')" class="filter-btn ${status === 'all' ? 'active' : ''}">Alle</button>
+      <button onclick="filterByStatus('nicht-angetroffen')" class="filter-btn ${status === 'nicht-angetroffen' ? 'active' : ''}">Nicht angetroffen</button>
+      <button onclick="filterByStatus('kein-eintritt')" class="filter-btn ${status === 'kein-eintritt' ? 'active' : ''}">Kein Eintritt persönlich</button>
+      <button onclick="filterByStatus('wiedervorlage')" class="filter-btn ${status === 'wiedervorlage' ? 'active' : ''}">Wiedervorlage</button>
+      <button onclick="filterByStatus('termin')" class="filter-btn ${status === 'termin' ? 'active' : ''}">Termin</button>
+      <button onclick="filterByStatus('beraten')" class="filter-btn ${status === 'beraten' ? 'active' : ''}">Bereits beraten</button>
+      <button onclick="filterByStatus('kein-interesse')" class="filter-btn ${status === 'kein-interesse' ? 'active' : ''}">Kein Interesse</button>
+      <button onclick="filterByStatus('abschluss')" class="filter-btn ${status === 'abschluss' ? 'active' : ''}">Abschluss</button>
+      <button onclick="filterByStatus('onlineabschluss')" class="filter-btn ${status === 'onlineabschluss' ? 'active' : ''}">Online/TS</button>
+      <button onclick="filterByStatus('abschl-anderer-vp')" class="filter-btn ${status === 'abschl-anderer-vp' ? 'active' : ''}">Abschl. anderer VP</button>
+    `;
+    currentFilter = status;
+    applyFilters();
+  }
+  function sortContacts(contactsToSort) {
+    return contactsToSort.sort((a, b) => {
+      const streetCompare = (a.strasse || '').localeCompare(b.strasse || '');
+      if (streetCompare !== 0) return streetCompare;
+      const numA = parseInt(a.nummer) || 0;
+      const numB = parseInt(b.nummer) || 0;
+      return numA - numB;
+    });
+  }
+  function toggleImportSection() {
+    const section = document.querySelector('.import-section');
+    section.classList.toggle('collapsed');
+    section.classList.toggle('expanded');
+  }
+  function toggleEntrySection() {
+    const section = document.querySelector('.entry-section');
+    section.classList.toggle('collapsed');
+    section.classList.toggle('expanded');
+  }
+  function showForm(type) {
+    document.getElementById('singleEntry').style.display = type === 'single' ? 'block' : 'none';
+    document.getElementById('streetEntry').style.display = type === 'street' ? 'block' : 'none';
+    document.getElementById('singleBtn').classList.toggle('active', type === 'single');
+    document.getElementById('streetBtn').classList.toggle('active', type === 'street');
+  }
+  function addStreet(event) {
+    event.preventDefault();
+    const plz = document.getElementById('street_plz').value;
+    const ort = document.getElementById('street_ort').value;
+    const strasse = document.getElementById('street_strasse').value;
+    const start = parseInt(document.getElementById('street_start').value);
+    const end = parseInt(document.getElementById('street_end').value);
+    for (let nummer = start; nummer <= end; nummer++) {
+      const contact = {
+        id: Date.now() + nummer,
+        plz: plz,
+        ort: ort,
+        strasse: strasse,
+        nummer: nummer.toString(),
+        zusatz: '',
+        we: '',
+        residents: []
+      };
+      contacts.push(contact);
+    }
+    contacts = sortContacts(contacts);
+    saveContacts();
+    updateStreetFilter();
+    renderContacts();
+    event.target.reset();
+  }
+  function addContact(event) {
+    event.preventDefault();
+    const contact = {
+      id: Date.now(),
+      plz: document.getElementById('plz').value,
+      ort: document.getElementById('ort').value,
+      strasse: document.getElementById('strasse').value,
+      nummer: document.getElementById('nummer').value,
+      zusatz: document.getElementById('zusatz').value,
+      we: document.getElementById('we').value,
+      residents: []
+    };
+    contacts.push(contact);
+    contacts = sortContacts(contacts);
+    saveContacts();
+    updateStreetFilter();
+    renderContacts();
+    event.target.reset();
+  }
+  function toggleActive(id) {
+    document.querySelectorAll('.contact-card').forEach(card => {
+      card.classList.remove('active');
+    });
+    const card = document.querySelector(`[data-id="${id}"]`);
+    if (card) {
+      card.classList.add('active');
+    }
+  }
+  function toggleResidents(id) {
+    const card = document.querySelector(`[data-id="${id}"]`);
+    const residentsSection = card.querySelector('.residents-section');
+    const deleteBtn = card.querySelector('.delete-btn');
+    if (residentsSection.style.display === 'block') {
+      residentsSection.style.display = 'none';
+      card.classList.remove('expanded');
+      card.classList.remove('active');
+      deleteBtn.style.display = 'none';
+    } else {
+      residentsSection.style.display = 'block';
+      card.classList.add('expanded');
+      deleteBtn.style.display = 'inline-block';
+      toggleActive(id);
+    }
+  }
+  function saveResident(contactId, unitNumber, field) {
+    const currentStreet = document.getElementById('streetFilter').value;
+    const contact = contacts.find(c => c.id === contactId);
+    if (!contact || !contact.residents) return;
+    let resident = contact.residents.find(r => r.unit === unitNumber);
+    if (!resident) {
+      resident = {
+        unit: unitNumber,
+        name: '',
+        phone: '',
+        status: '',
+        notes: '',
+        mieter: false,
+        statusHistory: []
+      };
+      contact.residents.push(resident);
+    }
+  
+    // Now you can modify resident properties safely
+    if (field === 'name') {
+      const input = document.querySelector(`input[data-unit="${unitNumber}"][data-contact="${contactId}"]`);
+      resident.name = input.value;
+    } else if (field === 'phone') {
+      const input = document.querySelector(`input[type="tel"][data-unit="${unitNumber}"][data-contact="${contactId}"]`);
+      resident.phone = input.value;
+    } else if (field === 'status') {
+      const select = document.querySelector(`select[data-unit="${unitNumber}"][data-contact="${contactId}"]`);
+      const newStatus = select.value;
+      if (!resident.statusHistory) {
+        resident.statusHistory = [];
+      }
+      resident.statusHistory.push({
+        status: newStatus,
+        date: new Date().toISOString(),
+        timestamp: Date.now()
+      });
+      resident.status = newStatus;
+      select.selectedIndex = 0;
+      select.className = "status-select";
+    } else if (field === 'notes') {
+      const textarea = document.querySelector(`textarea[data-unit="${unitNumber}"][data-contact="${contactId}"]`);
+      resident.notes = textarea.value;
+    } else if (field === 'mieter') {
+      const checkbox = document.querySelector(`input[type="checkbox"][data-unit="${unitNumber}"][data-contact="${contactId}"]`);
+      resident.mieter = checkbox.checked;
+    }
+    saveContacts();
+    updateStatistics();
+    applyFilters();
+  }
+  function deleteContact(id) {
+    contacts = contacts.filter(contact => contact.id !== id);
+    saveContacts();
+    updateStreetFilter();
+    renderContacts();
+  }
+  function deleteAllContacts() {
+    if (confirm('Möchten Sie wirklich alle Adressen löschen?')) {
+      contacts = [];
+      saveContacts();
+      renderContacts();
+    }
+  }
+  function addUnit(contactId) {
+    const contact = contacts.find(c => c.id === contactId);
+    if (!contact.we) contact.we = "0";
+    contact.we = (parseInt(contact.we) + 1).toString();
+    saveContacts();
+    renderContacts();
+  }
+  function deleteUnit(contactId) {
+    const contact = contacts.find(c => c.id === contactId);
+    if (contact.we && parseInt(contact.we) > 0) {
+      const currentUnits = parseInt(contact.we);
+      if (contact.residents) {
+        contact.residents = contact.residents.filter(r => parseInt(r.unit) < currentUnits);
+      }
+      contact.we = (currentUnits - 1).toString();
+      saveContacts();
+      renderContacts();
+    }
+  }
+  function saveContacts() {
+    localStorage.setItem('contacts', JSON.stringify(contacts));
+  }
+  function updateStreetFilter() {
+    const streetFilter = document.getElementById('streetFilter');
+    const streets = new Set();
+    contacts.forEach(contact => {
+      if (contact.strasse) {
+        streets.add(contact.strasse);
+      }
+    });
+    while (streetFilter.options.length > 1) {
+      streetFilter.remove(1);
+    }
+    Array.from(streets).sort().forEach(street => {
+      const option = document.createElement('option');
+      option.value = street;
+      option.textContent = street;
+      streetFilter.appendChild(option);
+    });
+  }
+  function getStatusLabel(status) {
+    if (!status) return 'Kein Status';
+    const statusLabels = {
+      'offen': 'Offen',
+      'nicht-angetroffen': 'Nicht angetroffen',
+      'kein-eintritt': 'Kein Eintritt persönlich',
+      'wiedervorlage': 'Wiedervorlage',
+      'termin': 'Termin',
+      'beraten': 'Bereits beraten',
+      'kein-interesse': 'Kein Interesse',
+      'abschluss': 'Abschluss',
+      'onlineabschluss': 'Online/TS',
+      'nicht-vermarktbar': 'Nicht vermarktbar',
+      'blacklist': 'Blacklist',
+      'abschl-anderer-vp': 'Abschl. anderer VP'
+    };
+    return statusLabels[status] || status;
+  }
+  function renderContacts(contactsToRender = contacts) {
+    contactsToRender = sortContacts([...contactsToRender]);
+    const expandedCards = new Set(Array.from(document.querySelectorAll('.contact-card.expanded')).map(card => card.getAttribute('data-id')));
+    const contactList = document.getElementById('contactList');
+    contactList.innerHTML = '';
+    contactsToRender.forEach(contact => {
+      const contactCard = document.createElement('div');
+      contactCard.className = 'contact-card';
+      contactCard.setAttribute('data-id', contact.id);
+      const weCount = contact.manualCurrentWe !== undefined ? contact.manualCurrentWe : parseInt(contact.we) || 0;
+
+      let residentInputs = `
+        <div class="unit-management">
+          <button onclick="event.stopPropagation(); deleteContact(${contact.id})" class="delete-btn" title="Löschen">Adresse löschen</button>
+          <button type="button" onclick="event.stopPropagation(); addUnit(${contact.id})" class="unit-btn">
+            + WE
+          </button>
+          <button type="button" onclick="event.stopPropagation(); deleteUnit(${contact.id})" class="unit-btn delete-unit">
+            - WE
+          </button>
+          <button type="button" onclick="event.stopPropagation(); openWeCorrectModal(${contact.id})" class="unit-btn we-correct-btn">
+            falsche WE melden
+          </button>
+        </div>
+      `;
+      if (contact.weCorrections && contact.weCorrections.length > 0) {
+        residentInputs += `
+          <div class="we-corrections-history">
+            <h4 style="margin: 0 0 5px 0; font-size: 0.95em;">WE-Korrekturen</h4>
+            ${contact.weCorrections?.map((correction, index) => `
+              <div class="we-correction-entry" onclick="editWeCorrection(${contact.id}, ${index})">
+                <p>Von ${correction.originalWe} auf ${correction.correctedWe} WE | ${correction.hasGEE ? 'GEE: Ja' : 'GEE: Nein'}</p>
+                <p style="color: #666;">Grund: ${correction.reason}</p>
+                <p style="color: #888; font-size: 0.8em;">${new Date(correction.date).toLocaleDateString('de-DE')}</p>
+              </div>
+            `).join('') || ''}
+          </div>
+        `;
+      }
+      for (let i = 1; i <= weCount; i++) {
+        const resident = contact.residents?.find(r => r.unit === i) || {
+          name: '',
+          phone: '',
+          status: '',
+          notes: '',
+          mieter: false,
+          statusHistory: []
+        };
+        const historyHtml = resident.statusHistory ? resident.statusHistory.sort((a, b) => b.timestamp - a.timestamp).map(entry => `
+            <div class="history-entry status-${entry.status}">
+              <span class="history-status">${getStatusLabel(entry.status)}</span>
+              <span class="history-date">${new Date(entry.date).toLocaleDateString('de-DE')} ${new Date(entry.date).toLocaleTimeString('de-DE', {
+        hour: '2-digit',
+        minute: '2-digit'
+      })}</span>
+              <button 
+                class="delete-history" 
+                onclick="event.stopPropagation(); deleteHistoryEntry(${contact.id}, ${i}, ${entry.timestamp})" 
+                title="Eintrag löschen"
+              >×</button>
+            </div>
+          `).join('') : '';
+        const selectHtml = `
+          <select 
+            class="status-select status-${resident.status}"
+            data-unit="${i}"
+            data-contact="${contact.id}"
+            onchange="saveResident(${contact.id}, ${i}, 'status')"
+          >
+            <option value="">Status auswählen</option>
+            <option value="offen">Offen</option>
+            <option value="nicht-angetroffen">Nicht angetroffen</option>
+            <option value="kein-eintritt">Kein Eintritt persönlich</option>
+            <option value="wiedervorlage">Wiedervorlage</option>
+            <option value="termin">Termin</option>
+            <option value="beraten">Bereits beraten</option>
+            <option value="kein-interesse">Kein Interesse</option>
+            <option value="abschluss">Abschluss</option>
+            <option value="abschl-anderer-vp">Abschl. anderer VP</option>
+            <option value="nicht-vermarktbar">Nicht vermarktbar</option>
+            <option value="blacklist">Blacklist</option>
+            <option value="onlineabschluss">Online/TS</option>
+          </select>`;
+        residentInputs += `
+          <div class="resident-entry">
+            <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px;">
+              <input 
+                type="text" 
+                placeholder="Bewohner WE ${i}" 
+                value="${resident.name}"
+                data-unit="${i}"
+                data-contact="${contact.id}"
+                onchange="saveResident(${contact.id}, ${i}, 'name')"
+                style="flex: 2;"
+              >
+              <input
+                type="tel"
+                placeholder="Telefon WE ${i}"
+                value="${resident.phone || ''}"
+                data-unit="${i}"
+                data-contact="${contact.id}"
+                onchange="saveResident(${contact.id}, ${i}, 'phone')"
+                style="flex: 1;"
+              >
+              <label style="display: flex; align-items: center; gap: 5px; white-space: nowrap;">
+                <input 
+                  type="checkbox" 
+                  ${resident.mieter ? 'checked' : ''}
+                  data-unit="${i}"
+                  data-contact="${contact.id}"
+                  onchange="saveResident(${contact.id}, ${i}, 'mieter')"
+                >
+                Mieter
+              </label>
+            </div>
+            ${selectHtml}
+            <div class="status-history">
+              ${historyHtml}
+            </div>
+            <div class="notes-section">
+              <textarea 
+                class="notes-textarea"
+                placeholder="Notizen für WE ${i} eingeben..."
+                data-unit="${i}"
+                data-contact="${contact.id}"
+                onchange="saveResident(${contact.id}, ${i}, 'notes')"
+                onblur="saveResident(${contact.id}, ${i}, 'notes')"
+              >${resident.notes || ''}</textarea>
+            </div>
+          </div>
+        `;
+      }
+      contactCard.innerHTML = `
+        <div class="contact-info ${!contact.residents?.[0]?.name && !contact.residents?.[0]?.status ? 'empty-status' : ''}
+          ${contact.residents?.some(r => getHighestPriorityStatus(r) === 'abschluss') ? 'has-abschluss' : ''}
+          ${contact.residents?.some(r => getHighestPriorityStatus(r) === 'onlineabschluss') ? 'status-onlineabschluss' : ''}
+          ${contact.residents?.some(r => getHighestPriorityStatus(r) === 'abschl-anderer-vp') ? 'status-abschl-anderer-vp' : ''}
+          ${contact.residents?.some(r => getHighestPriorityStatus(r) === 'beraten') ? 'status-beraten' : ''}
+          ${contact.residents?.some(r => getHighestPriorityStatus(r) === 'kein-interesse') && 
+            contact.residents.every(r => !['abschluss', 'onlineabschluss', 'beraten', 'abschl-anderer-vp'].includes(getHighestPriorityStatus(r))) ? 'status-kein-interesse-red' : ''}" 
+          onclick="toggleResidents(${contact.id})">
+          <p>${contact.plz}</p>
+          <p>${contact.ort}</p>
+          <p>${contact.strasse} ${contact.nummer}</p>
+          <p>${contact.zusatz ? `${contact.zusatz}` : ''}</p>
+          <p>${contact.we ? `${contact.we} WE` : ''}</p>
+          <div class="unit-info">
+            ${contact.residents?.map((resident, index) => {
+      const isInactive = resident?.statusHistory?.length > 0 ? Date.now() - resident.statusHistory.sort((a, b) => b.timestamp - a.timestamp)[0].timestamp > 28 * 24 * 60 * 60 * 1000 : !resident?.status;
+      const nameClass = isInactive && getHighestPriorityStatus(resident) !== 'abschluss' ? 'inactive-resident' : '';
+      return `
+              <p>WE${index + 1}: <strong class="${nameClass}">${resident?.name || '-'}${resident?.notes ? '<span style="color: red">*</span>' : ''}</strong>${resident?.mieter ? ' (M)' : ''}${resident?.phone ? ` <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h4l2 5l-2.5 1.5a11 11 0 0 0 5 5l1.5 -2.5l5 2v4a2 2 0 0 1-2 2a16 16 0 0 1-15 -15a2 2 0 0 1 2 -2"></path></svg>` : ''}</p>
+            `;
+    }).join('') || '<p>-</p>'}
+          </div>
+          <div class="unit-info">
+            ${contact.residents?.map((resident, index) => `
+              <p>${getStatusLabel(getHighestPriorityStatus(resident)) || 'Kein Status'}</p>
+            `).join('') || '<p>Kein Status</p>'}
+          </div>
+        </div>
+        <div class="residents-section" style="display: none;">
+          ${residentInputs}
+        </div>
+      `;
+      if (expandedCards.has(contact.id.toString())) {
+        contactCard.classList.add('expanded');
+        const residentsSection = contactCard.querySelector('.residents-section');
+        residentsSection.style.display = 'block';
+      }
+      contactList.appendChild(contactCard);
+    });
+    updateStatistics();
+  }
+
+  function applyFilters() {
+    const searchTerm = (document.getElementById('searchInput').value || '').toLowerCase();
+    const selectedStreet = document.getElementById('streetFilter').value;
+    const filteredContacts = contacts.filter(contact => {
+      if (!contact) return false;
+      const searchMatch = (contact.plz?.toString() || '').includes(searchTerm) || 
+                         (contact.ort?.toLowerCase() || '').includes(searchTerm) || 
+                         (contact.strasse?.toLowerCase() || '').includes(searchTerm) || 
+                         (contact.nummer?.toString() || '').includes(searchTerm) || 
+                         (contact.zusatz?.toLowerCase() || '').includes(searchTerm) || 
+                         (contact.we?.toString()?.toLowerCase() || '').includes(searchTerm) || 
+                         contact.residents?.some(resident => resident?.name?.toLowerCase()?.includes(searchTerm)) || 
+                         false;
+      const statusMatch = currentFilter === 'all' || 
+                         currentFilter !== 'offen' && 
+                         currentFilter !== 'blacklist' && 
+                         currentFilter !== 'nicht-vermarktbar' && 
+                         contact.residents?.some(resident => getHighestPriorityStatus(resident) === currentFilter) || 
+                         false;
+      const streetMatch = selectedStreet === 'all' || contact.strasse === selectedStreet;
+      return searchMatch && statusMatch && streetMatch;
+    });
+    renderContacts(filteredContacts);
+    document.getElementById('streetFilter').value = selectedStreet;
+  }
+
+  function getStatusPriority(status) {
+    const priorities = {
+      'abschluss': 12,
+      'onlineabschluss': 11,
+      'abschl-anderer-vp': 10,
+      'beraten': 9,
+      'termin': 8,
+      'wiedervorlage': 7,
+      'kein-eintritt': 6,
+      'kein-interesse': 5,
+      'nicht-vermarktbar': 4,
+      'blacklist': 3,
+      'nicht-angetroffen': 2,
+      'offen': 1,
+      '': 0
+    };
+    return priorities[status] || 0;
+  }
+
+  function getHighestPriorityStatus(resident) {
+    if (!resident?.statusHistory?.length) {
+      return resident?.status || '';
+    }
+
+    return resident.statusHistory.reduce((highestStatus, entry) => {
+      const currentPriority = getStatusPriority(entry.status);
+      const highestPriority = getStatusPriority(highestStatus);
+      return currentPriority > highestPriority ? entry.status : highestStatus;
+    }, '');
+  }
+
+  function toggleCalendar() {
+    const calendarDiv = document.getElementById('calendar');
+    calendarDiv.style.display = calendarDiv.style.display === 'none' ? 'block' : 'none';
+    if (calendarDiv.style.display === 'block') {
+      renderCalendar();
+    }
+  }
+
+  function getDayStats(date) {
+    let startOfDay = new Date(date);
+    startOfDay.setHours(0, 0, 0, 0);
+    let endOfDay = new Date(date);
+    endOfDay.setHours(23, 59, 59, 999);
+    let total = 0;
+    let completions = 0;
+    contacts.forEach(contact => {
+      if (contact.residents) {
+        contact.residents.forEach(resident => {
+          if (resident.statusHistory) {
+            resident.statusHistory.forEach(entry => {
+              const entryDate = new Date(entry.date);
+              if (entryDate >= startOfDay && entryDate <= endOfDay) {
+                total++;
+                // Only count 'abschluss' status
+                if (entry.status === 'abschluss') {
+                  completions++;
+                }
+              }
+            });
+          }
+        });
+      }
+    });
+    return { total, completions };
+  }
+
+  function getMonthStats(year, month) {
+    let totalCompletions = 0;
+    contacts.forEach(contact => {
+      if (contact.residents) {
+        contact.residents.forEach(resident => {
+          if (resident.statusHistory) {
+            resident.statusHistory.forEach(entry => {
+              const entryDate = new Date(entry.date);
+              if (entryDate.getFullYear() === year && entryDate.getMonth() === month) {
+                // Only count 'abschluss' status
+                if (entry.status === 'abschluss') {
+                  totalCompletions++;
+                }
+              }
+            });
+          }
+        });
+      }
+    });
+    return totalCompletions;
+  }
+
+  function calculateForecast(currentCompletions, currentDay, totalWorkdaysInMonth) {
+    const workdaysElapsed = countWorkdaysSoFar(currentDay);
+    if (workdaysElapsed === 0) return 0;
+    const completionsPerWorkday = currentCompletions / workdaysElapsed;
+    return Math.round(completionsPerWorkday * totalWorkdaysInMonth);
+  }
+
+  function countWorkdaysSoFar(currentDate) {
+    let workdays = 0;
+    const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+    while (startOfMonth <= currentDate) {
+      if (startOfMonth.getDay() !== 0 && startOfMonth.getDay() !== 6) {
+        workdays++;
+      }
+      startOfMonth.setDate(startOfMonth.getDate() + 1);
+    }
+    return workdays;
+  }
+
+  function countWorkdaysInMonth(year, month) {
+    let workdays = 0;
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    for (let day = 1; day <= daysInMonth; day++) {
+      const date = new Date(year, month, day);
+      if (date.getDay() !== 0 && date.getDay() !== 6) {
+        workdays++;
+      }
+    }
+    return workdays;
+  }
+
+  function previousMonth() {
+    currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
+    renderCalendar();
+  }
+
+  function nextMonth() {
+    currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1);
+    renderCalendar();
+  }
+
+  function toggleVisitRecommendation() {
+    const content = document.getElementById('visitRecommendationContent');
+    content.style.display = content.style.display === 'none' ? 'block' : 'none';
+    if (content.style.display === 'block') {
+      document.querySelectorAll('.recommendation-type-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      document.querySelector('.recommendation-type-btn:first-child').classList.add('active');
+    }
+  }
+
+  function showVisitRecommendations() {
+    const startTime = document.getElementById('startTime').value;
+    const endTime = document.getElementById('endTime').value;
+    const startMinutes = timeToMinutes(startTime);
+    const endMinutes = timeToMinutes(endTime);
+    const recommendations = [];
+    contacts.forEach(contact => {
+      if (contact.residents) {
+        contact.residents.forEach(resident => {
+          if (resident.statusHistory) {
+            const lastStatus = resident.status;
+            if (lastStatus === 'nicht-angetroffen') {
+              const lastEntry = resident.statusHistory.filter(entry => entry.status === 'nicht-angetroffen').sort((a, b) => b.timestamp - a.timestamp)[0];
+              if (lastEntry) {
+                const visitTime = new Date(lastEntry.date);
+                const visitMinutes = visitTime.getHours() * 60 + visitTime.getMinutes();
+                if (visitMinutes < startMinutes || visitMinutes > endMinutes) {
+                  recommendations.push({
+                    contact: contact,
+                    resident: resident,
+                    unit: resident.unit,
+                    lastVisit: visitTime
+                  });
+                }
+              }
+            }
+          }
+        });
+      }
+    });
+    displayRecommendations(recommendations);
+  }
+
+  function timeToMinutes(timeString) {
+    const [hours, minutes] = timeString.split(':').map(Number);
+    return hours * 60 + minutes;
+  }
+
+  function displayRecommendations(recommendations) {
+    const resultsDiv = document.getElementById('recommendationResults');
+    if (recommendations.length === 0) {
+      resultsDiv.innerHTML = `
+        <p style="text-align: center; padding: 15px;">Keine Empfehlungen für diesen Zeitraum gefunden.</p>
+        <button onclick="clearRecommendations()" class="delete-btn" style="position: static; margin: 10px auto; display: block;">Liste leeren</button>
+      `;
+      return;
+    }
+    recommendations.sort((a, b) => {
+      const streetCompare = (a.contact.strasse || '').localeCompare(b.contact.strasse || '');
+      if (streetCompare !== 0) return streetCompare;
+      const numA = parseInt(a.contact.nummer) || 0;
+      const numB = parseInt(b.contact.nummer) || 0;
+      return numA - numB;
+    });
+    resultsDiv.innerHTML = `
+      <button onclick="clearRecommendations()" class="delete-btn" style="position: static; margin: 10px auto; display: block;">Liste leeren</button>
+      ${recommendations.map(rec => `
+        <div class="recommended-contact">
+          <div><strong>${rec.contact.strasse} ${rec.contact.nummer}${rec.contact.zusatz ? ` ${rec.contact.zusatz}` : ''}</strong></div>
+          <div>WE ${rec.unit}: ${rec.resident.name || 'Unbekannt'}</div>
+          <div class="last-visit-time">
+            Letzter Besuch: ${rec.lastVisit.toLocaleString('de-DE', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  })} Uhr
+          </div>
+        </div>
+      `).join('')}
+    `;
+  }
+
+  function clearRecommendations() {
+    const resultsDiv = document.getElementById('recommendationResults');
+    resultsDiv.innerHTML = '';
+  }
+
+  function showSection(sectionId) {
+    document.querySelectorAll('.sidebar-nav a').forEach(item => {
+      item.classList.remove('active');
+    });
+    const navLink = document.querySelector(`.sidebar-nav a[href="#${sectionId}"]`);
+    if (navLink) {
+      navLink.classList.add('active');
+    }
+    document.querySelectorAll('.expanded').forEach(section => {
+      section.classList.remove('expanded');
+    });
+    document.querySelector('.import-section').style.display = 'none';
+    document.querySelector('.entry-section').style.display = 'none';
+    document.querySelector('.calendar-section').style.display = 'none';
+    document.querySelector('.statistics-section').style.display = 'none';
+    document.querySelector('.visit-recommendation-box').style.display = 'none';
+    document.querySelector('.search-box').style.display = 'none';
+    document.querySelector('.status-filters').style.display = 'none';
+    document.querySelector('.contact-list').style.display = 'none';
+    document.querySelector('.street-filter-container').style.display = 'none';
+    document.querySelector('.import-export-buttons').style.display = 'flex';
+    switch (sectionId) {
+      case 'contacts':
+        document.querySelector('.search-box').style.display = 'flex';
+        document.querySelector('.status-filters').style.display = 'flex';
+        document.querySelector('.contact-list').style.display = 'block';
+        document.querySelector('.street-filter-container').style.display = 'block';
+        filterByStatus('all'); // Reset filter to 'all' when showing contacts
+        break;
+      case 'import':
+        document.querySelector('.import-section').style.display = 'block';
+        document.querySelector('.import-section').classList.remove('collapsed');
+        document.querySelector('.import-section').classList.add('expanded');
+        break;
+      case 'add':
+        document.querySelector('.entry-section').style.display = 'block';
+        document.querySelector('.entry-section').classList.remove('collapsed');
+        document.querySelector('.entry-section').classList.add('expanded');
+        break;
+      case 'stats':
+        document.querySelector('.statistics-section').style.display = 'block';
+        document.getElementById('statusStats').style.display = 'block';
+        updateStatistics();
+        break;
+      case 'calendar':
+        document.querySelector('.calendar-section').style.display = 'block';
+        document.getElementById('calendar').style.display = 'block';
+        renderCalendar();
+        break;
+      case 'recommendations':
+        document.querySelector('.visit-recommendation-box').style.display = 'block';
+        document.getElementById('visitRecommendationContent').style.display = 'block';
+        break;
+      case 'pdf-corrections':
+        exportWECorrectionsToExcel();
+        break;
+    }
+  }
+
+  function showDeleteByPLZDialog() {
+    document.getElementById('deletePLZDialog').style.display = 'block';
+  }
+
+  function closeDeletePLZDialog() {
+    document.getElementById('deletePLZDialog').style.display = 'none';
+    document.getElementById('plzToDelete').value = '';
+  }
+
+  function deleteByPLZ() {
+    const plzToDelete = document.getElementById('plzToDelete').value;
+    if (!plzToDelete || plzToDelete.length !== 5) {
+      alert('Bitte geben Sie eine gültige PLZ ein');
+      return;
+    }
+    const countBefore = contacts.length;
+    contacts = contacts.filter(contact => contact.plz !== plzToDelete);
+    const deleted = countBefore - contacts.length;
+    if (deleted > 0) {
+      alert(`${deleted} Adressen wurden gelöscht`);
+      saveContacts();
+      renderContacts();
+      updateStreetFilter();
+    } else {
+      alert('Keine Adressen mit dieser PLZ gefunden');
+    }
+    closeDeletePLZDialog();
+  }
+
+  function showDeleteStreetDialog() {
+    const dialog = document.getElementById('deleteStreetDialog');
+    const select = document.getElementById('streetToDelete');
+    while (select.options.length > 1) {
+      select.remove(1);
+    }
+    const streets = [...new Set(contacts.map(c => c.strasse))].sort();
+    streets.forEach(street => {
+      const option = document.createElement('option');
+      option.value = street;
+      option.textContent = street;
+      select.appendChild(option);
+    });
+    select.multiple = true;
+    dialog.style.display = 'block';
+  }
+
+  function closeDeleteStreetDialog() {
+    document.getElementById('deleteStreetDialog').style.display = 'none';
+    document.getElementById('streetToDelete').value = '';
+  }
+
+  function deleteByStreet() {
+    const streetSelect = document.getElementById('streetToDelete');
+    const selectedStreets = Array.from(streetSelect.selectedOptions).map(option => option.value).filter(street => street);
+    if (selectedStreets.length === 0) {
+      alert('Bitte wählen Sie mindestens eine Straße aus');
+      return;
+    }
+    const countBefore = contacts.length;
+    contacts = contacts.filter(contact => !selectedStreets.includes(contact.strasse));
+    const deleted = countBefore - contacts.length;
+    if (deleted > 0) {
+      alert(`${deleted} Adressen wurden gelöscht`);
+      saveContacts();
+      renderContacts();
+      updateStreetFilter();
+    } else {
+      alert('Keine Adressen in den ausgewählten Straßen gefunden');
+    }
+    closeDeleteStreetDialog();
+  }
+
+  function exportToCSV() {
+    const headers = ['PLZ', 'Ort', 'Strasse', 'Nummer', 'Zusatz', 'WE', 'BewohnerName', 'BewohnerTelefon', 'Status', 'Notizen', 'IstMieter', 'StatusVerlauf'];
+    let csvContent = headers.join(',') + '\n';
+    contacts.forEach(contact => {
+      if (!contact.residents || contact.residents.length === 0) {
+        const row = [contact.plz || '', contact.ort || '', contact.strasse || '', contact.nummer || '', contact.zusatz || '', contact.we || '', '', '', '', '', '', ''].map(field => `"${(field + '').replace(/"/g, '""')}"`);
+        csvContent += row.join(',') + '\n';
+      } else {
+        contact.residents.forEach(resident => {
+          const row = [contact.plz || '', contact.ort || '', contact.strasse || '', contact.nummer || '', contact.zusatz || '', contact.we || '', resident.name || '', resident.phone || '', resident.status || '', resident.notes || '', resident.mieter ? 'true' : 'false', JSON.stringify(resident.statusHistory || [])].map(field => `"${(field + '').replace(/"/g, '""')}"`);
+          csvContent += row.join(',') + '\n';
+        });
+      }
+    });
+    const blob = new Blob(['\ufeff' + csvContent], {
+      type: 'text/csv;charset=utf-8;'
+    });
+    const filename = `qualifizierungen_${new Date().toISOString().split('T')[0]}.csv`;
+    if ('showSaveFilePicker' in window) {
+      const opts = {
+        suggestedName: filename,
+        types: [{
+          description: 'CSV-Datei',
+          accept: {
+            'text/csv': ['.csv']
+          }
+        }]
+      };
+      window.showSaveFilePicker(opts).then(handle => handle.createWritable()).then(writable => writable.write(blob).then(() => writable.close())).catch(() => {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        link.click();
+        URL.revokeObjectURL(url);
+      });
+    } else {
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      link.click();
+      URL.revokeObjectURL(url);
+    }
+  }
+
+  function getMonthStats(year, month) {
+    let totalCompletions = 0;
+    contacts.forEach(contact => {
+      if (contact.residents) {
+        contact.residents.forEach(resident => {
+          if (resident.statusHistory) {
+            resident.statusHistory.forEach(entry => {
+              const entryDate = new Date(entry.date);
+              if (entryDate.getFullYear() === year && entryDate.getMonth() === month) {
+                // Only count 'abschluss' status
+                if (entry.status === 'abschluss') {
+                  totalCompletions++;
+                }
+              }
+            });
+          }
+        });
+      }
+    });
+    return totalCompletions;
+  }
+
+  function calculateForecast(currentCompletions, currentDay, totalWorkdaysInMonth) {
+    const workdaysElapsed = countWorkdaysSoFar(currentDay);
+    if (workdaysElapsed === 0) return 0;
+    const completionsPerWorkday = currentCompletions / workdaysElapsed;
+    return Math.round(completionsPerWorkday * totalWorkdaysInMonth);
+  }
+
+  function countWorkdaysSoFar(currentDate) {
+    let workdays = 0;
+    const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+    while (startOfMonth <= currentDate) {
+      if (startOfMonth.getDay() !== 0 && startOfMonth.getDay() !== 6) {
+        workdays++;
+      }
+      startOfMonth.setDate(startOfMonth.getDate() + 1);
+    }
+    return workdays;
+  }
+
+  function countWorkdaysInMonth(year, month) {
+    let workdays = 0;
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    for (let day = 1; day <= daysInMonth; day++) {
+      const date = new Date(year, month, day);
+      if (date.getDay() !== 0 && date.getDay() !== 6) {
+        workdays++;
+      }
+    }
+    return workdays;
+  }
+
+  function deleteHistoryEntry(contactId, unitNumber, timestamp) {
+    const contact = contacts.find(c => c.id === contactId);
+    if (!contact || !contact.residents) return;
+    const resident = contact.residents.find(r => r.unit === unitNumber);
+    if (!resident || !resident.statusHistory) return;
+    resident.statusHistory = resident.statusHistory.filter(entry => entry.timestamp !== timestamp);
+    if (resident.statusHistory.length > 0) {
+      const lastEntry = resident.statusHistory.sort((a, b) => b.timestamp - a.timestamp)[0];
+      resident.status = lastEntry.status;
+    } else {
+      resident.status = '';
+    }
+    saveContacts();
+    renderContacts();
+  }
+
+  function openWeCorrectModal(contactId) {
+    const contact = contacts.find(c => c.id === contactId);
+    if (!contact) return;
+    const modal = document.getElementById('weCorrectModal');
+    const currentWeCountInput = document.getElementById('currentWeCount');
+    const correctedWeCountInput = document.getElementById('correctedWeCount');
+    const weCorrectReasonInput = document.getElementById('weCorrectReason');
+    const manualCurrentWeInput = document.getElementById('manualCurrentWe');
+    const hasGEEInput = document.getElementById('hasGEE');
+    currentWeCountInput.value = contact.manualCurrentWe !== undefined ? contact.manualCurrentWe : contact.we || '0';
+    correctedWeCountInput.value = contact.we || '0';
+    weCorrectReasonInput.value = '';
+    manualCurrentWeInput.checked = contact.manualCurrentWe !== undefined;
+    hasGEEInput.checked = false;
+    modal.dataset.contactId = contactId;
+    modal.style.display = 'block';
+  }
+
+  function saveWeCorrection() {
+    const modal = document.getElementById('weCorrectModal');
+    const contactId = parseInt(modal.dataset.contactId);
+    const contact = contacts.find(c => c.id === contactId);
+    if (!contact) return;
+    const manualCurrentWeInput = document.getElementById('manualCurrentWe');
+    const hasGEEInput = document.getElementById('hasGEE');
+    const currentWeCountInput = document.getElementById('currentWeCount');
+    const correctedWeCountInput = document.getElementById('correctedWeCount');
+    const weCorrectReasonInput = document.getElementById('weCorrectReason');
+    const currentWeCount = manualCurrentWeInput.checked ? parseInt(currentWeCountInput.value) : parseInt(contact.we) || 0;
+    const correctedWeCount = parseInt(correctedWeCountInput.value);
+    const weCorrectReason = weCorrectReasonInput.value.trim();
+    const hasGEE = hasGEEInput.checked;
+    if (manualCurrentWeInput.checked) {
+      contact.manualCurrentWe = currentWeCount;
+    } else {
+      delete contact.manualCurrentWe;
+    }
+    const correction = {
+      originalWe: currentWeCount,
+      correctedWe: correctedWeCount,
+      reason: weCorrectReason,
+      hasGEE: hasGEE,
+      date: new Date().toISOString()
+    };
+    if (modal.dataset.isEdit === 'true') {
+      const correctionIndex = parseInt(modal.dataset.correctionIndex);
+      contact.weCorrections[correctionIndex] = correction;
+    } else {
+      if (!contact.weCorrections) {
+        contact.weCorrections = [];
+      }
+      contact.weCorrections.push(correction);
+    }
+    contact.we = correctedWeCount.toString();
+    if (correctedWeCount < contact.residents.length) {
+      contact.residents = contact.residents.slice(0, correctedWeCount);
+    } else if (correctedWeCount > contact.residents.length) {
+      while (contact.residents.length < correctedWeCount) {
+        contact.residents.push({
+          unit: contact.residents.length + 1,
+          name: '',
+          phone: '',
+          status: '',
+          notes: '',
+          mieter: false,
+          statusHistory: []
+        });
+      }
+    }
+    saveContacts();
+    renderContacts();
+    closeWeCorrectModal();
+  }
+
+  function closeWeCorrectModal() {
+    const modal = document.getElementById('weCorrectModal');
+    modal.style.display = 'none';
+    modal.dataset.isEdit = 'false';
+    delete modal.dataset.correctionIndex;
+  }
+
+  function exportWECorrectionsToExcel() {
+    const workbook = XLSX.utils.book_new();
+    const tableData = contacts.flatMap(contact => {
+      if (!contact.weCorrections || contact.weCorrections.length === 0) return [];
+      return contact.weCorrections.map(correction => ({
+        Adresse: `${contact.strasse} ${contact.nummer}${contact.zusatz ? ` ${contact.zusatz}` : ''}`,
+        Ort: `${contact.plz} ${contact.ort}`,
+        'Ursprüngliche WE': correction.originalWe,
+        'Korrigierte WE': correction.correctedWe,
+        'GEE/VGM vorhanden': correction.hasGEE ? 'Ja' : 'Nein',
+        Begründung: correction.reason,
+        Datum: new Date(correction.date).toLocaleString('de-DE')
+      }));
+    });
+    const worksheet = XLSX.utils.json_to_sheet(tableData);
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'WE-Korrekturen');
+    const filename = `WE-Korrekturen_${new Date().toISOString().split('T')[0]}.xlsx`;
+    XLSX.writeFile(workbook, filename);
+  }
+
+  function editWeCorrection(contactId, correctionIndex) {
+    const contact = contacts.find(c => c.id === contactId);
+    if (!contact || !contact.weCorrections) return;
+    const correction = contact.weCorrections[correctionIndex];
+    const modal = document.getElementById('weCorrectModal');
+    const currentWeCountInput = document.getElementById('currentWeCount');
+    const correctedWeCountInput = document.getElementById('correctedWeCount');
+    const weCorrectReasonInput = document.getElementById('weCorrectReason');
+    const manualCurrentWeInput = document.getElementById('manualCurrentWe');
+    const hasGEEInput = document.getElementById('hasGEE');
+    currentWeCountInput.value = correction.originalWe;
+    correctedWeCountInput.value = correction.correctedWe;
+    weCorrectReasonInput.value = correction.reason;
+    manualCurrentWeInput.checked = true;
+    hasGEEInput.checked = correction.hasGEE;
+    modal.dataset.contactId = contactId;
+    modal.dataset.correctionIndex = correctionIndex;
+    modal.dataset.isEdit = 'true';
+    modal.style.display = 'block';
+  }
+
+  function importFromExcel(file) {
+    const reader = new FileReader();
+  
+    reader.onload = function(e) {
+      try {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, {type: 'array'});
+        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(firstSheet);
+      
+        // Create a temporary map to group rows by address
+        const addressMap = new Map();
+      
+        rows.forEach(row => {
+          const addressKey = `${row['PLZ']}_${row['Straße']}_${row['Nummer']}_${row['Zusatz'] || ''}`;
+        
+          if (!addressMap.has(addressKey)) {
+            addressMap.set(addressKey, {
+              id: Date.now() + Math.random(),
+              plz: row['PLZ'],
+              ort: row['Ort'],
+              strasse: row['Straße'],
+              nummer: row['Nummer'],
+              zusatz: row['Zusatz'] || '',
+              we: row['WE'],
+              manualCurrentWe: row['Aktuelle WE'] || undefined,
+              weCorrections: row['WE Korrekturen'] ? JSON.parse(row['WE Korrekturen']) : [],
+              residents: []
+            });
+          }
+        
+          // Only add resident if there's at least a name or status
+          if (row['Bewohner'] || row['Status']) {
+            const contact = addressMap.get(addressKey);
+            contact.residents.push({
+              unit: contact.residents.length + 1,
+              name: row['Bewohner'] || '',
+              phone: row['Telefon'] || '',
+              status: row['Status'] || '',
+              notes: row['Notizen'] || '',
+              mieter: row['Mieter'] === 'true',
+              statusHistory: row['Statusverlauf'] ? JSON.parse(row['Statusverlauf']) : []
+            });
+          }
+        });
+      
+        // Convert map back to array
+        contacts = Array.from(addressMap.values());
+        contacts = sortContacts(contacts);
+        saveContacts();
+        updateStreetFilter();
+        renderContacts();
+      
+        alert(`Import erfolgreich: ${contacts.length} Adressen importiert`);
+      
+      } catch (err) {
+        console.error('Import failed:', err);
+        alert('Fehler beim Import: ' + err.message);
+      }
+    };
+  
+    reader.onerror = err => {
+      console.error('FileReader error:', err);
+      alert('Fehler beim Lesen der Datei');
+    };
+  
+    reader.readAsArrayBuffer(file);
+  }
+
+  function exportToExcel() {
+    // Create array of objects in the format needed for XLSX
+    const exportData = contacts.map(contact => {
+      // For contacts without residents, create one row with basic info
+      if (!contact.residents || contact.residents.length === 0) {
+        return {
+          'PLZ': contact.plz,
+          'Ort': contact.ort,
+          'Straße': contact.strasse,
+          'Nummer': contact.nummer,
+          'Zusatz': contact.zusatz,
+          'WE': contact.we,
+          'Bewohner': '',
+          'Telefon': '',
+          'Status': '',
+          'Notizen': '',
+          'Mieter': '',
+          'Statusverlauf': '',
+          'Aktuelle WE': contact.manualCurrentWe || '',
+          'WE Korrekturen': JSON.stringify(contact.weCorrections || [])
+        };
+      }
+    
+      // For contacts with residents, create one row per resident
+      return contact.residents.map(resident => ({
+        'PLZ': contact.plz,
+        'Ort': contact.ort,
+        'Straße': contact.strasse,
+        'Nummer': contact.nummer,
+        'Zusatz': contact.zusatz,
+        'WE': contact.we,
+        'Bewohner': resident.name,
+        'Telefon': resident.phone,
+        'Status': resident.status,
+        'Notizen': resident.notes,
+        'Mieter': resident.mieter ? 'true' : 'false',
+        'Statusverlauf': JSON.stringify(resident.statusHistory || []),
+        'Aktuelle WE': contact.manualCurrentWe || '',
+        'WE Korrekturen': JSON.stringify(contact.weCorrections || [])
+      }));
+    }).flat();
+
+    // Create a new workbook and add the data
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    XLSX.utils.book_append_sheet(wb, ws, "Qualifizierungen");
+  
+    // Save the file
+    const filename = `qualifizierungen_${new Date().toISOString().split('T')[0]}.xlsx`;
+    XLSX.writeFile(wb, filename);
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.sidebar-nav a').forEach(link => {
+      link.addEventListener('click', e => {
+        e.preventDefault();
+        const sectionId = link.getAttribute('href').replace('#', '');
+        showSection(sectionId);
+      });
+    });
+  
+    // Move the import-export-buttons setup here
+    document.querySelector('.import-export-buttons').innerHTML = `
+      <button onclick="document.getElementById('excelImport').click()" class="import-btn">Qualis importieren</button>
+      <button onclick="exportToExcel()" class="import-btn">Qualis exportieren</button>
+      <input type="file" id="excelImport" style="display: none" accept=".xlsx,.xls" onchange="importFromExcel(this.files[0])">
+    `;
+  
+    showSection('contacts');
+    function loadScript(src) {
+      return new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = src;
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.appendChild(script);
+      });
+    }
+    updateStreetFilter();
+    filterByStatus('all'); // Set initial filter to 'all' when page loads
+    Promise.all([loadScript("https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js")]).then(() => {}).catch(error => {
+      console.error('Failed to load libraries', error);
+    });
+  });
+
+  function toggleFullscreen(e) {
+    e.preventDefault();
+    const expandPaths = document.querySelectorAll('.fullscreen-expand');
+    const collapsePaths = document.querySelectorAll('.fullscreen-collapse');
+  
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().then(() => {
+        expandPaths.forEach(path => path.style.display = 'none');
+        collapsePaths.forEach(path => path.style.display = 'block');
+      }).catch(err => {
+        console.log('Fehler beim Aktivieren des Vollbildmodus:', err);
+      });
+    } else {
+      document.exitFullscreen().then(() => {
+        expandPaths.forEach(path => path.style.display = 'block');
+        collapsePaths.forEach(path => path.style.display = 'none');
+      }).catch(err => {
+        console.log('Fehler beim Verlassen des Vollbildmodus:', err);
+      });
+    }
+  }
+
+  document.addEventListener('fullscreenchange', () => {
+    const expandPaths = document.querySelectorAll('.fullscreen-expand');
+    const collapsePaths = document.querySelectorAll('.fullscreen-collapse');
+  
+    if (document.fullscreenElement) {
+      expandPaths.forEach(path => path.style.display = 'none');
+      collapsePaths.forEach(path => path.style.display = 'block');
+    } else {
+      expandPaths.forEach(path => path.style.display = 'block');
+      collapsePaths.forEach(path => path.style.display = 'none');
+    }
+  });
+
+  function updateStatistics() {
+    const statsGrid = document.getElementById('statsGrid');
+    if (!statsGrid) return;
+
+    // Reset statistics grid
+    statsGrid.innerHTML = '';
+
+    // Initialize counters for each status
+    const statusCounts = {
+      'offen': 0,
+      'nicht-angetroffen': 0,
+      'kein-eintritt': 0,
+      'wiedervorlage': 0,
+      'termin': 0,
+      'beraten': 0,
+      'kein-interesse': 0,
+      'abschluss': 0,
+      'onlineabschluss': 0,
+      'nicht-vermarktbar': 0,
+      'blacklist': 0,
+      'abschl-anderer-vp': 0
+    };
+
+    let totalUnits = 0;
+    let totalStatusChanges = 0;
+    let totalCompletions = 0;
+
+    // Count statuses and total status changes
+    contacts.forEach(contact => {
+      const weCount = parseInt(contact.we) || 0;
+      totalUnits += weCount;
+    
+      if (contact.residents) {
+        contact.residents.forEach(resident => {
+          const highestStatus = getHighestPriorityStatus(resident);
+          if (highestStatus && statusCounts.hasOwnProperty(highestStatus)) {
+            statusCounts[highestStatus]++;
+            if (highestStatus === 'abschluss' || highestStatus === 'onlineabschluss') {
+              totalCompletions++;
+            }
+          }
+          // Count total status changes from history
+          if (resident.statusHistory) {
+            totalStatusChanges += resident.statusHistory.length;
+          }
+        });
+      }
+    });
+
+    // Calculate total processed units (units with any status)
+    const processedUnits = Object.values(statusCounts).reduce((a, b) => a + b, 0);
+
+    // Create and append stat cards
+    Object.entries(statusCounts).forEach(([status, count]) => {
+      const percentage = totalUnits > 0 ? (count / totalUnits * 100).toFixed(1) : '0.0';
+      const card = document.createElement('div');
+      card.className = `stat-card status-${status}`;
+      card.innerHTML = `
+        <div class="stat-number">${count}</div>
+        <div class="stat-label">${getStatusLabel(status)}</div>
+        <div class="stat-percentage">${percentage}%</div>
+      `;
+      statsGrid.appendChild(card);
+    });
+
+    // Add total stats for units
+    const totalCard = document.createElement('div');
+    totalCard.className = 'stat-card';
+    const totalPercentage = totalUnits > 0 ? (processedUnits / totalUnits * 100).toFixed(1) : '0.0';
+    totalCard.innerHTML = `
+      <div>${processedUnits} / ${totalUnits}</div>
+      <div class="stat-label">Bearbeitete Einheiten</div>
+      <div class="stat-percentage">${totalPercentage}%</div>
+    `;
+    statsGrid.appendChild(totalCard);
+
+    // Add total status changes card
+    const statusChangesCard = document.createElement('div');
+    statusChangesCard.className = 'stat-card';
+    const changesPerCompletion = totalCompletions > 0 ? (totalStatusChanges / totalCompletions).toFixed(1) : '0.0';
+    statusChangesCard.innerHTML = `
+      <div>${totalStatusChanges}</div>
+      <div class="stat-label">Statusänderungen gesamt</div>
+      <div class="stat-percentage">${changesPerCompletion} pro Abschluss</div>
+    `;
+    statsGrid.appendChild(statusChangesCard);
+  }
+
+  function toggleStatistics() {
+    const statsDiv = document.getElementById('statusStats');
+    statsDiv.style.display = statsDiv.style.display === 'none' ? 'block' : 'none';
+    if (statsDiv.style.display === 'block') {
+      updateStatistics();
+    }
+  }
+</script>
