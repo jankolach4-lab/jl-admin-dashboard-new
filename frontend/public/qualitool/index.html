@@ -2343,7 +2343,7 @@
   }
 
   function openWeCorrectModal(contactId) {
-    const contact = contacts.find(c => c.id === contactId);
+    const contact = contacts.find(c => String(c.id) === String(contactId));
     if (!contact) return;
     const modal = document.getElementById('weCorrectModal');
     const currentWeCountInput = document.getElementById('currentWeCount');
@@ -2351,12 +2351,12 @@
     const weCorrectReasonInput = document.getElementById('weCorrectReason');
     const manualCurrentWeInput = document.getElementById('manualCurrentWe');
     const hasGEEInput = document.getElementById('hasGEE');
-    currentWeCountInput.value = contact.manualCurrentWe !== undefined ? contact.manualCurrentWe : contact.we || '0';
-    correctedWeCountInput.value = contact.we || '0';
+    currentWeCountInput.value = (contact.manualCurrentWe !== undefined ? contact.manualCurrentWe : (contact.we || '0')) || '0';
+    correctedWeCountInput.value = (contact.we || '0');
     weCorrectReasonInput.value = '';
-    manualCurrentWeInput.checked = contact.manualCurrentWe !== undefined;
+    manualCurrentWeInput.checked = (contact.manualCurrentWe !== undefined);
     hasGEEInput.checked = false;
-    modal.dataset.contactId = contactId;
+    modal.dataset.contactId = String(contactId);
     modal.style.display = 'block';
   }
 
