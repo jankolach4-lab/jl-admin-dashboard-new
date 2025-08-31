@@ -2143,7 +2143,8 @@
         document.getElementById('visitRecommendationContent').style.display = 'block';
         break;
       case 'pdf-corrections':
-        exportWECorrectionsToExcel();
+        // Wechsel auf Korrekturen-Ansicht: Liste aller WE-Korrekturen anzeigen
+        renderWeCorrectionsList();
         break;
     }
   }
