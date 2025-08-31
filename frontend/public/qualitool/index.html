@@ -2471,70 +2471,106 @@
 
   function importFromExcel(file) {
     const reader = new FileReader();
-  
+
+    // Helper: try multiple possible header names
+    function getField(row, keys) {
+      for (const k of keys) {
+        if (row.hasOwnProperty(k) && row[k] !== undefined && row[k] !== null) return row[k];
+      }
+      return undefined;
+    }
+
+    // Helper: robust boolean parsing without changing UI/flows
+    function parseBoolean(val) {
+      if (typeof val === 'boolean') return val;
+      if (val === undefined || val === null) return false;
+      const s = String(val).trim().toLowerCase();
+      return ['true','1','ja','j','y','yes','wahr','x'].includes(s);
+    }
+
+    // Helper: safe JSON parse
+    function safeParseJSON(val, fallback) {
+      try {
+        if (val === undefined || val === null || val === '') return fallback;
+        if (typeof val !== 'string') return Array.isArray(val) ? val : fallback;
+        return JSON.parse(val);
+      } catch (e) {
+        return fallback;
+      }
+    }
+
     reader.onload = function(e) {
       try {
         const data = new Uint8Array(e.target.result);
         const workbook = XLSX.read(data, {type: 'array'});
         const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
         const rows = XLSX.utils.sheet_to_json(firstSheet);
-      
-        // Create a temporary map to group rows by address
+
+        // Create a temporary map to group rows by address (keine UI-/Funktionsänderung)
         const addressMap = new Map();
-      
+
         rows.forEach(row => {
-          const addressKey = `${row['PLZ']}_${row['Straße']}_${row['Nummer']}_${row['Zusatz'] || ''}`;
-        
+          const plz = getField(row, ['PLZ']);
+          const ort = getField(row, ['Ort']);
+          const strasse = getField(row, ['Straße','Strasse']);
+          const nummer = getField(row, ['Nummer','Nr.']);
+          const zusatz = getField(row, ['Zusatz']) || '';
+          const we = getField(row, ['WE']);
+
+          const addressKey = `${plz}_${strasse}_${nummer}_${zusatz || ''}`;
+
           if (!addressMap.has(addressKey)) {
             addressMap.set(addressKey, {
               id: Date.now() + Math.random(),
-              plz: row['PLZ'],
-              ort: row['Ort'],
-              strasse: row['Straße'],
-              nummer: row['Nummer'],
-              zusatz: row['Zusatz'] || '',
-              we: row['WE'],
-              manualCurrentWe: row['Aktuelle WE'] || undefined,
-              weCorrections: row['WE Korrekturen'] ? JSON.parse(row['WE Korrekturen']) : [],
+              plz: plz,
+              ort: ort,
+              strasse: strasse,
+              nummer: nummer,
+              zusatz: zusatz,
+              we: we,
+              manualCurrentWe: getField(row, ['Aktuelle WE']) || undefined,
+              weCorrections: safeParseJSON(getField(row, ['WE Korrekturen']), []),
               residents: []
             });
           }
-        
-          // Only add resident if there's at least a name or status
-          if (row['Bewohner'] || row['Status']) {
+
+          // Nur Bewohner hinzufügen, wenn Name oder Status vorhanden (keine UI-/Funktionsänderung)
+          const hasBewohner = getField(row, ['Bewohner']);
+          const statusVal = getField(row, ['Status']);
+          if (hasBewohner || statusVal) {
             const contact = addressMap.get(addressKey);
             contact.residents.push({
               unit: contact.residents.length + 1,
-              name: row['Bewohner'] || '',
-              phone: row['Telefon'] || '',
-              status: row['Status'] || '',
-              notes: row['Notizen'] || '',
-              mieter: row['Mieter'] === 'true',
-              statusHistory: row['Statusverlauf'] ? JSON.parse(row['Statusverlauf']) : []
+              name: hasBewohner || '',
+              phone: getField(row, ['Telefon']) || '',
+              status: statusVal || '',
+              notes: getField(row, ['Notizen']) || '',
+              mieter: parseBoolean(getField(row, ['Mieter'])),
+              statusHistory: safeParseJSON(getField(row, ['Statusverlauf','StatusVerlauf']), [])
             });
           }
         });
-      
-        // Convert map back to array
+
+        // Zurück in Array
         contacts = Array.from(addressMap.values());
         contacts = sortContacts(contacts);
         saveContacts();
         updateStreetFilter();
         renderContacts();
-      
+
         alert(`Import erfolgreich: ${contacts.length} Adressen importiert`);
-      
+
       } catch (err) {
         console.error('Import failed:', err);
         alert('Fehler beim Import: ' + err.message);
       }
     };
-  
+
     reader.onerror = err => {
       console.error('FileReader error:', err);
       alert('Fehler beim Lesen der Datei');
     };
-  
+
     reader.readAsArrayBuffer(file);
   }
 
