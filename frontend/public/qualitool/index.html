@@ -2115,6 +2115,8 @@
     if (weSecHide) { weSecHide.style.display = 'none'; weSecHide.innerHTML = ''; }
     switch (sectionId) {
       case 'contacts':
+        const weSecHide2 = document.getElementById('weCorrectionsSection');
+        if (weSecHide2) { weSecHide2.style.display = 'none'; weSecHide2.innerHTML = ''; }
         document.querySelector('.search-box').style.display = 'flex';
         document.querySelector('.status-filters').style.display = 'flex';
         document.querySelector('.contact-list').style.display = 'block';
