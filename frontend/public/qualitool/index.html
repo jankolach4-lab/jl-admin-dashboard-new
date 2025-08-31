@@ -2362,16 +2362,16 @@
 
   function saveWeCorrection() {
     const modal = document.getElementById('weCorrectModal');
-    const contactId = parseInt(modal.dataset.contactId);
-    const contact = contacts.find(c => c.id === contactId);
+    const contactIdStr = modal.dataset.contactId;
+    const contact = contacts.find(c => String(c.id) === String(contactIdStr));
     if (!contact) return;
     const manualCurrentWeInput = document.getElementById('manualCurrentWe');
     const hasGEEInput = document.getElementById('hasGEE');
     const currentWeCountInput = document.getElementById('currentWeCount');
     const correctedWeCountInput = document.getElementById('correctedWeCount');
     const weCorrectReasonInput = document.getElementById('weCorrectReason');
-    const currentWeCount = manualCurrentWeInput.checked ? parseInt(currentWeCountInput.value) : parseInt(contact.we) || 0;
-    const correctedWeCount = parseInt(correctedWeCountInput.value);
+    const currentWeCount = manualCurrentWeInput.checked ? parseInt(currentWeCountInput.value || '0') : parseInt(contact.we || '0') || 0;
+    const correctedWeCount = parseInt(correctedWeCountInput.value || '0') || 0;
     const weCorrectReason = weCorrectReasonInput.value.trim();
     const hasGEE = hasGEEInput.checked;
     if (manualCurrentWeInput.checked) {
@@ -2387,7 +2387,7 @@
       date: new Date().toISOString()
     };
     if (modal.dataset.isEdit === 'true') {
-      const correctionIndex = parseInt(modal.dataset.correctionIndex);
+      const correctionIndex = parseInt(modal.dataset.correctionIndex || '0') || 0;
       contact.weCorrections[correctionIndex] = correction;
     } else {
       if (!contact.weCorrections) {
@@ -2395,10 +2395,11 @@
       }
       contact.weCorrections.push(correction);
     }
-    contact.we = correctedWeCount.toString();
-    if (correctedWeCount < contact.residents.length) {
+    contact.we = String(correctedWeCount);
+    if (correctedWeCount < (contact.residents?.length || 0)) {
       contact.residents = contact.residents.slice(0, correctedWeCount);
-    } else if (correctedWeCount > contact.residents.length) {
+    } else if (correctedWeCount > (contact.residents?.length || 0)) {
+      contact.residents = contact.residents || [];
       while (contact.residents.length < correctedWeCount) {
         contact.residents.push({
           unit: contact.residents.length + 1,
