@@ -2118,6 +2118,94 @@
         document.querySelector('.street-filter-container').style.display = 'block';
         filterByStatus('all'); // Reset filter to 'all' when showing contacts
         break;
+
+  function renderWeCorrectionsList() {
+    const container = document.querySelector('.main-content .container');
+    if (!container) return;
+
+    // Kopf
+    const title = document.createElement('h2');
+    title.textContent = 'WE-Korrekturen';
+    title.style.marginTop = '10px';
+
+    // Zusammenstellen der Liste
+    const listWrap = document.createElement('div');
+    listWrap.style.marginTop = '10px';
+
+    // Daten sammeln
+    const rows = [];
+    contacts.forEach(contact => {
+      (contact.weCorrections || []).forEach((c, idx) => {
+        rows.push({
+          adresse: `${contact.strasse || ''} ${contact.nummer || ''}${contact.zusatz ? ' ' + contact.zusatz : ''}`.trim(),
+          ort: `${contact.plz || ''} ${contact.ort || ''}`.trim(),
+          originalWe: c.originalWe,
+          correctedWe: c.correctedWe,
+          hasGEE: c.hasGEE ? 'Ja' : 'Nein',
+          reason: c.reason || '',
+          date: c.date ? new Date(c.date).toLocaleString('de-DE') : ''
+        });
+      });
+    });
+
+    // Falls leer, Hinweis ausgeben
+    if (rows.length === 0) {
+      listWrap.innerHTML = '<p style="text-align:center; padding: 10px; color:#6b7280;">Keine WE-Korrekturen vorhanden.</p>';
+    } else {
+      // Einfache Tabelle (schlicht, passend zum Design)
+      const table = document.createElement('table');
+      table.style.width = '100%';
+      table.style.borderCollapse = 'collapse';
+      table.style.fontSize = '14px';
+
+      const thead = document.createElement('thead');
+      const headRow = document.createElement('tr');
+      const headers = ['Adresse', 'Ort', 'Ursprüngliche WE', 'Korrigierte WE', 'GEE/VGM', 'Begründung', 'Datum'];
+      headers.forEach(h => {
+        const th = document.createElement('th');
+        th.textContent = h;
+        th.style.textAlign = 'left';
+        th.style.padding = '8px 6px';
+        th.style.borderBottom = '1px solid #e5e7eb';
+        headRow.appendChild(th);
+      });
+      thead.appendChild(headRow);
+
+      const tbody = document.createElement('tbody');
+      rows.forEach(r => {
+        const tr = document.createElement('tr');
+        [r.adresse, r.ort, r.originalWe, r.correctedWe, r.hasGEE, r.reason, r.date].forEach(val => {
+          const td = document.createElement('td');
+          td.textContent = String(val ?? '');
+          td.style.padding = '8px 6px';
+          td.style.borderBottom = '1px solid #f3f4f6';
+          tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+      });
+
+      table.appendChild(thead);
+      table.appendChild(tbody);
+      listWrap.appendChild(table);
+
+      // Export-Button (Excel) oben rechts behalten
+      const exportBar = document.createElement('div');
+      exportBar.style.display = 'flex';
+      exportBar.style.justifyContent = 'flex-end';
+      exportBar.style.margin = '10px 0';
+      const btn = document.createElement('button');
+      btn.textContent = 'WE-Korrekturen exportieren';
+      btn.className = 'import-btn';
+      btn.onclick = () => exportWECorrectionsToExcel();
+      exportBar.appendChild(btn);
+
+      container.innerHTML = '';
+      container.appendChild(title);
+      container.appendChild(exportBar);
+      container.appendChild(listWrap);
+    }
+  }
+
       case 'import':
         document.querySelector('.import-section').style.display = 'block';
         document.querySelector('.import-section').classList.remove('collapsed');
