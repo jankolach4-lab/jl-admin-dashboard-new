@@ -1327,6 +1327,8 @@
     const currentCompletions = getMonthStats(currentDate.getFullYear(), currentDate.getMonth());
     const totalWorkdays = countWorkdaysInMonth(currentDate.getFullYear(), currentDate.getMonth());
     const forecast = calculateForecast(currentCompletions, new Date(), totalWorkdays);
+<script src="./capacitor-bridge.js"></script>
+
   
     const calendarDiv = document.getElementById('calendar');
     let summaryDiv = calendarDiv.querySelector('.calendar-summary');
