@@ -2671,8 +2671,8 @@
       <input type="file" id="excelImport" style="display: none" accept=".xlsx,.xls" onchange="importFromExcel(this.files[0])">
     `;
   
-    // Initialisieren sobald DOM geladen ist
-    document.addEventListener('DOMContentLoaded', async () => {
+    // Initialisieren sobald DOM geladen ist (direkt ausführen)
+    (async () => {
       const user = await requireAuthOrRedirect();
       if (!user) return;
 
@@ -2684,10 +2684,10 @@
         }
       } catch { localStorage.setItem('contacts','[]'); }
 
-      // Originale Initialisierung
+      // Originale Initialisierung: Immer zuerst zur Adressliste (Kontaktliste)
       showSection('contacts');
-      updateStreetFilter();
       filterByStatus('all');
+      updateStreetFilter();
 
       // saveContacts erweitern, ohne UI zu ändern
       const _save = window.saveContacts;
@@ -2707,7 +2707,7 @@
           updateStreetFilter();
         }
       } catch(e){ console.warn('Initiale Cloud-Sync Warnung:', e.message||e); }
-    });
+    })();
 
     Promise.all([loadScript("https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js")]).then(() => {}).catch(error => {
       console.error('Failed to load libraries', error);
