@@ -2635,7 +2635,35 @@
       });
     });
   
-    // Move the import-export-buttons setup here
+    // Supabase Client Init
+    const SUPABASE_URL = 'https://whigasnqcvjkilkmbfld.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndoaWdhc25xY3Zqa2lsa21iZmxkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQyNDE1OTIsImV4cCI6MjA2OTgxNzU5Mn0.tfUnIP_oWy3N9UM6Ws9mPiKqsGtj8_kIOMW42E298rc';
+    const supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false } });
+
+    async function requireAuthOrRedirect(){
+      const { data: { session } } = await supa.auth.getSession();
+      if (!session) { window.location.href = './login.html'; return null; }
+      return session.user;
+    }
+
+    class CloudSync {
+      constructor(){ this.syncing = false; }
+      async getCloudContacts(){
+        const { data, error } = await supa.from('user_contacts').select('contacts').single();
+        if (error && error.code !== 'PGRST116') throw error;
+        return (data && data.contacts) ? data.contacts : [];
+      }
+      async upsertCloud(contacts){
+        const { data: { user } } = await supa.auth.getUser();
+        const { error } = await supa.from('user_contacts').upsert({ user_id: user.id, contacts }, { onConflict: 'user_id' });
+        if (error) throw error;
+      }
+    }
+
+    const cloudSync = new CloudSync();
+
+    // Hook into existing lifecycle after DOMContentLoaded at the bottom, without UI changes
+
     document.querySelector('.import-export-buttons').innerHTML = `
       <button onclick="document.getElementById('excelImport').click()" class="import-btn">Qualis importieren</button>
       <button onclick="exportToExcel()" class="import-btn">Qualis exportieren</button>
