@@ -2119,23 +2119,22 @@
         filterByStatus('all'); // Reset filter to 'all' when showing contacts
         break;
 
-  function renderWeCorrectionsList() {
-    const container = document.querySelector('.main-content .container');
+  function renderWeCorrectionsList(mountEl) {
+    const container = mountEl || document.querySelector('#weCorrectionsSection');
     if (!container) return;
 
     // Kopf
+    container.innerHTML = '';
     const title = document.createElement('h2');
     title.textContent = 'WE-Korrekturen';
     title.style.marginTop = '10px';
 
-    // Zusammenstellen der Liste
     const listWrap = document.createElement('div');
     listWrap.style.marginTop = '10px';
 
-    // Daten sammeln
     const rows = [];
     contacts.forEach(contact => {
-      (contact.weCorrections || []).forEach((c, idx) => {
+      (contact.weCorrections || []).forEach((c) => {
         rows.push({
           adresse: `${contact.strasse || ''} ${contact.nummer || ''}${contact.zusatz ? ' ' + contact.zusatz : ''}`.trim(),
           ort: `${contact.plz || ''} ${contact.ort || ''}`.trim(),
@@ -2148,11 +2147,9 @@
       });
     });
 
-    // Falls leer, Hinweis ausgeben
     if (rows.length === 0) {
       listWrap.innerHTML = '<p style="text-align:center; padding: 10px; color:#6b7280;">Keine WE-Korrekturen vorhanden.</p>';
     } else {
-      // Einfache Tabelle (schlicht, passend zum Design)
       const table = document.createElement('table');
       table.style.width = '100%';
       table.style.borderCollapse = 'collapse';
@@ -2188,7 +2185,7 @@
       table.appendChild(tbody);
       listWrap.appendChild(table);
 
-      // Export-Button (Excel) oben rechts behalten
+      // Export-Button (Excel) oben rechts
       const exportBar = document.createElement('div');
       exportBar.style.display = 'flex';
       exportBar.style.justifyContent = 'flex-end';
@@ -2199,7 +2196,6 @@
       btn.onclick = () => exportWECorrectionsToExcel();
       exportBar.appendChild(btn);
 
-      container.innerHTML = '';
       container.appendChild(title);
       container.appendChild(exportBar);
       container.appendChild(listWrap);
