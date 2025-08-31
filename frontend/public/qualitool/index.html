@@ -2561,31 +2561,27 @@
   function importFromExcel(file) {
     const reader = new FileReader();
 
-    // Helper: try multiple possible header names
+    // Helper: mehrere mögliche Header-Namen erlauben
     function getField(row, keys) {
       for (const k of keys) {
-        if (row.hasOwnProperty(k) && row[k] !== undefined && row[k] !== null) return row[k];
+        if (Object.prototype.hasOwnProperty.call(row, k) && row[k] != null) return row[k];
       }
       return undefined;
     }
 
-    // Helper: robust boolean parsing without changing UI/flows
     function parseBoolean(val) {
       if (typeof val === 'boolean') return val;
-      if (val === undefined || val === null) return false;
+      if (val == null) return false;
       const s = String(val).trim().toLowerCase();
       return ['true','1','ja','j','y','yes','wahr','x'].includes(s);
     }
 
-    // Helper: safe JSON parse
     function safeParseJSON(val, fallback) {
       try {
-        if (val === undefined || val === null || val === '') return fallback;
+        if (val == null || val === '') return fallback;
         if (typeof val !== 'string') return Array.isArray(val) ? val : fallback;
         return JSON.parse(val);
-      } catch (e) {
-        return fallback;
-      }
+      } catch { return fallback; }
     }
 
     reader.onload = function(e) {
@@ -2595,7 +2591,10 @@
         const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
         const rows = XLSX.utils.sheet_to_json(firstSheet);
 
-        // Create a temporary map to group rows by address (keine UI-/Funktionsänderung)
+        // Nutzerentscheidung: Hinzufügen (OK) oder Überschreiben (Abbrechen)?
+        const shouldAppend = confirm("Möchten Sie die Daten aus der Excel-Datei zu den bestehenden Einträgen hinzufügen?\n\n- OK: Hinzufügen\n- Abbrechen: Bestehende Liste ersetzen");
+
+        // Temporäre Gruppierung nach Adresse
         const addressMap = new Map();
 
         rows.forEach(row => {
@@ -2605,25 +2604,19 @@
           const nummer = getField(row, ['Nummer','Nr.']);
           const zusatz = getField(row, ['Zusatz']) || '';
           const we = getField(row, ['WE']);
-
           const addressKey = `${plz}_${strasse}_${nummer}_${zusatz || ''}`;
 
           if (!addressMap.has(addressKey)) {
             addressMap.set(addressKey, {
               id: Date.now() + Math.random(),
-              plz: plz,
-              ort: ort,
-              strasse: strasse,
-              nummer: nummer,
-              zusatz: zusatz,
-              we: we,
+              plz, ort, strasse, nummer, zusatz,
+              we,
               manualCurrentWe: getField(row, ['Aktuelle WE']) || undefined,
               weCorrections: safeParseJSON(getField(row, ['WE Korrekturen']), []),
               residents: []
             });
           }
 
-          // Nur Bewohner hinzufügen, wenn Name oder Status vorhanden (keine UI-/Funktionsänderung)
           const hasBewohner = getField(row, ['Bewohner']);
           const statusVal = getField(row, ['Status']);
           if (hasBewohner || statusVal) {
@@ -2640,14 +2633,19 @@
           }
         });
 
-        // Zurück in Array
-        contacts = Array.from(addressMap.values());
-        contacts = sortContacts(contacts);
+        const importedContacts = Array.from(addressMap.values());
+
+        if (shouldAppend) {
+          contacts = sortContacts([...(contacts || []), ...importedContacts]);
+        } else {
+          contacts = sortContacts(importedContacts);
+        }
+
         saveContacts();
         updateStreetFilter();
         renderContacts();
 
-        alert(`Import erfolgreich: ${contacts.length} Adressen importiert`);
+        alert(`Import erfolgreich: ${importedContacts.length} Adressen ${shouldAppend ? 'hinzugefügt' : 'importiert'}`);
 
       } catch (err) {
         console.error('Import failed:', err);
