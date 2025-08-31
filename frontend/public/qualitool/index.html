@@ -2663,6 +2663,31 @@
 
     const cloudSync = new CloudSync();
 
+    // Logout support (minimal, ohne UI-Layout zu verändern)
+    async function signOut() {
+      try {
+        await supa.auth.signOut();
+      } catch (e) {
+        console.warn('Signout Warnung:', e?.message || e);
+      } finally {
+        try { localStorage.removeItem('contacts'); } catch {}
+        window.location.href = './login.html';
+      }
+    }
+
+    function addLogoutButton() {
+      try {
+        const btn = document.createElement('button');
+        btn.textContent = 'Logout';
+        btn.title = 'Abmelden';
+        btn.style.cssText = 'position:fixed;top:10px;right:10px;z-index:10000;background:#111827;color:#fff;border:none;padding:8px 12px;border-radius:8px;cursor:pointer;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,.15)';
+        btn.addEventListener('click', (e) => { e.stopPropagation(); signOut(); });
+        document.body.appendChild(btn);
+      } catch (e) {
+        console.warn('Logout-Button hinzufügen fehlgeschlagen:', e?.message || e);
+      }
+    }
+
     // Hook into existing lifecycle after DOMContentLoaded at the bottom, without UI changes
 
     document.querySelector('.import-export-buttons').innerHTML = `
