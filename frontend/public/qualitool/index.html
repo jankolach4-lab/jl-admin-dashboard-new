@@ -2231,8 +2231,18 @@
         document.getElementById('visitRecommendationContent').style.display = 'block';
         break;
       case 'pdf-corrections':
-        // Wechsel auf Korrekturen-Ansicht: Liste aller WE-Korrekturen anzeigen
-        renderWeCorrectionsList();
+        document.querySelector('.import-section').style.display = 'none';
+        document.querySelector('.entry-section').style.display = 'none';
+        document.querySelector('.calendar-section').style.display = 'none';
+        document.querySelector('.statistics-section').style.display = 'none';
+        document.querySelector('.visit-recommendation-box').style.display = 'none';
+        document.querySelector('.search-box').style.display = 'none';
+        document.querySelector('.status-filters').style.display = 'none';
+        document.querySelector('.contact-list').style.display = 'none';
+        document.querySelector('.street-filter-container').style.display = 'none';
+        const weSec = document.getElementById('weCorrectionsSection');
+        weSec.style.display = 'block';
+        renderWeCorrectionsList(weSec);
         break;
     }
   }
