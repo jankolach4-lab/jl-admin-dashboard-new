@@ -2110,6 +2110,8 @@
     document.querySelector('.contact-list').style.display = 'none';
     document.querySelector('.street-filter-container').style.display = 'none';
     document.querySelector('.import-export-buttons').style.display = 'flex';
+    const weSecHide = document.getElementById('weCorrectionsSection');
+    if (weSecHide) { weSecHide.style.display = 'none'; weSecHide.innerHTML = ''; }
     switch (sectionId) {
       case 'contacts':
         document.querySelector('.search-box').style.display = 'flex';
