@@ -48,12 +48,10 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Build Debug APK
+      - name: Grant execute permission for Gradle
         run: |
           cd android
-          ./gradlew assembleDebug
-
-      - name: Upload APK artifact
+          chmod +x ./gradlew
         uses: actions/upload-artifact@v4
         with:
           name: qualitool-debug-apk
