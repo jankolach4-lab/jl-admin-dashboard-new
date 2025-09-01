@@ -16,11 +16,13 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '18'
 
       - name: Install dependencies
         run: |
           yarn install --frozen-lockfile || yarn install
+          # Ensure Capacitor core is available for CLI operations
+          yarn add @capacitor/core@^6 -W || yarn add @capacitor/core@^6
 
       - name: Build web assets
         run: |
