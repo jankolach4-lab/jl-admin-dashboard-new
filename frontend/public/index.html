@@ -22,19 +22,23 @@
     </head>
     <body>
         <noscript>You need to enable JavaScript to run this app.</noscript>
-    <script>
-      // Minimaler Auto-Start direkt ins Tool (funktioniert auch in der APK)
-      (function(){
-        try {
-          // Wenn wir nicht bereits im /qualitool/ Pfad sind, weiterleiten
-          var href = window.location.href;
-          if (!/\/qualitool\//.test(href)) {
-            // relative Weiterleitung vom Build-Root in das Tool-Verzeichnis
-            window.location.replace('./qualitool/index.html');
-          }
-        } catch (e) { /* stiller Fallback – zeigt sonst die Standardseite */ }
-      })();
-    </script>
+        <div id="root"></div>
+        <script>
+          // Auto-Weiterleitung ins Tool (funktioniert in Web & Capacitor)
+          (function(){
+            try {
+              var href = String(window.location.href || '');
+              var alreadyInTool = /\/qualitool\//.test(href);
+              if (!alreadyInTool) {
+                window.location.replace('./qualitool/index.html');
+              }
+            } catch (e) {}
+          })();
+        </script>
+        <noscript>
+          <meta http-equiv="refresh" content="0; url=./qualitool/index.html" />
+          <a href="./qualitool/index.html">Zum Tool wechseln</a>
+        </noscript>
         <!--
       This HTML file is a template.
       If you open it directly in the browser, you will see an empty page.
