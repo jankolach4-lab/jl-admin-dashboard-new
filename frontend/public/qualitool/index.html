@@ -2721,11 +2721,12 @@
 
   document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.sidebar-nav a').forEach(link => {
-      link.addEventListener('click', e => {
+      link.addEventListener('click', function(e) {
         e.preventDefault();
-        const sectionId = link.getAttribute('href').replace('#', '');
+        const sectionId = (this.getAttribute('href')||'').replace('#', '');
+        if (!sectionId) return;
         showSection(sectionId);
-      });
+      }, { passive: true });
     });
   
     // Supabase Client Init
