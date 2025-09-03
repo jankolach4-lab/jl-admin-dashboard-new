@@ -2785,6 +2785,11 @@
       }
     }
 
+    // Globale Navigation als Fallback (funktioniert auch ohne Listener)
+    window.navTo = function(sectionId){
+      try { showSection(sectionId); } catch(e) { console.error(e); }
+      return false;
+    };
 
     // Hook into existing lifecycle after DOMContentLoaded at the bottom, without UI changes
 
