@@ -2729,15 +2729,32 @@
       }, { passive: true });
     });
   
-    // Supabase Client Init
-    const SUPABASE_URL = 'https://whigasnqcvjkilkmbfld.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndoaWdhc25xY3Zqa2lsa21iZmxkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQyNDE1OTIsImV4cCI6MjA2OTgxNzU5Mn0.tfUnIP_oWy3N9UM6Ws9mPiKqsGtj8_kIOMW42E298rc';
-    const supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false } });
+    // Supabase Client Init (robust: funktioniert auch ohne Internet)
+    let supa = null;
+    try {
+      const SUPABASE_URL = 'https://whigasnqcvjkilkmbfld.supabase.co';
+      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndoaWdhc25xY3Zqa2lsa21iZmxkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQyNDE1OTIsImV4cCI6MjA2OTgxNzU5Mn0.tfUnIP_oWy3N9UM6Ws9mPiKqsGtj8_kIOMW42E298rc';
+      if (window.supabase && typeof window.supabase.createClient === 'function') {
+        supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false } });
+      }
+    } catch (e) {
+      console.warn('Supabase init skipped (offline):', e?.message || e);
+      supa = null;
+    }
 
     async function requireAuthOrRedirect(){
-      const { data: { session } } = await supa.auth.getSession();
-      if (!session) { window.location.href = './login.html'; return null; }
-      return session.user;
+      try {
+        if (!supa) {
+          // Offline-/No-CDN-Fallback: keine Weiterleitung, App bleibt benutzbar
+          return { id: 'local-offline' };
+        }
+        const { data: { session } } = await supa.auth.getSession();
+        if (!session) { window.location.href = './login.html'; return null; }
+        return session.user;
+      } catch (e) {
+        console.warn('Auth check failed, continuing offline:', e?.message || e);
+        return { id: 'local-offline' };
+      }
     }
 
     class CloudSync {
