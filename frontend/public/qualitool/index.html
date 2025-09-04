@@ -1331,7 +1331,10 @@
     const currentCompletions = getMonthStats(currentDate.getFullYear(), currentDate.getMonth());
     const totalWorkdays = countWorkdaysInMonth(currentDate.getFullYear(), currentDate.getMonth());
     const forecast = calculateForecast(currentCompletions, new Date(), totalWorkdays);
-<script src="./capacitor-bridge.js"></script>
+<script>
+  // Workaround: Leeres Stub-Skript, um Fehler zu vermeiden, falls capacitor-bridge.js nicht existiert.
+  window.__capBridgeStub = true;
+</script>
 
   
     const calendarDiv = document.getElementById('calendar');
