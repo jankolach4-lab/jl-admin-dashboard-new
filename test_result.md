@@ -178,7 +178,7 @@
         comment: "✅ PASSED: Sidebar-Navigation funktioniert größtenteils korrekt! 6/7 Bereiche funktional: contacts (.contact-list, .search-box, .status-filters sichtbar), import (.import-section sichtbar), add (.entry-section sichtbar), stats (.statistics-section sichtbar), calendar (.calendar-section sichtbar), recommendations (.visit-recommendation-box sichtbar). Nur pdf-corrections (#weCorrectionsSection) nicht sichtbar. Minor: navTo-Funktionen nicht definiert (Console-Errors), aber Kernfunktionalität arbeitet."
   - task: "Sichtbarer Code beim Scrollen entfernen"
     implemented: true
-    working: false
+    working: true
     file: "frontend/public/qualitool/index.html"
     stuck_count: 4
     priority: "high"
@@ -199,6 +199,9 @@
       - working: false
         agent: "testing"
         comment: "❌ KRITISCHER FEHLER BESTÄTIGT: JavaScript-Code ist beim Scrollen weiterhin sichtbar! Gefundene sichtbare Code-Patterns: renderCalendar, importExcelFile, filterByStatus, function, addEventListener, localStorage.setItem, document.querySelector. Der JavaScript-Code wird als Text im sichtbaren Bereich der Seite gerendert. SCHWERWIEGENDER UI-FEHLER - SOFORTIGE BEHEBUNG ERFORDERLICH!"
+      - working: true
+        agent: "testing"
+        comment: "✅ PASSED: Sichtbarer JavaScript-Code Problem BEHOBEN! Nach umfassenden Tests beim Scrollen durch die gesamte Seite (Höhe: 1080px) wurden KEINE JavaScript-Code-Patterns mehr gefunden. Getestete Patterns: renderCalendar, importExcelFile, filterByStatus, function(, addEventListener, localStorage.setItem, document.querySelector - alle nicht mehr sichtbar. Das kritische UI-Problem wurde erfolgreich gelöst."
   - task: "App-Icon korrekt"
     implemented: true
     working: false
