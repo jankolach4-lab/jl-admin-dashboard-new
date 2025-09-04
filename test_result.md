@@ -145,7 +145,7 @@
     implemented: true
     working: false
     file: "frontend/public/qualitool/index.html"
-    stuck_count: 1
+    stuck_count: 2
     priority: "high"
     needs_retesting: false
     status_history:
@@ -158,6 +158,9 @@
       - working: false
         agent: "testing"
         comment: "❌ TEILWEISE FUNKTIONAL: Sidebar-Links sind klickbar und visuell reagieren (active-Klasse), aber JavaScript-Funktionen (navTo, showSection) sind nicht definiert. Alle 7 Sidebar-Links gefunden und klickbar, aber Navigation funktioniert nicht vollständig wegen fehlender JS-Funktionen."
+      - working: false
+        agent: "testing"
+        comment: "❌ TEILWEISE FUNKTIONAL: Alle 7 Sidebar-Links klickbar, Bereiche werden sichtbar (contacts, import, add, stats, calendar, recommendations sichtbar, nur pdf-corrections nicht). ABER: navTo-Funktionen nicht definiert (Console-Errors), keine [QT-Click] Logs erscheinen. JavaScript-Funktionen fehlen weiterhin."
   - task: "Sichtbarer Code beim Scrollen entfernen"
     implemented: true
     working: false
