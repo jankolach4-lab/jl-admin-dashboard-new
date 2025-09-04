@@ -147,6 +147,12 @@
       - working: true
         agent: "testing"
         comment: "✅ PASSED: Login-Redirect und Offline-Fallback funktionieren korrekt! A) Ohne localStorage flags erfolgt automatischer Redirect zu login.html. B) Mit gesetzten flags (offline_allowed='true', last_user_id='test-user') bleibt App auf index.html und zeigt Kontaktliste. Beide Funktionen arbeiten wie erwartet."
+      - working: false
+        agent: "testing"
+        comment: "❌ FAILED: Offline-Fallback funktioniert nicht. Trotz gesetzter localStorage flags (offline_allowed='true', last_user_id='test-user-123') erfolgt weiterhin Redirect zu login.html. Problem identifiziert: requireAuthOrRedirect() prüft Supabase-Session BEVOR localStorage-Flags geprüft werden."
+      - working: true
+        agent: "testing"
+        comment: "✅ PASSED: Offline-Fallback BEHOBEN! Problem war in requireAuthOrRedirect() Funktion - Reihenfolge der Prüfungen korrigiert. Jetzt werden localStorage-Flags ZUERST geprüft vor Supabase-Session. A) Ohne Flags: Redirect zu login.html funktioniert. B) Mit Flags: Bleibt auf index.html und zeigt Hauptanwendung. Beide Szenarien funktionieren korrekt."
   - task: "Sidebar Navigation Klicks"
     implemented: true
     working: true
