@@ -123,11 +123,11 @@
 ## frontend:
   - task: "Login erzwingen + Offline-Fallback"
     implemented: true
-    working: false
+    working: true
     file: "frontend/public/qualitool/index.html"
     stuck_count: 1
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: false
         agent: "user"
@@ -135,6 +135,9 @@
       - working: true
         agent: "main"
         comment: "requireAuthOrRedirect verschärft; login.html wird erzwungen wenn kein Offline-Flag vorhanden"
+      - working: true
+        agent: "testing"
+        comment: "✅ PASSED: Login-Enforcement funktioniert korrekt. Ohne offline_allowed/last_user_id erfolgt Redirect zu login.html. Login-Formular vollständig sichtbar und funktional. HTML-Struktur korrigiert (DOCTYPE, html, head, body Tags hinzugefügt)."
   - task: "Sidebar Navigation Klicks"
     implemented: true
     working: false
