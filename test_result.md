@@ -165,7 +165,7 @@
     implemented: true
     working: false
     file: "frontend/public/qualitool/index.html"
-    stuck_count: 2
+    stuck_count: 3
     priority: "high"
     needs_retesting: false
     status_history:
@@ -178,6 +178,9 @@
       - working: false
         agent: "testing"
         comment: "❌ KRITISCHER FEHLER: JavaScript-Code ist beim Scrollen sichtbar! Funktionen wie renderCalendar, importExcelFile, filterByStatus etc. sind als Text am unteren Bildschirmrand sichtbar. Dies ist ein schwerwiegender UI-Fehler der sofort behoben werden muss."
+      - working: false
+        agent: "testing"
+        comment: "❌ KRITISCHER FEHLER WEITERHIN VORHANDEN: JavaScript-Code ist beim Scrollen sichtbar! Gefunden: renderCalendar, importExcelFile, filterByStatus, function, addEventListener, localStorage.setItem, document.querySelector. Screenshots zeigen Code am unteren Bildschirmrand. MUSS SOFORT BEHOBEN WERDEN!"
   - task: "App-Icon korrekt"
     implemented: true
     working: false
