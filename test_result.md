@@ -195,11 +195,11 @@
 
 ## test_plan:
   current_focus:
-    - "Login erzwingen + Offline-Fallback"
-    - "Sidebar Navigation Klicks"
     - "Sichtbarer Code beim Scrollen entfernen"
+    - "Sidebar Navigation Klicks"
   stuck_tasks:
     - "App-Icon korrekt"
+    - "Sichtbarer Code beim Scrollen entfernen"
   test_all: false
   test_priority: "high_first"
 
