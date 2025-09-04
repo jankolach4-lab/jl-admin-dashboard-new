@@ -234,12 +234,8 @@
 ## test_plan:
   current_focus:
     - "Sichtbarer Code beim Scrollen entfernen"
-    - "Login erzwingen + Offline-Fallback"
-    - "Sidebar Navigation Klicks"
   stuck_tasks:
     - "Sichtbarer Code beim Scrollen entfernen"
-    - "Login erzwingen + Offline-Fallback"
-    - "Sidebar Navigation Klicks"
   test_all: false
   test_priority: "high_first"
 
