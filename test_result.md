@@ -206,11 +206,11 @@
         comment: "CI Icon-Generation-Pfad korrigiert; verwendet frontend/resources/icon.png"
   - task: "Import/Export Buttons Sichtbarkeit"
     implemented: true
-    working: false
+    working: true
     file: "frontend/public/qualitool/index.html"
     stuck_count: 1
     priority: "medium"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: false
         agent: "testing"
@@ -218,6 +218,9 @@
       - working: false
         agent: "testing"
         comment: "❌ FAILED: Import/Export-Buttons weiterhin nicht sichtbar. 4 Buttons gefunden, aber Excel Import/Export Buttons (onclick='excelImport'/'exportToExcel') sind nicht sichtbar, auch nach Expansion der Import-Sektion. toggleImportSection-Funktion nicht definiert (Console-Error)."
+      - working: true
+        agent: "testing"
+        comment: "✅ PASSED: Import/Export-Buttons sind sichtbar und funktional! Nach Klick auf Import-Section Header werden 2 Import und 2 Export Buttons sichtbar. Buttons sind klickbar ohne JavaScript-Fehler (Dateiauswahl kann abgebrochen werden). Minor: toggleImportSection-Funktion nicht definiert (Console-Error), aber Grundfunktionalität arbeitet."
 
 ## metadata:
   created_by: "main_agent"
