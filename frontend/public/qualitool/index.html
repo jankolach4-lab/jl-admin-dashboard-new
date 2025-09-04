@@ -2199,13 +2199,53 @@
     if (weSecHide) { weSecHide.style.display = 'none'; weSecHide.innerHTML = ''; }
     switch (sectionId) {
       case 'contacts':
-        const weSecHide2 = document.getElementById('weCorrectionsSection');
-        if (weSecHide2) { weSecHide2.style.display = 'none'; weSecHide2.innerHTML = ''; }
+        {
+          const weSecHide2 = document.getElementById('weCorrectionsSection');
+          if (weSecHide2) { weSecHide2.style.display = 'none'; weSecHide2.innerHTML = ''; }
+          document.querySelector('.search-box').style.display = 'flex';
+          document.querySelector('.status-filters').style.display = 'flex';
+          document.querySelector('.contact-list').style.display = 'block';
+          document.querySelector('.street-filter-container').style.display = 'block';
+          filterByStatus('all');
+        }
+        break;
+      case 'import':
+        document.querySelector('.import-section').style.display = 'block';
+        document.querySelector('.import-section').classList.add('expanded');
+        break;
+      case 'add':
+        document.querySelector('.entry-section').style.display = 'block';
+        document.querySelector('.entry-section').classList.add('expanded');
+        break;
+      case 'stats':
+        document.querySelector('.statistics-section').style.display = 'block';
+        document.getElementById('statusStats').style.display = 'block';
+        updateStatistics();
+        break;
+      case 'calendar':
+        document.querySelector('.calendar-section').style.display = 'block';
+        document.getElementById('calendar').style.display = 'block';
+        renderCalendar();
+        break;
+      case 'recommendations':
+        document.querySelector('.visit-recommendation-box').style.display = 'block';
+        document.getElementById('visitRecommendationContent').style.display = 'block';
+        break;
+      case 'pdf-corrections':
+        {
+          const mount = document.getElementById('weCorrectionsSection');
+          if (mount) {
+            renderWeCorrectionsList(mount);
+            mount.style.display = 'block';
+          }
+        }
+        break;
+      default:
+        // Fallback: Kontakte anzeigen
         document.querySelector('.search-box').style.display = 'flex';
         document.querySelector('.status-filters').style.display = 'flex';
         document.querySelector('.contact-list').style.display = 'block';
         document.querySelector('.street-filter-container').style.display = 'block';
-        filterByStatus('all'); // Reset filter to 'all' when showing contacts
         break;
 
   function renderWeCorrectionsList(mountEl) {
