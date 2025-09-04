@@ -2329,46 +2329,6 @@
     }
   }
 
-      case 'import':
-        document.querySelector('.import-section').style.display = 'block';
-        document.querySelector('.import-section').classList.remove('collapsed');
-        document.querySelector('.import-section').classList.add('expanded');
-        break;
-      case 'add':
-        document.querySelector('.entry-section').style.display = 'block';
-        document.querySelector('.entry-section').classList.remove('collapsed');
-        document.querySelector('.entry-section').classList.add('expanded');
-        break;
-      case 'stats':
-        document.querySelector('.statistics-section').style.display = 'block';
-        document.getElementById('statusStats').style.display = 'block';
-        updateStatistics();
-        break;
-      case 'calendar':
-        document.querySelector('.calendar-section').style.display = 'block';
-        document.getElementById('calendar').style.display = 'block';
-        renderCalendar();
-        break;
-      case 'recommendations':
-        document.querySelector('.visit-recommendation-box').style.display = 'block';
-        document.getElementById('visitRecommendationContent').style.display = 'block';
-        break;
-      case 'pdf-corrections':
-        document.querySelector('.import-section').style.display = 'none';
-        document.querySelector('.entry-section').style.display = 'none';
-        document.querySelector('.calendar-section').style.display = 'none';
-        document.querySelector('.statistics-section').style.display = 'none';
-        document.querySelector('.visit-recommendation-box').style.display = 'none';
-        document.querySelector('.search-box').style.display = 'none';
-        document.querySelector('.status-filters').style.display = 'none';
-        document.querySelector('.contact-list').style.display = 'none';
-        document.querySelector('.street-filter-container').style.display = 'none';
-        const weSec = document.getElementById('weCorrectionsSection');
-        weSec.style.display = 'block';
-        renderWeCorrectionsList(weSec);
-        break;
-    }
-  }
 
   function showDeleteByPLZDialog() {
     document.getElementById('deletePLZDialog').style.display = 'block';
