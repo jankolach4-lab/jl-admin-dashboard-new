@@ -123,9 +123,9 @@
 ## frontend:
   - task: "Login erzwingen + Offline-Fallback"
     implemented: true
-    working: true
+    working: false
     file: "frontend/public/qualitool/index.html"
-    stuck_count: 1
+    stuck_count: 2
     priority: "high"
     needs_retesting: false
     status_history:
@@ -138,6 +138,9 @@
       - working: true
         agent: "testing"
         comment: "✅ PASSED: Login-Enforcement funktioniert korrekt. Ohne offline_allowed/last_user_id erfolgt Redirect zu login.html. Login-Formular vollständig sichtbar und funktional. HTML-Struktur korrigiert (DOCTYPE, html, head, body Tags hinzugefügt)."
+      - working: false
+        agent: "testing"
+        comment: "❌ FAILED: Login-Enforcement funktioniert NICHT. Direkter Zugriff auf index.html ohne localStorage-Flags führt NICHT zu Redirect auf login.html. Offline-Fallback funktioniert ebenfalls nicht - nach Setzen der Flags (offline_allowed='true', last_user_id='test-user-1') erfolgt kein Redirect zu index.html."
   - task: "Sidebar Navigation Klicks"
     implemented: true
     working: false
