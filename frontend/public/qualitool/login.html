@@ -19,11 +19,13 @@
     .muted { color:#6b7280; font-size:12px; text-align:center; margin-top:8px; }
     .error { color:#b91c1c; background:#fee2e2; border:1px solid #fecaca; padding:8px 10px; border-radius:8px; display:none; font-size:13px; }
     .loading { display:none; color:#2563eb; text-align:center; font-size:13px; }
+    .offline { display:none; color:#92400e; background:#fef3c7; border:1px solid #fcd34d; padding:8px 10px; border-radius:8px; font-size:13px; margin-bottom:10px; }
   </style>
 </head>
 <body>
   <div class="wrap">
     <h1>Login zum Qualifizierungs‑Tool</h1>
+    <div class="offline" id="offlineMsg">Sie sind offline. Ein Login ist erst nach Internetverbindung möglich. Falls Sie bereits eingeloggt waren, starten Sie die App neu.</div>
     <div class="error" id="errorBox"></div>
     <div class="loading" id="loadingBox">Bitte warten…</div>
     <div class="form">
@@ -33,7 +35,7 @@
         <button id="loginBtn">Einloggen</button>
         <button id="signupBtn" class="secondary">Registrieren</button>
       </div>
-      <p class="muted">Nach erfolgreichem Login werden Ihre Adressen mit der Cloud synchronisiert.</p>
+      <p class="muted">Nach erfolgreichem Login werden Ihre Adressen nutzerspezifisch gespeichert und synchronisiert.</p>
     </div>
   </div>
 
@@ -43,30 +45,33 @@
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false } });
 
     const $ = (id) => document.getElementById(id);
+    const isOnline = () => navigator.onLine;
+
+    function storageKey(userId){ return userId ? `contacts:${userId}` : 'contacts'; }
+    function getLocalContacts(userId){ try { return JSON.parse(localStorage.getItem(storageKey(userId))||'[]'); } catch { return []; } }
+    function setLocalContacts(userId, c){ localStorage.setItem(storageKey(userId), JSON.stringify(c||[])); }
+
     function showError(msg){ const box = $('errorBox'); box.textContent = msg; box.style.display = 'block'; }
     function clearError(){ const box = $('errorBox'); box.textContent = ''; box.style.display = 'none'; }
     function setLoading(on){ $('loadingBox').style.display = on ? 'block' : 'none'; $('loginBtn').disabled = on; $('signupBtn').disabled = on; }
 
     async function getCloudContacts(){
       const { data, error } = await supabase.from('user_contacts').select('contacts').single();
-      if (error && error.code !== 'PGRST116') throw error; // 116 = row not found
+      if (error && error.code !== 'PGRST116') throw error;
       return (data && data.contacts) ? data.contacts : [];
     }
-    function getLocalContacts(){ try { return JSON.parse(localStorage.getItem('contacts')||'[]'); } catch { return []; } }
-    function setLocalContacts(c){ localStorage.setItem('contacts', JSON.stringify(c||[])); }
 
-    async function uploadLocalToCloud(){
-      const { data: { user } } = await supabase.auth.getUser();
-      const contacts = getLocalContacts();
-      const { error } = await supabase.from('user_contacts').upsert({ user_id: user.id, contacts }, { onConflict: 'user_id' });
+    async function uploadLocalToCloud(userId){
+      const contacts = getLocalContacts(userId);
+      const { error } = await supabase.from('user_contacts').upsert({ user_id: userId, contacts }, { onConflict: 'user_id' });
       if (error) throw error;
     }
 
     async function signIn(){
       clearError(); setLoading(true);
       try {
-        const email = $('email').value.trim();
-        const password = $('password').value;
+        if (!isOnline()) { $('offlineMsg').style.display='block'; setLoading(false); return; }
+        const email = $('email').value.trim(); const password = $('password').value;
         if (!email || !password) { showError('Bitte E‑Mail und Passwort eingeben.'); return; }
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
@@ -78,8 +83,8 @@
     async function signUp(){
       clearError(); setLoading(true);
       try {
-        const email = $('email').value.trim();
-        const password = $('password').value;
+        if (!isOnline()) { $('offlineMsg').style.display='block'; setLoading(false); return; }
+        const email = $('email').value.trim(); const password = $('password').value;
         if (!email || !password) { showError('Bitte E‑Mail und Passwort eingeben.'); return; }
         const { data, error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
@@ -93,17 +98,24 @@
     }
 
     async function afterAuth(){
-      try {
-        const cloud = await getCloudContacts();
-        const local = getLocalContacts();
-        if (local.length > 0 && cloud.length === 0) {
-          const doUpload = confirm('Lokale Adressen gefunden. Jetzt in die Cloud hochladen, um sie zu sichern und zu synchronisieren?');
-          if (doUpload) { await uploadLocalToCloud(); }
-        } else if (cloud.length > 0) {
-          setLocalContacts(cloud);
-        }
-        window.location.href = './index.html';
-      } catch(e){ showError('Synchronisierung fehlgeschlagen: ' + (e.message||e)); }
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { showError('Kein Nutzer gefunden.'); return; }
+
+      // Offline-Nutzung ab jetzt erlaubt (nach erstem Login)
+      localStorage.setItem('last_user_id', user.id);
+      localStorage.setItem('offline_allowed', 'true');
+
+      // Cloud <-> Lokal Sync beim ersten Login
+      const cloud = await getCloudContacts();
+      const local = getLocalContacts(user.id);
+      if (local.length > 0 && cloud.length === 0) {
+        const doUpload = confirm('Lokale Adressen gefunden. Jetzt in die Cloud hochladen?');
+        if (doUpload) { await uploadLocalToCloud(user.id); }
+      } else if (cloud.length > 0) {
+        setLocalContacts(user.id, cloud);
+      }
+
+      window.location.href = './index.html';
     }
 
     $('loginBtn').addEventListener('click', signIn);
@@ -111,8 +123,12 @@
     $('email').addEventListener('keydown', e => { if (e.key === 'Enter') signIn(); });
     $('password').addEventListener('keydown', e => { if (e.key === 'Enter') signIn(); });
 
-    // Bereits eingeloggt? Weiterleiten
-    (async () => { const { data: { session } } = await supabase.auth.getSession(); if (session) { window.location.href = './index.html'; } })();
+    // Bereits eingeloggt? Weiterleiten (nur online möglich)
+    (async () => { 
+      if (!isOnline()) { $('offlineMsg').style.display='block'; return; }
+      const { data: { session } } = await supabase.auth.getSession(); 
+      if (session) { window.location.href = './index.html'; } 
+    })();
   </script>
 </body>
 </html>
