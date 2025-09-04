@@ -2860,18 +2860,20 @@
 
     async function requireAuthOrRedirect(){
       try {
+        // Offline-/No-CDN-Fallback ZUERST prüfen, wenn bereits einmal eingeloggt wurde
+        const offlineAllowed = localStorage.getItem('offline_allowed') === 'true';
+        const lastUser = localStorage.getItem('last_user_id');
+        if (offlineAllowed && lastUser) {
+          return { id: lastUser };
+        }
+        
         // Online-Fall: Supabase verfügbar -> Sitzung prüfen
         if (supa) {
           const { data: { session } } = await supa.auth.getSession();
           if (!session) { window.location.href = './login.html'; return null; }
           return session.user;
         }
-        // Offline-/No-CDN-Fallback nur erlauben, wenn bereits einmal eingeloggt wurde
-        const offlineAllowed = localStorage.getItem('offline_allowed') === 'true';
-        const lastUser = localStorage.getItem('last_user_id');
-        if (offlineAllowed && lastUser) {
-          return { id: lastUser };
-        }
+        
         // Sonst zur Login-Seite leiten
         window.location.href = './login.html';
         return null;
