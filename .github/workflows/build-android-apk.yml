@@ -2,6 +2,11 @@ name: Android APK (Capacitor)
 
 on:
   workflow_dispatch:
+  push:
+    branches: [ main ]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/build-android-apk.yml'
 
 jobs:
   build-apk:
