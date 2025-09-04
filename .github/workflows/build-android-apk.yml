@@ -43,6 +43,22 @@ jobs:
       - name: Generate Android icons
         run: npx @capacitor/assets generate --android || true
 
+      - name: Verify built web assets
+        run: |
+          test -f build/qualitool/index.html
+          test -f build/qualitool/login.html
+          grep -q "Qualifizierungs-Tool" build/qualitool/index.html || (echo "index.html marker not found" && exit 1)
+          grep -q "Login zum Qualifizierungs" build/qualitool/login.html || (echo "login.html marker not found" && exit 1)
+          head -n 5 build/index.html || true
+
+      - name: Copy/sync web assets to Android
+        run: |
+          npx cap sync android
+          test -f android/app/src/main/assets/public/qualitool/login.html
+          grep -q "Login zum Qualifizierungs" android/app/src/main/assets/public/qualitool/login.html || (echo "android assets missing login" && exit 1)
+          grep -q "qualitool/index.html" android/app/src/main/assets/public/index.html || (echo "redirect to qualitool not present" && exit 1)
+          head -n 5 android/app/src/main/assets/public/index.html || true
+
       - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
@@ -68,3 +84,4 @@ jobs:
           name: qualitool-debug-apk
           path: frontend/android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
+          retention-days: 7
