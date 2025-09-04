@@ -186,6 +186,17 @@
       - working: "NA"
         agent: "main"
         comment: "CI Icon-Generation-Pfad korrigiert; verwendet frontend/resources/icon.png"
+  - task: "Import/Export Buttons Sichtbarkeit"
+    implemented: true
+    working: false
+    file: "frontend/public/qualitool/index.html"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: false
+        agent: "testing"
+        comment: "❌ FAILED: Import/Export-Buttons existieren (2 Import, 2 Export gefunden), sind aber nicht sichtbar. Buttons können nicht geklickt werden da sie nicht im sichtbaren Bereich sind. Vermutlich CSS-Display-Problem oder in kollabiertem Bereich."
 
 ## metadata:
   created_by: "main_agent"
