@@ -242,9 +242,9 @@
 
 ## test_plan:
   current_focus:
+    - "Login erzwingen + Offline-Fallback"
     - "Sichtbarer Code beim Scrollen entfernen"
-  stuck_tasks:
-    - "Sichtbarer Code beim Scrollen entfernen"
+  stuck_tasks: []
   test_all: false
   test_priority: "high_first"
 
