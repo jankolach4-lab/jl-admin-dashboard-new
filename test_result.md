@@ -144,7 +144,7 @@
     file: "frontend/public/qualitool/index.html"
     stuck_count: 1
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: false
         agent: "user"
@@ -152,6 +152,9 @@
       - working: "NA"
         agent: "main"
         comment: "Unsichtbarer Click-Logger eingebaut zur Diagnose"
+      - working: false
+        agent: "testing"
+        comment: "❌ TEILWEISE FUNKTIONAL: Sidebar-Links sind klickbar und visuell reagieren (active-Klasse), aber JavaScript-Funktionen (navTo, showSection) sind nicht definiert. Alle 7 Sidebar-Links gefunden und klickbar, aber Navigation funktioniert nicht vollständig wegen fehlender JS-Funktionen."
   - task: "Sichtbarer Code beim Scrollen entfernen"
     implemented: true
     working: false
