@@ -159,9 +159,9 @@
     implemented: true
     working: false
     file: "frontend/public/qualitool/index.html"
-    stuck_count: 1
-    priority: "medium"
-    needs_retesting: true
+    stuck_count: 2
+    priority: "high"
+    needs_retesting: false
     status_history:
       - working: false
         agent: "user"
@@ -169,6 +169,9 @@
       - working: "NA"
         agent: "main"
         comment: "Platzhaltertext 'This is a forecast' entfernt; Emergent-Badge & Posthog aus public/index.html entfernt"
+      - working: false
+        agent: "testing"
+        comment: "❌ KRITISCHER FEHLER: JavaScript-Code ist beim Scrollen sichtbar! Funktionen wie renderCalendar, importExcelFile, filterByStatus etc. sind als Text am unteren Bildschirmrand sichtbar. Dies ist ein schwerwiegender UI-Fehler der sofort behoben werden muss."
   - task: "App-Icon korrekt"
     implemented: true
     working: false
