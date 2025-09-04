@@ -197,3 +197,5 @@
 ## agent_communication:
   - agent: "main"
     message: "Bitte Frontend-Tests ausführen: Öffnen von frontend/public/qualitool/index.html in Browser-Umgebung, prüfen ob Redirect zu login.html erfolgt (ohne offline flags), Klick-Logger Ereignisse erscheinen in Konsole bei Klick auf Sidebar-Links (nach Login über login.html)."
+  - agent: "testing"
+    message: "Frontend-Tests abgeschlossen. KRITISCHER BEFUND: HTML-Struktur war fehlerhaft (fehlende DOCTYPE, html, head, body Tags) - wurde korrigiert. Login-Enforcement funktioniert korrekt, aber JavaScript-Funktionen laden nicht vollständig. SCHWERWIEGEND: Sichtbarer JavaScript-Code beim Scrollen gefunden - muss behoben werden. Import/Export-Buttons existieren aber sind nicht sichtbar. Sidebar-Navigation teilweise funktional."
