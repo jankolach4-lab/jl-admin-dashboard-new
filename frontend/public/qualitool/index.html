@@ -2744,16 +2744,28 @@
 
     async function requireAuthOrRedirect(){
       try {
-        if (!supa) {
-          // Offline-/No-CDN-Fallback: keine Weiterleitung, App bleibt benutzbar
-          return { id: 'local-offline' };
+        // Online-Fall: Supabase verfügbar -> Sitzung prüfen
+        if (supa) {
+          const { data: { session } } = await supa.auth.getSession();
+          if (!session) { window.location.href = './login.html'; return null; }
+          return session.user;
         }
-        const { data: { session } } = await supa.auth.getSession();
-        if (!session) { window.location.href = './login.html'; return null; }
-        return session.user;
+        // Offline-/No-CDN-Fallback nur erlauben, wenn bereits einmal eingeloggt wurde
+        const offlineAllowed = localStorage.getItem('offline_allowed') === 'true';
+        const lastUser = localStorage.getItem('last_user_id');
+        if (offlineAllowed && lastUser) {
+          return { id: lastUser };
+        }
+        // Sonst zur Login-Seite leiten
+        window.location.href = './login.html';
+        return null;
       } catch (e) {
-        console.warn('Auth check failed, continuing offline:', e?.message || e);
-        return { id: 'local-offline' };
+        console.warn('Auth check failed; redirecting to login unless offline allowed:', e?.message || e);
+        const offlineAllowed = localStorage.getItem('offline_allowed') === 'true';
+        const lastUser = localStorage.getItem('last_user_id');
+        if (offlineAllowed && lastUser) { return { id: lastUser }; }
+        window.location.href = './login.html';
+        return null;
       }
     }
 
