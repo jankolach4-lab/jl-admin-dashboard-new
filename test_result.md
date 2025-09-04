@@ -101,3 +101,99 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
+
+## user_problem_statement: "APK zeigt kein Login, Sidebar klickt nicht, sichtbarer Code beim Scrollen, Icon falsch. Supabase-Login + Offline nach erstem Login müssen funktionieren."
+
+## backend:
+  - task: "Supabase Sync Endpoint (Clientseitig genutzt)"
+    implemented: true
+    working: "NA"
+    file: "frontend/public/qualitool/index.html"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "user"
+        comment: "APK: Kein Login sichtbar, App startet direkt in Tool"
+      - working: false
+        agent: "main"
+        comment: "Auth-Check in index.html geändert: Offline nur nach erstem Login, sonst Redirect zur login.html"
+
+## frontend:
+  - task: "Login erzwingen + Offline-Fallback"
+    implemented: true
+    working: false
+    file: "frontend/public/qualitool/index.html"
+    stuck_count: 1
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "user"
+        comment: "Login Screen erscheint nicht in APK"
+      - working: true
+        agent: "main"
+        comment: "requireAuthOrRedirect verschärft; login.html wird erzwungen wenn kein Offline-Flag vorhanden"
+  - task: "Sidebar Navigation Klicks"
+    implemented: true
+    working: false
+    file: "frontend/public/qualitool/index.html"
+    stuck_count: 1
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "user"
+        comment: "Buttons reagieren nicht"
+      - working: "NA"
+        agent: "main"
+        comment: "Unsichtbarer Click-Logger eingebaut zur Diagnose"
+  - task: "Sichtbarer Code beim Scrollen entfernen"
+    implemented: true
+    working: false
+    file: "frontend/public/qualitool/index.html"
+    stuck_count: 1
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "user"
+        comment: "Code sichtbar beim Scrollen"
+      - working: "NA"
+        agent: "main"
+        comment: "Platzhaltertext 'This is a forecast' entfernt; Emergent-Badge & Posthog aus public/index.html entfernt"
+  - task: "App-Icon korrekt"
+    implemented: true
+    working: false
+    file: ".github/workflows/build-android-apk.yml"
+    stuck_count: 1
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "user"
+        comment: "Icon zeigt falsches Logo"
+      - working: "NA"
+        agent: "main"
+        comment: "CI Icon-Generation-Pfad korrigiert; verwendet frontend/resources/icon.png"
+
+## metadata:
+  created_by: "main_agent"
+  version: "1.0"
+  test_sequence: 1
+  run_ui: true
+
+## test_plan:
+  current_focus:
+    - "Login erzwingen + Offline-Fallback"
+    - "Sidebar Navigation Klicks"
+    - "Sichtbarer Code beim Scrollen entfernen"
+  stuck_tasks:
+    - "App-Icon korrekt"
+  test_all: false
+  test_priority: "high_first"
+
+## agent_communication:
+  - agent: "main"
+    message: "Bitte Frontend-Tests ausführen: Öffnen von frontend/public/qualitool/index.html in Browser-Umgebung, prüfen ob Redirect zu login.html erfolgt (ohne offline flags), Klick-Logger Ereignisse erscheinen in Konsole bei Klick auf Sidebar-Links (nach Login über login.html)."
