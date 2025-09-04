@@ -2095,6 +2095,64 @@
     resultsDiv.innerHTML = '';
   }
 
+  // Debug: unsichtbarer Click-Logger zur Diagnose von Tap-Problemen
+  (function setupClickLogger(){
+    try {
+      const loggerId = 'qt-debug-click-logger';
+      if (document.getElementById(loggerId)) return;
+      const log = document.createElement('div');
+      log.id = loggerId;
+      log.style.position = 'fixed';
+      log.style.bottom = '8px';
+      log.style.left = '8px';
+      log.style.padding = '4px 6px';
+      log.style.fontSize = '10px';
+      log.style.background = 'rgba(37,99,235,0.08)';
+      log.style.color = '#111';
+      log.style.border = '1px solid rgba(37,99,235,0.25)';
+      log.style.borderRadius = '6px';
+      log.style.pointerEvents = 'none';
+      log.style.zIndex = '2147483647';
+      log.style.opacity = '0'; // unsichtbar
+      document.body.appendChild(log);
+
+      function write(msg){
+        try {
+          const ts = new Date().toLocaleTimeString('de-DE');
+          log.textContent = `[${ts}] ${msg}`;
+          console.log('[QT-Click]', msg);
+        } catch(_){}
+      }
+
+      document.addEventListener('click', (e) => {
+        const t = e.target;
+        const isSidebar = !!t.closest && !!t.closest('.sidebar-nav');
+        const href = t.getAttribute && t.getAttribute('href');
+        const sec = href && href.startsWith('#') ? href.slice(1) : null;
+        write(`Click target=${t.tagName}${isSidebar? ' [sidebar]':''} href=${href||'-'} sec=${sec||'-'}`);
+      }, { capture: true });
+
+      // Pointer-Events Diagnose
+      document.querySelectorAll('.sidebar, .sidebar *').forEach(el => {
+        const pe = window.getComputedStyle(el).pointerEvents;
+        if (pe === 'none') {
+          console.warn('[QT] pointer-events:none auf', el);
+        }
+      });
+
+      // Z-Index Diagnose: prüfe Overlay über Sidebar
+      setTimeout(() => {
+        const sidebar = document.querySelector('.sidebar');
+        if (!sidebar) return;
+        const rect = sidebar.getBoundingClientRect();
+        const el = document.elementFromPoint(rect.left + 10, rect.top + 10);
+        if (el && !sidebar.contains(el)) {
+          console.warn('[QT] Element über der Sidebar erkannt:', el);
+        }
+      }, 1000);
+    } catch(e){ console.warn('Click-Logger Setup fehlgeschlagen:', e); }
+  })();
+
   function showSection(sectionId) {
     document.querySelectorAll('.sidebar-nav a').forEach(item => {
       item.classList.remove('active');
