@@ -26,6 +26,7 @@ jobs:
       - name: Install dependencies
         run: |
           yarn install --frozen-lockfile || yarn install
+          yarn add --dev typescript@^5.6 || true
           # Ensure Capacitor core is available for CLI operations
           yarn add @capacitor/core@^6 -W || yarn add @capacitor/core@^6
 
