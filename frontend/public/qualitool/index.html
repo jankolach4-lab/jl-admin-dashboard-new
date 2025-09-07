@@ -2257,20 +2257,14 @@
       console.error('showSection error:', e);
     }
 
-      default:
-        setDisp('.search-box','flex');
-        setDisp('.status-filters','flex');
-        setDisp('.contact-list','block');
-        setDisp('.street-filter-container','block');
-        break;
     }
   }
 
-  // Globale Navigation als Fallback (auch wenn Listener nicht binden)
-  window.navTo = function(sectionId){
-    try { showSection(sectionId); } catch(e) { console.error(e); }
-    return false;
-  };
+  // Hash-Fallback: Wenn der Hash sich ändert (Default-Anchor), Sektion anzeigen
+  window.addEventListener('hashchange', () => {
+    const sec = (location.hash||'').slice(1);
+    if (sec) showSection(sec);
+  });
 
   function renderWeCorrectionsList(mountEl) {
     const container = mountEl || document.querySelector('#weCorrectionsSection');
