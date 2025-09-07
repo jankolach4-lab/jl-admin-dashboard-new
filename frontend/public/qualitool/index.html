@@ -2246,6 +2246,12 @@
     }
   }
 
+  // Globale Navigation als Fallback (auch wenn Listener nicht binden)
+  window.navTo = function(sectionId){
+    try { showSection(sectionId); } catch(e) { console.error(e); }
+    return false;
+  };
+
   function renderWeCorrectionsList(mountEl) {
     const container = mountEl || document.querySelector('#weCorrectionsSection');
     if (!container) return;
