@@ -2828,8 +2828,29 @@
     const ws = XLSX.utils.json_to_sheet(exportData);
     XLSX.utils.book_append_sheet(wb, ws, "Qualifizierungen");
   
-    // Save the file
+    // Save/Share
     const filename = `qualifizierungen_${new Date().toISOString().split('T')[0]}.xlsx`;
+
+    // Native App: über Filesystem + Share teilen
+    if (isNativeApp()) {
+      try {
+        const wbArray = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+        const blob = new Blob([wbArray], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        const base64 = await blobToBase64(blob);
+        const Filesystem = getCapPlugin('Filesystem');
+        const Share = getCapPlugin('Share');
+        if (!Filesystem || !Share) throw new Error('Capacitor Plugins nicht verfügbar');
+        await Filesystem.writeFile({ path: filename, data: base64, directory: 'CACHE', recursive: false });
+        const uriRes = await Filesystem.getUri({ path: filename, directory: 'CACHE' });
+        await Share.share({ title: 'Qualis exportieren (Excel)', url: uriRes.uri, dialogTitle: 'Datei teilen / speichern' });
+      } catch (err) {
+        console.warn('Native Excel-Export fehlgeschlagen, Fallback Browser:', err?.message||err);
+        XLSX.writeFile(wb, filename);
+      }
+      return;
+    }
+
+    // Browser: klassisch herunterladen
     XLSX.writeFile(wb, filename);
   }
 
