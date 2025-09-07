@@ -2402,6 +2402,32 @@
     closeDeleteStreetDialog();
   }
 
+  // Helper: Plattform/Nativ erkennen
+  function isNativeApp() {
+    try { return !!window.Capacitor && typeof window.Capacitor.getPlatform === 'function' && window.Capacitor.getPlatform() !== 'web'; }
+    catch(_) { return false; }
+  }
+  // Helper: Blob -> Base64 (ohne Prefix)
+  function blobToBase64(blob) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = reject;
+      reader.onload = () => {
+        const res = String(reader.result || '');
+        const base64 = res.includes(',') ? res.split(',', 2)[1] : res;
+        resolve(base64);
+      };
+      reader.readAsDataURL(blob);
+    });
+  }
+  function getCapPlugin(name){
+    try {
+      if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins[name]) return window.Capacitor.Plugins[name];
+      if (window.__CapHelper && window.__CapHelper.getPlugin) return window.__CapHelper.getPlugin(name);
+    } catch(_){}
+    return null;
+  }
+
   function exportToCSV() {
     const headers = ['PLZ', 'Ort', 'Strasse', 'Nummer', 'Zusatz', 'WE', 'BewohnerName', 'BewohnerTelefon', 'Status', 'Notizen', 'IstMieter', 'StatusVerlauf'];
     let csvContent = headers.join(',') + '\n';
