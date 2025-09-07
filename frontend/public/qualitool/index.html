@@ -2169,73 +2169,94 @@
     } catch(e){ console.warn('Click-Logger Setup fehlgeschlagen:', e); }
   })();
 
+  // Global verfügbar: navTo Fallback
+  window.navTo = function(sectionId){
+    try { showSection(sectionId); } catch(e) { console.error('[navTo]', e); }
+    return false;
+  };
+
+  function $el(sel){ return document.querySelector(sel); }
+  function setDisp(sel, val){ const n=$el(sel); if(n) n.style.display=val; }
+  function addCls(sel, cls){ const n=$el(sel); if(n) n.classList.add(cls); }
+  function rmCls(sel, cls){ document.querySelectorAll(sel).forEach(n=>n.classList.remove(cls)); }
+
   function showSection(sectionId) {
-    document.querySelectorAll('.sidebar-nav a').forEach(item => {
-      item.classList.remove('active');
-    });
-    const navLink = document.querySelector(`.sidebar-nav a[href="#${sectionId}"]`);
-    if (navLink) {
-      navLink.classList.add('active');
-    }
-    document.querySelectorAll('.expanded').forEach(section => {
-      section.classList.remove('expanded');
-    });
-    // Standardansicht (Kontakte) wieder sichtbar schalten
-    document.querySelector('.import-section').style.display = 'none';
-    document.querySelector('.entry-section').style.display = 'none';
-    document.querySelector('.calendar-section').style.display = 'none';
-    document.querySelector('.statistics-section').style.display = 'none';
-    document.querySelector('.visit-recommendation-box').style.display = 'none';
-    document.querySelector('.search-box').style.display = 'none';
-    document.querySelector('.status-filters').style.display = 'none';
-    document.querySelector('.contact-list').style.display = 'none';
-    document.querySelector('.street-filter-container').style.display = 'none';
-    document.querySelector('.import-export-buttons').style.display = 'flex';
-    const weSecHide = document.getElementById('weCorrectionsSection');
-    if (weSecHide) { weSecHide.style.display = 'none'; weSecHide.innerHTML = ''; }
-    switch (sectionId) {
-      case 'contacts':
-        {
-          const weSecHide2 = document.getElementById('weCorrectionsSection');
-          if (weSecHide2) { weSecHide2.style.display = 'none'; weSecHide2.innerHTML = ''; }
-          document.querySelector('.search-box').style.display = 'flex';
-          document.querySelector('.status-filters').style.display = 'flex';
-          document.querySelector('.contact-list').style.display = 'block';
-          document.querySelector('.street-filter-container').style.display = 'block';
-          filterByStatus('all');
+    try {
+      rmCls('.sidebar-nav a','active');
+      const navLink = document.querySelector(`.sidebar-nav a[href="#${sectionId}"]`);
+      if (navLink) navLink.classList.add('active');
+
+      document.querySelectorAll('.expanded').forEach(section => section.classList.remove('expanded'));
+
+      // Alles ausblenden (nur wenn vorhanden)
+      setDisp('.import-section','none');
+      setDisp('.entry-section','none');
+      setDisp('.calendar-section','none');
+      setDisp('.statistics-section','none');
+      setDisp('.visit-recommendation-box','none');
+      setDisp('.search-box','none');
+      setDisp('.status-filters','none');
+      setDisp('.contact-list','none');
+      setDisp('.street-filter-container','none');
+      setDisp('.import-export-buttons','flex');
+      const weSecHide = document.getElementById('weCorrectionsSection');
+      if (weSecHide) { weSecHide.style.display = 'none'; weSecHide.innerHTML = ''; }
+
+      switch (sectionId) {
+        case 'contacts': {
+          const we2 = document.getElementById('weCorrectionsSection');
+          if (we2) { we2.style.display='none'; we2.innerHTML=''; }
+          setDisp('.search-box','flex');
+          setDisp('.status-filters','flex');
+          setDisp('.contact-list','block');
+          setDisp('.street-filter-container','block');
+          if (typeof filterByStatus==='function') filterByStatus('all');
+          break;
         }
-        break;
-      case 'import':
-        document.querySelector('.import-section').style.display = 'block';
-        document.querySelector('.import-section').classList.add('expanded');
-        break;
-      case 'add':
-        document.querySelector('.entry-section').style.display = 'block';
-        document.querySelector('.entry-section').classList.add('expanded');
-        break;
-      case 'stats':
-        document.querySelector('.statistics-section').style.display = 'block';
-        document.getElementById('statusStats').style.display = 'block';
-        updateStatistics();
-        break;
-      case 'calendar':
-        document.querySelector('.calendar-section').style.display = 'block';
-        document.getElementById('calendar').style.display = 'block';
-        renderCalendar();
-        break;
-      case 'recommendations':
-        document.querySelector('.visit-recommendation-box').style.display = 'block';
-        document.getElementById('visitRecommendationContent').style.display = 'block';
-        break;
-      case 'pdf-corrections':
-        {
+        case 'import': {
+          setDisp('.import-section','block');
+          addCls('.import-section','expanded');
+          break;
+        }
+        case 'add': {
+          setDisp('.entry-section','block');
+          addCls('.entry-section','expanded');
+          break;
+        }
+        case 'stats': {
+          setDisp('.statistics-section','block');
+          const ss = document.getElementById('statusStats'); if (ss) ss.style.display='block';
+          if (typeof updateStatistics==='function') updateStatistics();
+          break;
+        }
+        case 'calendar': {
+          setDisp('.calendar-section','block');
+          const cal = document.getElementById('calendar'); if (cal) cal.style.display='block';
+          if (typeof renderCalendar==='function') renderCalendar();
+          break;
+        }
+        case 'recommendations': {
+          setDisp('.visit-recommendation-box','block');
+          const cnt = document.getElementById('visitRecommendationContent'); if (cnt) cnt.style.display='block';
+          break;
+        }
+        case 'pdf-corrections': {
           const mount = document.getElementById('weCorrectionsSection');
-          if (mount) {
-            renderWeCorrectionsList(mount);
-            mount.style.display = 'block';
-          }
+          if (mount) { if (typeof renderWeCorrectionsList==='function') renderWeCorrectionsList(mount); mount.style.display='block'; }
+          break;
         }
-        break;
+        default: {
+          setDisp('.search-box','flex');
+          setDisp('.status-filters','flex');
+          setDisp('.contact-list','block');
+          setDisp('.street-filter-container','block');
+          break;
+        }
+      }
+    } catch(e) {
+      console.error('showSection error:', e);
+    }
+
       default:
         // Fallback: Kontakte anzeigen
         document.querySelector('.search-box').style.display = 'flex';
