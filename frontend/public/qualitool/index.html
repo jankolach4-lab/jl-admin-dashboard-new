@@ -2442,34 +2442,46 @@
         });
       }
     });
-    const blob = new Blob(['\ufeff' + csvContent], {
-      type: 'text/csv;charset=utf-8;'
-    });
+    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
     const filename = `qualifizierungen_${new Date().toISOString().split('T')[0]}.csv`;
+
+    // Native App (APK): über Filesystem speichern + Share-Dialog öffnen
+    if (isNativeApp()) {
+      (async () => {
+        try {
+          const base64 = await blobToBase64(blob);
+          const Filesystem = getCapPlugin('Filesystem');
+          const Share = getCapPlugin('Share');
+          if (!Filesystem || !Share) throw new Error('Capacitor Plugins nicht verfügbar');
+
+          await Filesystem.writeFile({ path: filename, data: base64, directory: 'CACHE', recursive: false });
+          const uriRes = await Filesystem.getUri({ path: filename, directory: 'CACHE' });
+          await Share.share({ title: 'Qualis exportieren (CSV)', url: uriRes.uri, dialogTitle: 'Datei teilen / speichern' });
+        } catch (err) {
+          console.warn('Native CSV-Export fehlgeschlagen, Fallback Browser:', err?.message||err);
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url; link.download = filename; link.click();
+          URL.revokeObjectURL(url);
+        }
+      })();
+      return;
+    }
+
+    // Browser: klassisch speichern
     if ('showSaveFilePicker' in window) {
-      const opts = {
-        suggestedName: filename,
-        types: [{
-          description: 'CSV-Datei',
-          accept: {
-            'text/csv': ['.csv']
-          }
-        }]
-      };
-      window.showSaveFilePicker(opts).then(handle => handle.createWritable()).then(writable => writable.write(blob).then(() => writable.close())).catch(() => {
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = filename;
-        link.click();
-        URL.revokeObjectURL(url);
-      });
+      const opts = { suggestedName: filename, types: [{ description: 'CSV-Datei', accept: { 'text/csv': ['.csv'] } }] };
+      window.showSaveFilePicker(opts)
+        .then(handle => handle.createWritable())
+        .then(writable => writable.write(blob).then(() => writable.close()))
+        .catch(() => {
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a'); link.href = url; link.download = filename; link.click();
+          URL.revokeObjectURL(url);
+        });
     } else {
       const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = filename;
-      link.click();
+      const link = document.createElement('a'); link.href = url; link.download = filename; link.click();
       URL.revokeObjectURL(url);
     }
   }
