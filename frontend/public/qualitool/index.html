@@ -2861,6 +2861,18 @@
   }
 
   document.addEventListener('DOMContentLoaded', () => {
+    // Defensive: Event-Delegation auf der Sidebar, falls einzelne Links nicht binden
+    const sidebar = document.querySelector('.sidebar');
+    if (sidebar) {
+      sidebar.addEventListener('click', function(e){
+        const a = e.target.closest && e.target.closest('a[href^="#"]');
+        if (!a) return;
+        e.preventDefault();
+        const sectionId = (a.getAttribute('href')||'').slice(1);
+        if (sectionId) showSection(sectionId);
+      }, { passive: true });
+    }
+
     document.querySelectorAll('.sidebar-nav a').forEach(link => {
       link.addEventListener('click', function(e) {
         e.preventDefault();
