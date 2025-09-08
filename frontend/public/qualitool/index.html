@@ -3089,14 +3089,20 @@
 
     document.querySelector('.import-export-buttons').innerHTML = `
       <button onclick="document.getElementById('excelImport').click()" class="import-btn">Qualis importieren</button>
-      <button id="btnExportExcel" class="import-btn">Qualis exportieren</button>
+      <button id="btnExportExcel" class="import-btn">Qualis exportieren (Excel)</button>
+      <button id="btnExportCSV" class="import-btn">CSV exportieren</button>
       <input type="file" id="excelImport" style="display: none" accept=".xlsx,.xls" onchange="importFromExcel(this.files[0])">
     `;
-    // Attach handler programmatically to avoid inline issues in some preview containers
-    const btn = document.getElementById('btnExportExcel');
-    if (btn) btn.addEventListener('click', async (e) => {
+    // Attach handlers programmatically to avoid inline issues in some preview containers
+    const btnX = document.getElementById('btnExportExcel');
+    if (btnX) btnX.addEventListener('click', async (e) => {
       e.preventDefault();
       try { await exportToExcel(); } catch(err){ console.error('Export error:', err); alert('Export fehlgeschlagen: '+(err.message||err)); }
+    });
+    const btnC = document.getElementById('btnExportCSV');
+    if (btnC) btnC.addEventListener('click', async (e) => {
+      e.preventDefault();
+      try { await exportToCSV(); } catch(err){ console.error('CSV export error:', err); alert('CSV-Export fehlgeschlagen: '+(err.message||err)); }
     });
   
     // Initialisieren sobald DOM geladen ist (direkt ausführen)
