@@ -2921,7 +2921,7 @@
         const sectionId = (this.getAttribute('href')||'').replace('#', '');
         if (!sectionId) return;
         showSection(sectionId);
-      }, { passive: true });
+      }, { passive: false });
     });
   
     // Supabase Client Init (robust: funktioniert auch ohne Internet)
