@@ -245,11 +245,11 @@
 
 ## test_plan:
   current_focus:
-    - "Login erzwingen + Offline-Fallback"
-    - "Sichtbarer Code beim Scrollen entfernen"
-  stuck_tasks: []
+    - "Sidebar Navigation Klicks"
+  stuck_tasks:
+    - "Sidebar Navigation Klicks"
   test_all: false
-  test_priority: "high_first"
+  test_priority: "stuck_first"
 
 ## agent_communication:
   - agent: "main"
