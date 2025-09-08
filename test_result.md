@@ -162,7 +162,7 @@
     file: "frontend/public/qualitool/index.html"
     stuck_count: 2
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: false
         agent: "user"
@@ -182,6 +182,9 @@
       - working: true
         agent: "main"
         comment: "Fix eingespielt: showSection-Klammerfehler (zusätzliche geschweifte Klammern) behoben, Initial-Hash-Handling ergänzt, Guard für .import-export-buttons, .contact-list Mindesthöhe gesetzt. UI-Manuelle/Auto-Checks: Alle Sektionen schalten sichtbar (import/add/stats/calendar/contacts)."
+      - working: false
+        agent: "testing"
+        comment: "❌ SIDEBAR NAVIGATION TEILWEISE DEFEKT: Automatisierte UI-Tests durchgeführt. POSITIV: ✅ Alle 7 Sidebar-Links gefunden und klickbar, ✅ Alle Sektionen werden sichtbar (import/add/stats/calendar/contacts), ✅ Hashchange-Handling funktioniert (#import, #contacts), ✅ Offline-Setup funktioniert, ✅ Kein sichtbarer JS-Code. KRITISCHE PROBLEME: ❌ Active-Klasse wird nicht gesetzt bei Klicks, ❌ Andere Sektionen werden nicht ausgeblendet (display:none fehlt), ❌ navTo/showSection Funktionen nicht definiert (Console-Errors). Navigation funktioniert nur visuell, aber Zustandsverwaltung defekt."
   - task: "Sichtbarer Code beim Scrollen entfernen"
     implemented: true
     working: true
