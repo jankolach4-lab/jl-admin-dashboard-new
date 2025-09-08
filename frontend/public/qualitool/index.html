@@ -2506,7 +2506,8 @@
     return null;
   }
 
-  function exportToCSV() {
+  async function exportToCSV() {
+    if (!(await ensureXLSXReady())) return;
     const headers = ['PLZ', 'Ort', 'Strasse', 'Nummer', 'Zusatz', 'WE', 'BewohnerName', 'BewohnerTelefon', 'Status', 'Notizen', 'IstMieter', 'StatusVerlauf'];
     let csvContent = headers.join(',') + '\n';
     contacts.forEach(contact => {
