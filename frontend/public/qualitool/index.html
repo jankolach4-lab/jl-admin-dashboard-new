@@ -2946,12 +2946,20 @@
         const wbArray = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
         const blob = new Blob([wbArray], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
         const base64 = await blobToBase64(blob);
-        const Filesystem = getCapPlugin('Filesystem');
-        const Share = getCapPlugin('Share');
-        if (!Filesystem || !Share) throw new Error('Capacitor Plugins nicht verfügbar');
-        await Filesystem.writeFile({ path: filename, data: base64, directory: 'CACHE', recursive: false });
-        const uriRes = await Filesystem.getUri({ path: filename, directory: 'CACHE' });
-        await Share.share({ title: 'Qualis exportieren (Excel)', url: uriRes.uri, dialogTitle: 'Datei teilen / speichern' });
+        // Option A: Direkt in Downloads speichern
+        try {
+          await saveToDownloadsAndroid(base64, filename, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+          return; // Erfolg
+        } catch(eDownload){
+          // Fallback: CACHE + Share-Dialog
+          const Filesystem = getCapPlugin('Filesystem');
+          const Share = getCapPlugin('Share');
+          if (!Filesystem || !Share) throw eDownload;
+          await Filesystem.writeFile({ path: filename, data: base64, directory: 'CACHE', recursive: false });
+          const uriRes = await Filesystem.getUri({ path: filename, directory: 'CACHE' });
+          await Share.share({ title: 'Qualis exportieren (Excel)', url: uriRes.uri, dialogTitle: 'Datei teilen / speichern' });
+          return;
+        }
       } catch (err) {
         console.warn('Native Excel-Export fehlgeschlagen, Fallback Browser:', err?.message||err);
         try {
