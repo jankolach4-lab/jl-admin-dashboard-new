@@ -2877,6 +2877,11 @@
   }
 
   document.addEventListener('DOMContentLoaded', () => {
+    // Initial Hash berücksichtigen (z.B. Direktaufruf mit #import)
+    const initial = (location.hash||'').slice(1);
+    if (initial) {
+      try { showSection(initial); } catch(e) { console.warn('init hash failed', e); }
+    }
     // Defensive: Event-Delegation auf der Sidebar, falls einzelne Links nicht binden
     const sidebar = document.querySelector('.sidebar');
     if (sidebar) {
