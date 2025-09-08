@@ -1343,19 +1343,6 @@
     var s2=document.createElement('script'); s2.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'; s2.async=true; document.head.appendChild(s2);
   })();
 </script>
-  // Simple script loader with Promise
-  function loadScript(src){
-    return new Promise((resolve, reject) => {
-      try {
-        const s = document.createElement('script');
-        s.src = src;
-        s.async = true;
-        s.onload = () => resolve(true);
-        s.onerror = (e) => reject(e);
-        document.head.appendChild(s);
-      } catch(e){ reject(e); }
-    });
-  }
 
 <script src="./capacitor-bridge.js"></script>
 <script>
