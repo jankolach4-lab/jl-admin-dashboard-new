@@ -2940,7 +2940,10 @@
     XLSX.utils.book_append_sheet(wb, ws, "Qualifizierungen");
   
     // Save/Share
-    const filename = `qualifizierungen_${new Date().toISOString().split('T')[0]}.xlsx`;
+    const place = (contacts && contacts[0] && contacts[0].ort) ? String(contacts[0].ort).replace(/\s+/g,'-').toLowerCase() : 'ort';
+    const d = new Date();
+    const pad = n => (n<10?('0'+n):n);
+    const filename = `qualifizierungen_${place}_${pad(d.getDate())}-${pad(d.getMonth()+1)}-${d.getFullYear()}.xlsx`;
 
     // Native App: über Filesystem + Share teilen
     if (isNativeApp()) {
