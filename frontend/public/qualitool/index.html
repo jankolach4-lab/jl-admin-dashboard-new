@@ -2198,7 +2198,10 @@
       setDisp('.status-filters','none');
       setDisp('.contact-list','none');
       setDisp('.street-filter-container','none');
-      setDisp('.import-export-buttons','flex');
+      // Defensive: Nur setzen, wenn Container existiert
+      if (document.querySelector('.import-export-buttons')) {
+        setDisp('.import-export-buttons','flex');
+      }
       const weSecHide = document.getElementById('weCorrectionsSection');
       if (weSecHide) { weSecHide.style.display = 'none'; weSecHide.innerHTML = ''; }
 
