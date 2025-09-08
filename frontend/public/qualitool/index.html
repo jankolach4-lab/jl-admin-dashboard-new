@@ -2450,6 +2450,41 @@
     try { return !!window.Capacitor && typeof window.Capacitor.getPlatform === 'function' && window.Capacitor.getPlatform() !== 'web'; }
     catch(_) { return false; }
   }
+  // Helper: robust file download handling (works in preview/iframe)
+  function triggerDownload(blob, filename){
+    try {
+      if (window.showSaveFilePicker) {
+        const opts = { suggestedName: filename, types: [{ description: 'Datei', accept: { 'application/octet-stream': ['.bin'], 'text/csv': ['.csv'], 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'] } }] };
+        return window.showSaveFilePicker(opts)
+          .then(handle => handle.createWritable())
+          .then(writable => writable.write(blob).then(() => writable.close()))
+          .catch(() => {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = filename; a.target = (window.top!==window.self)?'_blank':'_self';
+            document.body.appendChild(a); a.click(); a.remove();
+            setTimeout(()=>URL.revokeObjectURL(url), 30000);
+          });
+      }
+    } catch(_){ /* fallthrough */ }
+    // Fallback: anchor click
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename; a.target = (window.top!==window.self)?'_blank':'_self';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 30000);
+  }
+
+  async function ensureXLSXReady(){
+    if (window.XLSX) return true;
+    for (let i=0;i<20;i++) { // up to ~4s
+      await new Promise(r=>setTimeout(r,200));
+      if (window.XLSX) return true;
+    }
+    alert('Die Excel-Bibliothek lädt noch. Bitte den Export erneut starten.');
+    return false;
+  }
+
   // Helper: Blob -> Base64 (ohne Prefix)
   function blobToBase64(blob) {
     return new Promise((resolve, reject) => {
