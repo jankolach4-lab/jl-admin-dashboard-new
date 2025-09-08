@@ -2912,7 +2912,7 @@
         e.preventDefault();
         const sectionId = (a.getAttribute('href')||'').slice(1);
         if (sectionId) showSection(sectionId);
-      }, { passive: true });
+      }, { passive: false });
     }
 
     document.querySelectorAll('.sidebar-nav a').forEach(link => {
