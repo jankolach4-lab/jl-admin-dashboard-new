@@ -2925,13 +2925,24 @@
         await Share.share({ title: 'Qualis exportieren (Excel)', url: uriRes.uri, dialogTitle: 'Datei teilen / speichern' });
       } catch (err) {
         console.warn('Native Excel-Export fehlgeschlagen, Fallback Browser:', err?.message||err);
-        XLSX.writeFile(wb, filename);
+        try {
+          const wbArray = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+          const blob = new Blob([wbArray], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+          triggerDownload(blob, filename);
+        } catch(e) { console.error('Export Fallback fehlgeschlagen:', e); }
       }
       return;
     }
 
-    // Browser: klassisch herunterladen
-    XLSX.writeFile(wb, filename);
+    // Browser: Download via Blob (robust in Preview/iframe)
+    try {
+      const wbArray = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+      const blob = new Blob([wbArray], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      triggerDownload(blob, filename);
+    } catch(e) {
+      console.error('Export fehlgeschlagen:', e);
+      alert('Export fehlgeschlagen: '+(e.message||e));
+    }
   }
 
   document.addEventListener('DOMContentLoaded', () => {
