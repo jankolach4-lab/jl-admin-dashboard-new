@@ -253,7 +253,7 @@
 
 ## agent_communication:
   - agent: "main"
-    message: "Bitte Frontend-Tests ausführen: Öffnen von frontend/public/qualitool/index.html in Browser-Umgebung, prüfen ob Redirect zu login.html erfolgt (ohne offline flags), Klick-Logger Ereignisse erscheinen in Konsole bei Klick auf Sidebar-Links (nach Login über login.html)."
+    message: "Bitte Frontend-Tests fokussiert auf Sidebar: 1) In login.html via localStorage offline_allowed=true und last_user_id='test-user' setzen (Offline-Fallback simulieren). 2) index.html laden und nacheinander die Sidebar-Icons (#import, #add, #stats, #calendar, #contacts) anklicken. 3) Verifizieren, dass die jeweils zugehörigen Sektionen sichtbar sind und alle anderen Hauptsektionen ausgeblendet werden. 4) Zusätzlich: Initial-Hash testen (#import direkt aufrufen) und sicherstellen, dass showSection korrekt greift. 5) Konsolenfehler und [QT-Click] Logs mit ausgeben."
   - agent: "testing"
     message: "Frontend-Tests abgeschlossen. KRITISCHER BEFUND: HTML-Struktur war fehlerhaft (fehlende DOCTYPE, html, head, body Tags) - wurde korrigiert. Login-Enforcement funktioniert korrekt, aber JavaScript-Funktionen laden nicht vollständig. SCHWERWIEGEND: Sichtbarer JavaScript-Code beim Scrollen gefunden - muss behoben werden. Import/Export-Buttons existieren aber sind nicht sichtbar. Sidebar-Navigation teilweise funktional."
   - agent: "testing"
