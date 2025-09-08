@@ -236,6 +236,8 @@
     overflow-y: auto; 
     flex: 1;
     max-height: calc(100vh - 400px); 
+    min-height: 40px; /* ensure visible area even when empty */
+    display: block;
   }
 
   .contact-card {
