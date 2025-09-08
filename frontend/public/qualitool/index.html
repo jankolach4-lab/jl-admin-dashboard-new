@@ -3086,9 +3086,7 @@
       } catch(e){ console.warn('Initiale Cloud-Sync Warnung:', e.message||e); }
     })();
 
-    Promise.all([loadScript("https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js")]).then(() => {}).catch(error => {
-      console.error('Failed to load libraries', error);
-    });
+    // XLSX lädt bereits dynamisch oben; zusätzlicher Loader entfernt, um Fehler zu vermeiden.
   });
 
 
