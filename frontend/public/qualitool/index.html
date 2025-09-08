@@ -2805,7 +2805,7 @@
     reader.readAsArrayBuffer(file);
   }
 
-  function exportToExcel() {
+  async function exportToExcel() {
     // Create array of objects in the format needed for XLSX
     const exportData = contacts.map(contact => {
       // For contacts without residents, create one row with basic info
