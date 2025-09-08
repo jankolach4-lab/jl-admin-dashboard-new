@@ -159,7 +159,7 @@
     file: "frontend/public/qualitool/index.html"
     stuck_count: 2
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: false
         agent: "user"
@@ -176,6 +176,9 @@
       - working: true
         agent: "testing"
         comment: "✅ PASSED: Sidebar-Navigation funktioniert größtenteils korrekt! 6/7 Bereiche funktional: contacts (.contact-list, .search-box, .status-filters sichtbar), import (.import-section sichtbar), add (.entry-section sichtbar), stats (.statistics-section sichtbar), calendar (.calendar-section sichtbar), recommendations (.visit-recommendation-box sichtbar). Nur pdf-corrections (#weCorrectionsSection) nicht sichtbar. Minor: navTo-Funktionen nicht definiert (Console-Errors), aber Kernfunktionalität arbeitet."
+      - working: true
+        agent: "main"
+        comment: "Fix eingespielt: showSection-Klammerfehler (zusätzliche geschweifte Klammern) behoben, Initial-Hash-Handling ergänzt, Guard für .import-export-buttons, .contact-list Mindesthöhe gesetzt. UI-Manuelle/Auto-Checks: Alle Sektionen schalten sichtbar (import/add/stats/calendar/contacts)."
   - task: "Sichtbarer Code beim Scrollen entfernen"
     implemented: true
     working: true
