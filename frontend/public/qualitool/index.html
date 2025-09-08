@@ -2492,6 +2492,49 @@
     return null;
   }
 
+  // Android: Download in öffentlichen Downloads-Ordner speichern (Option A)
+  async function ensureAndroidFsPermissions(Filesystem){
+    try {
+      if (!Filesystem) return;
+      if (Filesystem.checkPermissions) {
+        const p = await Filesystem.checkPermissions();
+        // p kann je nach Capacitor-Version verschieden aussehen; bei fehlender Freigabe nachfragen
+        if ((p.publicStorage && p.publicStorage !== 'granted') || (p.write && p.write !== 'granted')) {
+          await Filesystem.requestPermissions();
+        }
+      } else if (Filesystem.requestPermissions) {
+        await Filesystem.requestPermissions();
+      }
+    } catch(_){}
+  }
+
+  async function saveToDownloadsAndroid(base64, filename, mime){
+    const Filesystem = getCapPlugin('Filesystem');
+    if (!Filesystem) throw new Error('Capacitor Filesystem nicht verfügbar');
+    await ensureAndroidFsPermissions(Filesystem);
+
+    const tryWrite = async (directoryKey) => {
+      return Filesystem.writeFile({ path: `Download/${filename}`, data: base64, directory: directoryKey, recursive: true });
+    };
+
+    // Versuche zuerst EXTERNAL_STORAGE (neuere Capacitor-Versionen), dann EXTERNAL
+    try {
+      await tryWrite('EXTERNAL_STORAGE');
+    } catch(e1){
+      try { await tryWrite('EXTERNAL'); }
+      catch(e2){ throw e2 || e1; }
+    }
+
+    // Optional: URI ermitteln
+    let uri = null;
+    try {
+      uri = await Filesystem.getUri({ path: `Download/${filename}`, directory: 'EXTERNAL' });
+    } catch(_){}
+
+    alert(`Datei gespeichert: Download/${filename}`);
+    return uri?.uri || null;
+  }
+
   async function exportToCSV() {
     if (!(await ensureXLSXReady())) return;
     const headers = ['PLZ', 'Ort', 'Strasse', 'Nummer', 'Zusatz', 'WE', 'BewohnerName', 'BewohnerTelefon', 'Status', 'Notizen', 'IstMieter', 'StatusVerlauf'];
