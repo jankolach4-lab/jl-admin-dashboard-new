@@ -155,7 +155,7 @@
         comment: "✅ PASSED: Offline-Fallback BEHOBEN! Problem war in requireAuthOrRedirect() Funktion - Reihenfolge der Prüfungen korrigiert. Jetzt werden localStorage-Flags ZUERST geprüft vor Supabase-Session. A) Ohne Flags: Redirect zu login.html funktioniert. B) Mit Flags: Bleibt auf index.html und zeigt Hauptanwendung. Beide Szenarien funktionieren korrekt."
   - task: "Sidebar Navigation Klicks"
     implemented: true
-    working: true
+    working: false
     file: "frontend/public/qualitool/index.html"
     stuck_count: 2
     priority: "high"
