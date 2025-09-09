@@ -238,23 +238,26 @@
   }
 
   button {
-    background: #2563eb;
+    background: var(--accent);
     color: white;
     border: none;
-    padding: 8px 16px;
-    border-radius: 6px;
+    padding: 8px 14px;
+    border-radius: 8px;
     cursor: pointer;
-    transition: all 0.2s ease;
-    margin: 5px;
+    transition: background .2s ease, transform .15s ease, box-shadow .15s ease;
+    margin: 4px;
     font-size: 13px;
-    font-weight: 500;
-    letter-spacing: 0.3px;
+    font-weight: 600;
+    letter-spacing: .2px;
+    box-shadow: var(--shadow-sm);
   }
 
-  button:hover {
-    background: #1d4ed8;
-    transform: translateY(-1px);
-  }
+  button:hover { background: var(--accent-600); transform: translateY(-1px); }
+  button:active { transform: translateY(0); }
+  button:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+
+  .delete-all-btn { background: #ef4444; }
+  .delete-all-btn:hover { background: #dc2626; }
 
   .contact-list {
     margin-top: 30px;
