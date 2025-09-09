@@ -20,9 +20,14 @@ cp -f ../scripts/android/SaveAsPlugin.java "$PLUGIN_DIR/SaveAsPlugin.java"
 
 # Ensure import and registration
 if ! grep -q "SaveAsPlugin" "$MAIN_ACTIVITY_PATH"; then
-  sed -i '1i import de.ams.Qualifizierungstool.plugins.SaveAsPlugin;' "$MAIN_ACTIVITY_PATH"
-  # Insert registerPlugin after super.onCreate
-  sed -i 's/super.onCreate(.*);/super.onCreate(savedInstanceState);\n        registerPlugin(SaveAsPlugin.class);/g' "$MAIN_ACTIVITY_PATH" || true
+  # Add import if not exists
+  if ! grep -q "de.ams.Qualifizierungstool.plugins.SaveAsPlugin" "$MAIN_ACTIVITY_PATH"; then
+    sed -i '1i import de.ams.Qualifizierungstool.plugins.SaveAsPlugin;' "$MAIN_ACTIVITY_PATH"
+  fi
+  # Insert registerPlugin inside onCreate block safely
+  if grep -q "class MainActivity" "$MAIN_ACTIVITY_PATH"; then
+    sed -i 's/super.onCreate(.*);/super.onCreate(savedInstanceState);\n        registerPlugin(SaveAsPlugin.class);/g' "$MAIN_ACTIVITY_PATH" || true
+  fi
 fi
 
 echo "SaveAs plugin injected and MainActivity patched: $MAIN_ACTIVITY_PATH"
