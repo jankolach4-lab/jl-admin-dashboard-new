@@ -69,7 +69,7 @@ jobs:
           sed -n '$-80,$p' android/app/src/main/java/**/MainActivity.java || true
           grep -Rsn "SaveAsPlugin" android/app/src/main/java || true
           # Try to compile Java sources quickly to catch syntax
-          cd android && ./gradlew :app:compileDebugJavaWithJavac -x lint -x test || true
+          cd android && ./gradlew :app:compileDebugJavaWithJavac -x lint -x test || (echo 'javac quick check failed' && exit 1)
           cd ..
 
       - name: Setup Java 17
