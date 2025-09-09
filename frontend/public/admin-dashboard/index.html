@@ -7,194 +7,138 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
   <style>
-    :root {
-      --bg: #f5f7fa; --surface:#fff; --text:#111827; --muted:#6b7280; --border:#e5e7eb;
-      --accent:#2563eb; --accent-600:#1d4ed8; --teal:#14b8a6; --radius:12px;
-      --shadow: 0 10px 30px rgba(0,0,0,.06);
-    }
-    *{box-sizing:border-box}
-    body{margin:0; font-family: -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Ubuntu,sans-serif; background:var(--bg); color:var(--text)}
-    header{ display:flex; justify-content:space-between; align-items:center; padding:14px 18px; background:var(--surface); box-shadow:var(--shadow); position:sticky; top:0; z-index:10; }
-    .brand{ font-weight:700; }
-    .row{ display:flex; gap:16px; padding:16px; flex-wrap:wrap; }
-    .card{ background:var(--surface); border-radius:var(--radius); box-shadow:var(--shadow); padding:14px; flex:1; min-width:320px; }
-    .kpi{ display:flex; align-items:baseline; gap:10px; }
-    .kpi h2{ margin:0; font-size:28px; }
-    .kpi span{ color:var(--muted); font-size:12px; }
-    .controls{ display:flex; gap:10px; align-items:center; }
-    select,button{ padding:8px 10px; border:1px solid var(--border); border-radius:8px; background:#fff; }
-    button{ background:var(--accent); color:#fff; border:none; box-shadow:0 2px 8px rgba(37,99,235,.2); cursor:pointer; }
-    button:hover{ background:var(--accent-600); }
-    .grid{ display:grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap:16px; padding:0 16px 16px; }
-    canvas{ max-height: 300px; }
-    .error{ color:#b91c1c; background:#fee2e2; border:1px solid #fecaca; padding:8px 10px; border-radius:10px; margin:10px 16px; display:none; }
+    :root { --bg:#f5f7fa; --surface:#fff; --text:#111827; --muted:#6b7280; --border:#e5e7eb; --accent:#2563eb; --accent-600:#1d4ed8; --teal:#14b8a6; --radius:12px; --shadow:0 10px 30px rgba(0,0,0,.06);} *{box-sizing:border-box}
+    body{margin:0; font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Ubuntu,sans-serif; background:var(--bg); color:var(--text)}
+    header{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;background:var(--surface);box-shadow:var(--shadow);position:sticky;top:0;z-index:10}
+    .brand{display:flex;align-items:center;gap:10px;font-weight:800}
+    .brand img{height:28px;width:28px;border-radius:6px}
+    .controls{display:flex;gap:10px;align-items:center}
+    select,button{padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:#fff}
+    button{background:var(--accent);color:#fff;border:none;box-shadow:0 2px 8px rgba(37,99,235,.2);cursor:pointer}
+    button:hover{background:var(--accent-600)}
+    main{padding:16px;display:grid;grid-template-columns:320px 1fr;gap:16px}
+    .panel{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:12px}
+    .panel h3{margin:6px 0 10px 0}
+    .list{max-height:60vh;overflow:auto;border:1px solid var(--border);border-radius:8px}
+    table{width:100%;border-collapse:separate;border-spacing:0}
+    th,td{font-size:13px;padding:10px 12px;border-bottom:1px solid var(--border)}
+    th{position:sticky;top:0;background:#fafafa;text-align:left}
+    tr:hover td{background:#fcfdff}
+    .grid{display:grid;grid-template-columns: repeat(auto-fill,minmax(360px,1fr));gap:16px}
+    .card{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px}
+    canvas{max-height:300px}
+    .error{color:#b91c1c;background:#fee2e2;border:1px solid #fecaca;padding:8px 10px;border-radius:10px;margin:10px 0;display:none}
   </style>
 </head>
 <body>
   <header>
-    <div class="brand">Admin Dashboard</div>
+    <div class="brand"><img src="../qualitool/qt-logo.png" alt="logo"/> <span>Admin Dashboard</span></div>
     <div class="controls">
-      <select id="range">
-        <option value="7">Letzte 7 Tage</option>
-        <option value="30" selected>Letzte 30 Tage</option>
-        <option value="90">Letzte 90 Tage</option>
-      </select>
+      <select id="range"><option value="7">7 Tage</option><option value="30" selected>30 Tage</option><option value="90">90 Tage</option></select>
       <button id="btnRefresh">Aktualisieren</button>
       <button id="btnLogout" style="background:#111827">Logout</button>
     </div>
   </header>
-
-  <div id="err" class="error"></div>
-
-  <section class="row">
-    <div class="card">
-      <div class="kpi"><h2 id="kpiCompletions">–</h2><span>Abschlüsse (Zeitraum)</span></div>
-    </div>
-    <div class="card">
-      <div class="kpi"><h2 id="kpiChanges">–</h2><span>Statusänderungen (Zeitraum)</span></div>
-    </div>
-    <div class="card">
-      <div class="kpi"><h2 id="kpiUsers">–</h2><span>Aktive Nutzer (Zeitraum)</span></div>
-    </div>
-  </section>
-
-  <section class="grid">
-    <div class="card">
-      <h3 style="margin:0 0 8px 0">Abschlüsse pro Tag</h3>
-      <canvas id="chartDaily"></canvas>
-    </div>
-    <div class="card">
-      <h3 style="margin:0 0 8px 0">Aktueller Status‑Breakdown</h3>
-      <canvas id="chartStatus"></canvas>
-    </div>
-    <div class="card">
-      <h3 style="margin:0 0 8px 0">Statusänderungen nach Ort</h3>
-      <canvas id="chartCity"></canvas>
-    </div>
-  </section>
+  <main>
+    <section class="panel">
+      <h3>Projekte</h3>
+      <div class="list">
+        <table id="tblProjects"><thead><tr><th>Projekt (Stadt)</th><th>WE gesamt</th><th>Mitarbeiter</th></tr></thead><tbody></tbody></table>
+      </div>
+      <h3 style="margin-top:12px">Mitarbeiter im Projekt: <span id="selProject">–</span></h3>
+      <div class="list">
+        <table id="tblUsers"><thead><tr><th>Mitarbeiter</th><th>WE</th></tr></thead><tbody></tbody></table>
+      </div>
+      <div id="err" class="error"></div>
+    </section>
+    <section class="panel">
+      <div class="grid">
+        <div class="card"><h4>Abschlüsse/Änderungen pro Tag</h4><canvas id="chartDaily"></canvas></div>
+        <div class="card"><h4>Status‑Breakdown</h4><canvas id="chartStatus"></canvas></div>
+      </div>
+    </section>
+  </main>
 
   <script>
     const SUPABASE_URL = 'https://whigasnqcvjkilkmbfld.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndoaWdhc25xY3Zqa2lsa21iZmxkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQyNDE1OTIsImV4cCI6MjA2OTgxNzU5Mn0.tfUnIP_oWy3N9UM6Ws9mPiKqsGtj8_kIOMW42E298rc';
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false } });
 
-    const $ = sel => document.querySelector(sel);
-    const errBox = $('#err');
+    const q = sel => document.querySelector(sel);
+    const errBox = q('#err');
+    let chDaily, chStatus; let currentUserId = null; let currentProject = null;
 
-    async function requireAuth(){
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) { window.location.href = './login.html'; throw new Error('no_session'); }
-      return session.user;
-    }
+    async function requireAuth(){ const { data:{ session } } = await supabase.auth.getSession(); if (!session) { window.location.href='./login.html'; throw new Error('no_session'); } return session.user; }
 
-    function daysAgo(n){ const d=new Date(); d.setDate(d.getDate()-n); d.setHours(0,0,0,0); return d.toISOString(); }
+    function daysAgoISO(n){ const d=new Date(); d.setDate(d.getDate()-n); d.setHours(0,0,0,0); return d.toISOString(); }
 
-    async function fetchDaily(range){
-      // Erwartet View wie v_daily_metrics(day, completions, changes, user_count)
-      const sinceISO = daysAgo(range);
-      const { data, error } = await supabase
-        .from('v_daily_metrics')
-        .select('*')
-        .gte('day', sinceISO)
-        .order('day', { ascending: true });
-      if (error) throw error;
-      return data || [];
-    }
-
-    async function fetchStatusNow(){
-      // Erwartet View wie v_user_status_breakdown_current_json(user_id, status_json)
-      const { data, error } = await supabase
-        .from('v_user_status_breakdown_current_json')
-        .select('*');
-      if (error) throw error;
-      // Aggregiere über alle Nutzer
-      const total = {};
-      (data||[]).forEach(row => {
-        let obj={};
-        try{ obj = typeof row.status_json==='string'? JSON.parse(row.status_json): (row.status_json||{});}catch{}
-        for (const [k,v] of Object.entries(obj)) total[k]=(total[k]||0)+Number(v||0);
+    async function loadProjects(){
+      errBox.style.display='none';
+      const { data, error } = await supabase.rpc('fn_dashboard_guarded_projects');
+      if (error){ showError(error.message); return []; }
+      const tbody = q('#tblProjects tbody'); tbody.innerHTML='';
+      (data||[]).forEach(row=>{
+        const tr=document.createElement('tr');
+        tr.innerHTML = `<td>${row.project||'–'}</td><td>${row.total_we||0}</td><td>${row.user_count||0}</td>`;
+        tr.addEventListener('click', ()=> selectProject(row.project));
+        tbody.appendChild(tr);
       });
-      return total;
-    }
-
-    async function fetchCity(range){
-      // Erwartet View wie v_daily_status_changes_by_city(day, city, changes)
-      const sinceISO = daysAgo(range);
-      const { data, error } = await supabase
-        .from('v_daily_status_changes_by_city')
-        .select('*')
-        .gte('day', sinceISO)
-        .order('day', { ascending: true });
-      if (error) throw error;
       return data||[];
     }
 
-    // Charts
-    let chDaily, chStatus, chCity;
+    async function selectProject(project){
+      currentProject = project; q('#selProject').textContent = project || '–';
+      const { data, error } = await supabase.rpc('fn_dashboard_guarded_project_users', { p_project: project });
+      if (error){ showError(error.message); return; }
+      const tbody = q('#tblUsers tbody'); tbody.innerHTML='';
+      (data||[]).forEach(u=>{
+        const tr=document.createElement('tr');
+        const name = u.display_name || u.email || u.user_id;
+        tr.innerHTML = `<td>${name}</td><td>${u.we_count||0}</td>`;
+        tr.addEventListener('click', ()=> selectUser(u.user_id, name));
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function selectUser(userId, name){
+      currentUserId = userId; const range = Number(q('#range').value||30);
+      // Daily changes
+      const { data:daily, error:e1 } = await supabase.rpc('fn_dashboard_guarded_user_daily_changes', { p_user_id: userId, p_days: range });
+      if (e1){ showError(e1.message); return; }
+      // Status breakdown
+      const { data:statusJson, error:e2 } = await supabase.rpc('fn_dashboard_guarded_user_status_breakdown', { p_user_id: userId });
+      if (e2){ showError(e2.message); return; }
+      renderDaily(daily||[]);
+      renderStatus(statusJson||{});
+    }
+
+    function showError(msg){ errBox.textContent = 'Fehler: ' + msg; errBox.style.display='block'; }
+
     function renderDaily(rows){
       const labels = rows.map(r=> new Date(r.day).toLocaleDateString('de-DE'));
-      const comp = rows.map(r=> r.completions||r.anshluesse||r.anzahl||0);
+      const vals = rows.map(r=> r.changes||0);
       if (chDaily) chDaily.destroy();
       chDaily = new Chart(document.getElementById('chartDaily'), {
-        type: 'line',
-        data: { labels, datasets:[{ label:'Abschlüsse', data: comp, borderColor:'#2563eb', backgroundColor:'rgba(37,99,235,.15)', tension:.3, fill:true }] },
-        options: { scales:{ y:{ beginAtZero:true } }, plugins:{ legend:{ display:false } } }
+        type:'line', data:{ labels, datasets:[{ label:'Änderungen', data:vals, borderColor:'#2563eb', backgroundColor:'rgba(37,99,235,.15)', tension:.35, fill:true }] },
+        options:{ scales:{ y:{ beginAtZero:true } }, plugins:{ legend:{ display:false } } }
       });
     }
     function renderStatus(obj){
-      const entries = Object.entries(obj).sort((a,b)=> b[1]-a[1]).slice(0,10);
-      const labels = entries.map(([k])=>k);
-      const vals = entries.map(([,v])=>v);
+      const entries = Object.entries(obj).sort((a,b)=> b[1]-a[1]).slice(0,12);
+      const labels = entries.map(([k])=>k); const vals = entries.map(([,v])=>v);
       if (chStatus) chStatus.destroy();
       chStatus = new Chart(document.getElementById('chartStatus'), {
-        type: 'doughnut',
-        data: { labels, datasets:[{ data: vals, backgroundColor: labels.map((_,i)=> `hsl(${(i*37)%360} 80% 60%)`) }] },
-        options: { plugins:{ legend:{ position:'bottom' } } }
-      });
-    }
-    function renderCity(rows){
-      // Summe pro Stadt im Zeitraum
-      const map = new Map();
-      rows.forEach(r=>{ const key=r.city||r.ort||'–'; map.set(key, (map.get(key)||0) + (r.changes||r.count||0)); });
-      const top = Array.from(map.entries()).sort((a,b)=> b[1]-a[1]).slice(0,8);
-      const labels = top.map(([k])=>k); const vals = top.map(([,v])=>v);
-      if (chCity) chCity.destroy();
-      chCity = new Chart(document.getElementById('chartCity'), {
-        type: 'bar', data: { labels, datasets:[{ label:'Änderungen', data: vals, backgroundColor:'#14b8a6' }] },
-        options: { scales:{ y:{ beginAtZero:true } }, plugins:{ legend:{ display:false } } }
+        type:'doughnut', data:{ labels, datasets:[{ data:vals, backgroundColor: labels.map((_,i)=> `hsl(${(i*37)%360} 80% 60%)`) }] },
+        options:{ plugins:{ legend:{ position:'bottom' } } }
       });
     }
 
-    async function refresh(){
-      errBox.style.display='none';
-      try {
-        const range = Number(document.getElementById('range').value||30);
-        const [daily, statusNow, byCity] = await Promise.all([
-          fetchDaily(range), fetchStatusNow(), fetchCity(range)
-        ]);
-        // KPIs
-        const totalCompletions = daily.reduce((s,r)=> s + (Number(r.completions||0)), 0);
-        const totalChanges = daily.reduce((s,r)=> s + (Number(r.changes||r.status_changes||0)), 0);
-        const activeUsers = new Set((daily||[]).map(r=> r.user_id).filter(Boolean)).size || '–';
-        document.getElementById('kpiCompletions').textContent = String(totalCompletions);
-        document.getElementById('kpiChanges').textContent = String(totalChanges);
-        document.getElementById('kpiUsers').textContent = String(activeUsers);
-
-        // Charts rendern
-        renderDaily(daily);
-        renderStatus(statusNow);
-        renderCity(byCity);
-      } catch(e){
-        console.error(e);
-        errBox.textContent = 'Fehler beim Laden der Daten: ' + (e.message||e);
-        errBox.style.display = 'block';
-      }
-    }
-
-    document.getElementById('btnRefresh').addEventListener('click', refresh);
+    document.getElementById('btnRefresh').addEventListener('click', async ()=>{
+      await loadProjects(); if (currentProject) await selectProject(currentProject); if (currentUserId) await selectUser(currentUserId);
+    });
     document.getElementById('btnLogout').addEventListener('click', async ()=>{ await supabase.auth.signOut(); window.location.href='./login.html'; });
 
-    (async ()=>{ await requireAuth(); refresh(); })();
+    (async ()=>{ await requireAuth(); await loadProjects(); })();
   </script>
 </body>
 </html>
