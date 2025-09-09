@@ -273,20 +273,21 @@
   }
 
   .contact-card {
-    background: #ffffff;
+    background: var(--surface);
     border: none;
-    padding: 15px;
+    padding: 14px;
     margin-bottom: 10px;
-    border-radius: 8px;
+    border-radius: 10px;
     cursor: pointer;
-    transition: all 0.2s ease;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    border-left: 4px solid transparent;
+    transition: background .2s ease, transform .15s ease, box-shadow .15s ease;
+    box-shadow: var(--shadow-sm);
+    border-left: 3px solid transparent;
   }
 
   .contact-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(0,0,0,0.12);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.10);
+    background: #fcfdff;
   }
 
   .contact-info {
