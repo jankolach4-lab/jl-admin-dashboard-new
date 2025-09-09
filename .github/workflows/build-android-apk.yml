@@ -61,6 +61,19 @@ jobs:
           head -n 5 android/app/src/main/assets/public/index.html || true
 
       # Remove previous SaveAs injection step (we avoid native plugin for now)
+      - name: Patch AndroidManifest for legacy external storage (Android 10)
+        run: |
+          MANIFEST="android/app/src/main/AndroidManifest.xml"
+          if [ -f "$MANIFEST" ]; then
+            if ! grep -q "requestLegacyExternalStorage" "$MANIFEST"; then
+              sed -i 's/<application /<application android:requestLegacyExternalStorage="true" /' "$MANIFEST"
+            fi
+            # Ensure legacy write permission for API 29
+            if ! grep -q "WRITE_EXTERNAL_STORAGE" "$MANIFEST"; then
+              sed -i '/<uses-permission android:name="android.permission.INTERNET" \/>/a \\n    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="29" \/>' "$MANIFEST"
+            fi
+          fi
+
       - name: Remove SaveAs injection step
         run: |
           echo 'Skipping SaveAs native plugin injection to stabilise build.'
