@@ -63,7 +63,10 @@ jobs:
       - name: Inject SaveAs (SAF) plugin
         run: |
           bash ../scripts/patch_saveas_plugin.sh
-          # Show patch result
+          echo '--- MainActivity head ---'
+          sed -n '1,60p' android/app/src/main/java/**/MainActivity.java || true
+          echo '--- MainActivity tail ---'
+          sed -n '$-80,$p' android/app/src/main/java/**/MainActivity.java || true
           grep -Rsn "SaveAsPlugin" android/app/src/main/java || true
           # Try to compile Java sources quickly to catch syntax
           cd android && ./gradlew :app:compileDebugJavaWithJavac -x lint -x test || true
