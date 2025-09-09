@@ -5,9 +5,9 @@ import android.content.Intent;
 import android.net.Uri;
 import android.util.Base64;
 
-import com.getcapacitor.BridgeActivity;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
+import com.getcapacitor.ActivityResult;
 import com.getcapacitor.annotation.ActivityCallback;
 import com.getcapacitor.annotation.CapacitorPlugin;
 import com.getcapacitor.annotation.PluginMethod;
