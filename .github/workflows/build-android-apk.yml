@@ -65,6 +65,9 @@ jobs:
           bash ../scripts/patch_saveas_plugin.sh
           # Show patch result
           grep -Rsn "SaveAsPlugin" android/app/src/main/java || true
+          # Try to compile Java sources quickly to catch syntax
+          cd android && ./gradlew :app:compileDebugJavaWithJavac -x lint -x test || true
+          cd ..
 
       - name: Setup Java 17
         uses: actions/setup-java@v4
