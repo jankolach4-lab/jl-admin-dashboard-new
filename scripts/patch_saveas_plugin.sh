@@ -18,16 +18,35 @@ mkdir -p "$PLUGIN_DIR"
 # Copy plugin java
 cp -f ../scripts/android/SaveAsPlugin.java "$PLUGIN_DIR/SaveAsPlugin.java"
 
-# Ensure import and registration
-if ! grep -q "SaveAsPlugin" "$MAIN_ACTIVITY_PATH"; then
-  # Add import if not exists
-  if ! grep -q "de.ams.Qualifizierungstool.plugins.SaveAsPlugin" "$MAIN_ACTIVITY_PATH"; then
-    sed -i '1i import de.ams.Qualifizierungstool.plugins.SaveAsPlugin;' "$MAIN_ACTIVITY_PATH"
-  fi
-  # Insert registerPlugin inside onCreate block safely
-  if grep -q "class MainActivity" "$MAIN_ACTIVITY_PATH"; then
-    sed -i 's/super.onCreate(.*);/super.onCreate(savedInstanceState);\n        registerPlugin(SaveAsPlugin.class);/g' "$MAIN_ACTIVITY_PATH" || true
-  fi
+# Ensure import after package line
+if ! grep -q "de.ams.Qualifizierungstool.plugins.SaveAsPlugin" "$MAIN_ACTIVITY_PATH"; then
+  sed -i '/^package .*;/a import de.ams.Qualifizierungstool.plugins.SaveAsPlugin;' "$MAIN_ACTIVITY_PATH"
 fi
+
+# Ensure registerPlugin call in onCreate, or create onCreate if missing
+if grep -q "onCreate(.*Bundle" "$MAIN_ACTIVITY_PATH"; then
+  if ! grep -q "registerPlugin(SaveAsPlugin.class)" "$MAIN_ACTIVITY_PATH"; then
+    sed -i '/super\.onCreate(/a\        registerPlugin(SaveAsPlugin.class);' "$MAIN_ACTIVITY_PATH"
+  fi
+else
+  # Inject onCreate method before final closing brace
+  tmpfile=$(mktemp)
+  awk 'BEGIN{inserted=0} {
+    if(!inserted && $0 ~ /class[[:space:]]+MainActivity[^{]*{/){
+      class_found=1
+    }
+    if(class_found && !inserted && $0 ~ /^}\s*$/){
+      print "    @Override";
+      print "    protected void onCreate(android.os.Bundle savedInstanceState) {";
+      print "        super.onCreate(savedInstanceState);";
+      print "        registerPlugin(SaveAsPlugin.class);";
+      print "    }";
+      inserted=1;
+    }
+    print $0
+  }' "$MAIN_ACTIVITY_PATH" > "$tmpfile"
+  mv "$tmpfile" "$MAIN_ACTIVITY_PATH"
+fi
+
 
 echo "SaveAs plugin injected and MainActivity patched: $MAIN_ACTIVITY_PATH"
