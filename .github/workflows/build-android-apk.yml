@@ -60,17 +60,11 @@ jobs:
           grep -q "qualitool/index.html" android/app/src/main/assets/public/index.html || (echo "redirect to qualitool not present" && exit 1)
           head -n 5 android/app/src/main/assets/public/index.html || true
 
-      - name: Inject SaveAs (SAF) plugin
+      # Remove previous SaveAs injection step (we avoid native plugin for now)
+      - name: Remove SaveAs injection step
         run: |
-          bash ../scripts/patch_saveas_plugin.sh
-          echo '--- MainActivity head ---'
-          sed -n '1,60p' android/app/src/main/java/**/MainActivity.java || true
-          echo '--- MainActivity tail ---'
-          sed -n '$-80,$p' android/app/src/main/java/**/MainActivity.java || true
-          grep -Rsn "SaveAsPlugin" android/app/src/main/java || true
-          # Try to compile Java sources quickly to catch syntax
-          cd android && ./gradlew :app:compileDebugJavaWithJavac -x lint -x test || (echo 'javac quick check failed' && exit 1)
-          cd ..
+          echo 'Skipping SaveAs native plugin injection to stabilise build.'
+
 
       - name: Setup Java 17
         uses: actions/setup-java@v4
