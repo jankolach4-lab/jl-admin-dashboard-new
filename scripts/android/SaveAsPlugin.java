@@ -5,9 +5,10 @@ import android.content.Intent;
 import android.net.Uri;
 import android.util.Base64;
 
+import androidx.activity.result.ActivityResult;
+
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
-import com.getcapacitor.ActivityResult;
 import com.getcapacitor.annotation.ActivityCallback;
 import com.getcapacitor.annotation.CapacitorPlugin;
 import com.getcapacitor.annotation.PluginMethod;
@@ -16,6 +17,8 @@ import java.io.OutputStream;
 
 @CapacitorPlugin(name = "SaveAs")
 public class SaveAsPlugin extends Plugin {
+    private String pendingMime;
+    private String pendingBase64;
 
     @PluginMethod
     public void createDocumentAndWrite(PluginCall call) {
@@ -32,9 +35,9 @@ public class SaveAsPlugin extends Plugin {
             return;
         }
 
-        // Save data in call for callback usage
-        call.set("__mime", mime);
-        call.set("__data", base64);
+        this.pendingMime = mime;
+        this.pendingBase64 = base64;
+        saveCall(call);
 
         Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
@@ -47,24 +50,31 @@ public class SaveAsPlugin extends Plugin {
     @ActivityCallback
     private void onSaveDocumentResult(PluginCall call, ActivityResult result) {
         if (result.getResultCode() != Activity.RESULT_OK || result.getData() == null) {
-            if (call != null) call.reject("user_cancelled");
+            PluginCall saved = getSavedCall();
+            if (saved != null) saved.reject("user_cancelled");
             return;
         }
         try {
             Uri uri = result.getData().getData();
-            String base64 = call.getString("__data");
-            byte[] bytes = Base64.decode(base64, Base64.DEFAULT);
+            byte[] bytes = Base64.decode(this.pendingBase64, Base64.DEFAULT);
             OutputStream os = getContext().getContentResolver().openOutputStream(uri, "w");
             if (os == null) {
-                call.reject("open_output_stream_failed");
+                PluginCall saved = getSavedCall();
+                if (saved != null) saved.reject("open_output_stream_failed");
                 return;
             }
             os.write(bytes);
             os.flush();
             os.close();
-            call.resolve();
+            PluginCall saved = getSavedCall();
+            if (saved != null) saved.resolve();
         } catch (Exception e) {
-            if (call != null) call.reject(e.getMessage());
+            PluginCall saved = getSavedCall();
+            if (saved != null) saved.reject(e.getMessage());
+        } finally {
+            this.pendingMime = null;
+            this.pendingBase64 = null;
+            freeSavedCall();
         }
     }
 }
