@@ -3014,7 +3014,18 @@
         if (!Filesystem || !Share) throw new Error('Capacitor Plugins nicht verfügbar');
         await Filesystem.writeFile({ path: filename, data: base64, directory: 'CACHE', recursive: false });
         const uriRes = await Filesystem.getUri({ path: filename, directory: 'CACHE' });
-        await Share.share({ title: 'Qualis exportieren (Excel)', url: uriRes.uri, dialogTitle: 'Datei teilen / speichern' });
+        try {
+          // Capacitor 6+: Share unterstützt files + mimeType
+          await Share.share({
+            title: 'Qualis exportieren (Excel)',
+            dialogTitle: 'Datei teilen / speichern',
+            files: [uriRes.uri],
+            mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+          });
+        } catch(_e) {
+          // Fallback auf url
+          await Share.share({ title: 'Qualis exportieren (Excel)', url: uriRes.uri, dialogTitle: 'Datei teilen / speichern' });
+        }
         return;
 
       } catch (err) {
