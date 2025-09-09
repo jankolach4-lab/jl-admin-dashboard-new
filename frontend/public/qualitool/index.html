@@ -2952,7 +2952,7 @@
         const blob = new Blob([wbArray], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
         const base64 = await blobToBase64(blob);
 
-        // Bevorzugt: System "Speichern unter…" (SAF)
+        // 1) Falls SAF-Plugin vorhanden, zuerst System-Dialog verwenden
         const SaveAs = getCapPlugin('SaveAs');
         if (SaveAs && typeof SaveAs.createDocumentAndWrite === 'function') {
           try {
@@ -2960,11 +2960,19 @@
             return;
           } catch(e){
             if (String(e||'').includes('user_cancelled')) return; // Nutzer hat abgebrochen
-            console.warn('SAF SaveAs fehlgeschlagen, versuche Share-Fallback:', e);
+            console.warn('SAF SaveAs fehlgeschlagen, versuche direkten Download/Share:', e);
           }
         }
 
-        // Fallback: CACHE + Share-Dialog
+        // 2) Android 10 (API 29): Versuche direkten Download in öffentlichen Ordner
+        try {
+          await saveToDownloadsAndroid(base64, filename, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+          return;
+        } catch(eDown){
+          console.warn('Direkter Download fehlgeschlagen, versuche Share:', eDown?.message||eDown);
+        }
+
+        // 3) Fallback: CACHE + Share-Dialog
         const Filesystem = getCapPlugin('Filesystem');
         const Share = getCapPlugin('Share');
         if (!Filesystem || !Share) throw new Error('Capacitor Plugins nicht verfügbar');
