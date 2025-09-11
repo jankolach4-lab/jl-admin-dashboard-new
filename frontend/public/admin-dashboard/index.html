@@ -28,6 +28,9 @@
     .card{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px}
     canvas{max-height:300px}
     .error{color:#b91c1c;background:#fee2e2;border:1px solid #fecaca;padding:8px 10px;border-radius:10px;margin:10px 0;display:none}
+    .muted{color:var(--muted);font-size:12px}
+    .table-wrap{overflow:auto;border:1px solid var(--border);border-radius:8px}
+    .kpi{display:flex;gap:8px;align-items:baseline}
   </style>
 </head>
 <body>
@@ -52,9 +55,13 @@
       <div id="err" class="error"></div>
     </section>
     <section class="panel">
-      <div class="grid">
-        <div class="card"><h4>Abschlüsse/Änderungen pro Tag</h4><canvas id="chartDaily"></canvas></div>
-        <div class="card"><h4>Status‑Breakdown</h4><canvas id="chartStatus"></canvas></div>
+      <div class="grid" id="chartsGrid">
+        <div class="card" id="cardProjCompl"><h4>Abschlüsse pro Tag (Projekt)</h4><canvas id="chartProjCompl"></canvas></div>
+        <div class="card" id="cardProjChanges"><h4>Statusänderungen pro Tag (Projekt)</h4><canvas id="chartProjChanges"></canvas></div>
+        <div class="card" id="cardProjStatus"><h4>Status‑Breakdown (Projekt)</h4><canvas id="chartProjStatus"></canvas><div class="table-wrap"><table id="tblProjStatus"><thead><tr><th>Status</th><th>Absolut</th><th>% von WE Projekt</th></tr></thead><tbody></tbody></table></div></div>
+        <div class="card" id="cardUserCompl" style="display:none"><h4>Abschlüsse pro Tag (Mitarbeiter)</h4><canvas id="chartUserCompl"></canvas></div>
+        <div class="card" id="cardUserChanges" style="display:none"><h4>Statusänderungen pro Tag (Mitarbeiter)</h4><canvas id="chartUserChanges"></canvas></div>
+        <div class="card" id="cardUserStatus" style="display:none"><h4>Status‑Breakdown (Mitarbeiter)</h4><canvas id="chartUserStatus"></canvas><div class="table-wrap"><table id="tblUserStatus"><thead><tr><th>Status</th><th>Absolut</th><th>% von WE Projekt</th></tr></thead><tbody></tbody></table></div></div>
       </div>
     </section>
   </main>
@@ -66,75 +73,130 @@
 
     const q = sel => document.querySelector(sel);
     const errBox = q('#err');
-    let chDaily, chStatus; let currentUserId = null; let currentProject = null;
+    let chProjCompl, chProjChanges, chProjStatus; let chUserCompl, chUserChanges, chUserStatus;
+    let currentUserId = null; let currentProject = null; let projectTotalWE = 0;
 
     async function requireAuth(){ const { data:{ session } } = await supabase.auth.getSession(); if (!session) { window.location.href='./login.html'; throw new Error('no_session'); } return session.user; }
 
     function daysAgoISO(n){ const d=new Date(); d.setDate(d.getDate()-n); d.setHours(0,0,0,0); return d.toISOString(); }
 
+    function showError(msg){ errBox.textContent = 'Fehler: ' + msg; errBox.style.display='block'; }
+
+    function renderBar(ctxId, labels, vals, label, color){
+      const ctx = document.getElementById(ctxId);
+      const instName = 'ch' + ctxId.charAt(0).toUpperCase() + ctxId.slice(1);
+      try{ if (window[instName]) window[instName].destroy(); }catch{}
+      const inst = new Chart(ctx, { type:'bar', data:{ labels, datasets:[{ label, data: vals, backgroundColor: color }] }, options:{ scales:{ y:{ beginAtZero:true } }, plugins:{ legend:{ display:false } } }});
+      window[instName] = inst; return inst;
+    }
+
+    function renderDoughnut(ctxId, labels, vals){
+      const ctx = document.getElementById(ctxId);
+      const instName = 'ch' + ctxId.charAt(0).toUpperCase() + ctxId.slice(1);
+      try{ if (window[instName]) window[instName].destroy(); }catch{}
+      const inst = new Chart(ctx, { type:'doughnut', data:{ labels, datasets:[{ data: vals, backgroundColor: labels.map((_,i)=> `hsl(${(i*37)%360} 80% 60%)`) }] }, options:{ plugins:{ legend:{ position:'bottom' } } } });
+      window[instName] = inst; return inst;
+    }
+
+    function renderStatusTable(tblId, rows){
+      const tbody = document.querySelector('#'+tblId+' tbody');
+      tbody.innerHTML='';
+      rows.forEach(r=>{
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${r.status||'–'}</td><td>${r.absolute||0}</td><td>${(r.percent||0).toFixed(1)}%</td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
     async function loadProjects(){
-      errBox.style.display='none';
+      errBox.style.display='none'; currentUserId=null; // reset user selection
+      q('#cardUserCompl').style.display='none'; q('#cardUserChanges').style.display='none'; q('#cardUserStatus').style.display='none';
+      q('#cardProjCompl').style.display='block'; q('#cardProjChanges').style.display='block'; q('#cardProjStatus').style.display='block';
       const { data, error } = await supabase.rpc('fn_dashboard_guarded_projects');
       if (error){ showError(error.message); return []; }
       const tbody = q('#tblProjects tbody'); tbody.innerHTML='';
       (data||[]).forEach(row=>{
         const tr=document.createElement('tr');
         tr.innerHTML = `<td>${row.project||'–'}</td><td>${row.total_we||0}</td><td>${row.user_count||0}</td>`;
-        tr.addEventListener('click', ()=> selectProject(row.project));
+        tr.addEventListener('click', ()=> selectProject(row.project, Number(row.total_we||0)));
         tbody.appendChild(tr);
       });
       return data||[];
     }
 
-    async function selectProject(project){
-      currentProject = project; q('#selProject').textContent = project || '–';
+    async function selectProject(project, totalWE){
+      currentProject = project; projectTotalWE = totalWE||0; q('#selProject').textContent = project || '–';
+      // load users table
       const { data, error } = await supabase.rpc('fn_dashboard_guarded_project_users', { p_project: project });
       if (error){ showError(error.message); return; }
       const tbody = q('#tblUsers tbody'); tbody.innerHTML='';
       (data||[]).forEach(u=>{
-        const tr=document.createElement('tr');
-        const name = u.display_name || u.email || u.user_id;
+        const tr=document.createElement('tr'); const name = u.display_name || u.email || u.user_id;
         tr.innerHTML = `<td>${name}</td><td>${u.we_count||0}</td>`;
         tr.addEventListener('click', ()=> selectUser(u.user_id, name));
         tbody.appendChild(tr);
       });
+      // load project charts
+      await refreshProjectCharts();
+    }
+
+    async function refreshProjectCharts(){
+      const range = Number(q('#range').value||30);
+      // RPCs to be created in SQL: project daily completions/changes + project status table
+      const [c1, c2, st] = await Promise.all([
+        supabase.rpc('fn_dashboard_guarded_project_daily_completions', { p_project: currentProject, p_days: range }),
+        supabase.rpc('fn_dashboard_guarded_project_daily_changes', { p_project: currentProject, p_days: range }),
+        supabase.rpc('fn_dashboard_guarded_project_status_table', { p_project: currentProject })
+      ]);
+      if (c1.error) showError(c1.error.message); else {
+        const labels = (c1.data||[]).map(r=> new Date(r.day).toLocaleDateString('de-DE'));
+        const vals = (c1.data||[]).map(r=> Number(r.completions||0));
+        chProjCompl = renderBar('chartProjCompl', labels, vals, 'Abschlüsse', '#2563eb');
+      }
+      if (c2.error) showError(c2.error.message); else {
+        const labels = (c2.data||[]).map(r=> new Date(r.day).toLocaleDateString('de-DE'));
+        const vals = (c2.data||[]).map(r=> Number(r.changes||0));
+        chProjChanges = renderBar('chartProjChanges', labels, vals, 'Änderungen', '#14b8a6');
+      }
+      if (st.error) showError(st.error.message); else {
+        const entries = Object.entries(st.data?.breakdown||{}).sort((a,b)=> b[1]-a[1]);
+        const labels = entries.map(([k])=>k); const vals = entries.map(([,v])=>v);
+        chProjStatus = renderDoughnut('chartProjStatus', labels, vals);
+        renderStatusTable('tblProjStatus', (st.data?.table||[]).map(r=> ({ status:r.status, absolute:Number(r.absolute||0), percent: Number(r.percent||0) })) );
+      }
     }
 
     async function selectUser(userId, name){
       currentUserId = userId; const range = Number(q('#range').value||30);
-      // Daily changes
-      const { data:daily, error:e1 } = await supabase.rpc('fn_dashboard_guarded_user_daily_changes', { p_user_id: userId, p_days: range });
-      if (e1){ showError(e1.message); return; }
-      // Status breakdown
-      const { data:statusJson, error:e2 } = await supabase.rpc('fn_dashboard_guarded_user_status_breakdown', { p_user_id: userId });
-      if (e2){ showError(e2.message); return; }
-      renderDaily(daily||[]);
-      renderStatus(statusJson||{});
-    }
-
-    function showError(msg){ errBox.textContent = 'Fehler: ' + msg; errBox.style.display='block'; }
-
-    function renderDaily(rows){
-      const labels = rows.map(r=> new Date(r.day).toLocaleDateString('de-DE'));
-      const vals = rows.map(r=> r.changes||0);
-      if (chDaily) chDaily.destroy();
-      chDaily = new Chart(document.getElementById('chartDaily'), {
-        type:'line', data:{ labels, datasets:[{ label:'Änderungen', data:vals, borderColor:'#2563eb', backgroundColor:'rgba(37,99,235,.15)', tension:.35, fill:true }] },
-        options:{ scales:{ y:{ beginAtZero:true } }, plugins:{ legend:{ display:false } } }
-      });
-    }
-    function renderStatus(obj){
-      const entries = Object.entries(obj).sort((a,b)=> b[1]-a[1]).slice(0,12);
-      const labels = entries.map(([k])=>k); const vals = entries.map(([,v])=>v);
-      if (chStatus) chStatus.destroy();
-      chStatus = new Chart(document.getElementById('chartStatus'), {
-        type:'doughnut', data:{ labels, datasets:[{ data:vals, backgroundColor: labels.map((_,i)=> `hsl(${(i*37)%360} 80% 60%)`) }] },
-        options:{ plugins:{ legend:{ position:'bottom' } } }
-      });
+      // toggle user cards
+      q('#cardUserCompl').style.display='block'; q('#cardUserChanges').style.display='block'; q('#cardUserStatus').style.display='block';
+      // fetch user charts
+      const [uc, ud, ust] = await Promise.all([
+        supabase.rpc('fn_dashboard_guarded_user_daily_completions', { p_user_id: userId, p_days: range }),
+        supabase.rpc('fn_dashboard_guarded_user_daily_changes', { p_user_id: userId, p_days: range }),
+        supabase.rpc('fn_dashboard_guarded_user_status_table', { p_user_id: userId, p_project: currentProject })
+      ]);
+      if (uc.error) showError(uc.error.message); else {
+        const labels = (uc.data||[]).map(r=> new Date(r.day).toLocaleDateString('de-DE'));
+        const vals = (uc.data||[]).map(r=> Number(r.completions||0));
+        chUserCompl = renderBar('chartUserCompl', labels, vals, 'Abschlüsse', '#2563eb');
+      }
+      if (ud.error) showError(ud.error.message); else {
+        const labels = (ud.data||[]).map(r=> new Date(r.day).toLocaleDateString('de-DE'));
+        const vals = (ud.data||[]).map(r=> Number(r.changes||0));
+        chUserChanges = renderBar('chartUserChanges', labels, vals, 'Änderungen', '#14b8a6');
+      }
+      if (ust.error) showError(ust.error.message); else {
+        const entries = Object.entries(ust.data?.breakdown||{}).sort((a,b)=> b[1]-a[1]);
+        const labels = entries.map(([k])=>k); const vals = entries.map(([,v])=>v);
+        chUserStatus = renderDoughnut('chartUserStatus', labels, vals);
+        renderStatusTable('tblUserStatus', (ust.data?.table||[]).map(r=> ({ status:r.status, absolute:Number(r.absolute||0), percent: Number(r.percent||0) })) );
+      }
     }
 
     document.getElementById('btnRefresh').addEventListener('click', async ()=>{
-      await loadProjects(); if (currentProject) await selectProject(currentProject); if (currentUserId) await selectUser(currentUserId);
+      if (currentProject) await refreshProjectCharts();
+      if (currentUserId) await selectUser(currentUserId);
     });
     document.getElementById('btnLogout').addEventListener('click', async ()=>{ await supabase.auth.signOut(); window.location.href='./login.html'; });
 
