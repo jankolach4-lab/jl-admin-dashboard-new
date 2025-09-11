@@ -173,6 +173,9 @@
         const labels = entries.map(([k])=>k); const vals = entries.map(([,v])=>v);
         chProjStatus = renderDoughnut('chartProjStatus', labels, vals);
         renderStatusTable('tblProjStatus', (st.data?.table||[]).map(r=> ({ status:r.status, absolute:Number(r.absolute||0), percent: Number(r.percent||0) })) );
+        // ensure both cards are visible
+        q('#cardProjStatus').style.display='block';
+        q('#cardProjStatusTable').style.display='block';
       }
     }
 
