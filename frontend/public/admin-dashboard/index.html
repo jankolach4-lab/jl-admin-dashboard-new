@@ -214,6 +214,22 @@
         q('#cardUserStatus').style.display='block';
         q('#cardUserStatusTable').style.display='block';
       }
+      if (uh.error) showError(uh.error.message); else {
+        const hours = Array.from({length:24}, (_,i)=>i);
+        const map = new Map((uh.data||[]).map(r=> [Number(r.hour), Number(r.changes)]));
+        const vals = hours.map(h=> map.get(h)||0);
+        renderBar('chartUserHourly', hours.map(h=> String(h).padStart(2,'0')+':00'), vals, 'Änderungen', '#f59e0b');
+      }
+      if (us.error) showError(us.error.message); else {
+        const t = q('#tblUserSummary tbody');
+        const d = us.data || {};
+        t.innerHTML = ''+
+          `<tr><td>Gesamt Statusänderungen</td><td>${d.total_changes??0}</td></tr>`+
+          `<tr><td>Abschlüsse (nicht Online)</td><td>${d.completions??0}</td></tr>`+
+          `<tr><td>Ø Änderungen bis Abschluss</td><td>${(d.avg_changes_per_completion??0)}</td></tr>`+
+          `<tr><td>WE mit Status</td><td>${d.we_with_status??0} (${d.we_with_status_percent??0}%)</td></tr>`+
+          `<tr><td>WE gesamt (Mitarbeiter, Projekt)</td><td>${d.we_total??0}</td></tr>`;
+      }
     }
 
     document.getElementById('btnRefresh').addEventListener('click', async ()=>{
