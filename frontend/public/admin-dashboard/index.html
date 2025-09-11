@@ -206,6 +206,8 @@
         const labels = entries.map(([k])=>k); const vals = entries.map(([,v])=>v);
         chUserStatus = renderDoughnut('chartUserStatus', labels, vals);
         renderStatusTable('tblUserStatus', (ust.data?.table||[]).map(r=> ({ status:r.status, absolute:Number(r.absolute||0), percent: Number(r.percent||0) })) );
+        q('#cardUserStatus').style.display='block';
+        q('#cardUserStatusTable').style.display='block';
       }
     }
 
