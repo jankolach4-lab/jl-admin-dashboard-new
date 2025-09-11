@@ -141,6 +141,9 @@
         tr.addEventListener('click', ()=> selectUser(u.user_id, name));
         tbody.appendChild(tr);
       });
+      // visuelle Hervorhebung des Projekts
+      q('#selProject').textContent = project || '–';
+      q('#selProject').classList.add('pill-accent');
       // load project charts
       await refreshProjectCharts();
     }
