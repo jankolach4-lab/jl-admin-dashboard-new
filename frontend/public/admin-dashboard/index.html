@@ -178,6 +178,8 @@
       currentUserId = userId; const range = Number(q('#range').value||30);
       // toggle user cards
       q('#cardUserCompl').style.display='block'; q('#cardUserChanges').style.display='block'; q('#cardUserStatus').style.display='block';
+      // user badge
+      const selU = q('#selUser'); selU.style.display='inline-block'; selU.textContent = name || '–';
       // fetch user charts
       const [uc, ud, ust] = await Promise.all([
         supabase.rpc('fn_dashboard_guarded_user_daily_completions', { p_user_id: userId, p_days: range }),
