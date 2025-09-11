@@ -188,10 +188,13 @@
       // user badge
       const selU = q('#selUser'); selU.style.display='inline-block'; selU.textContent = name || '–';
       // fetch user charts
-      const [uc, ud, ust] = await Promise.all([
+      const dateStr = (q('#userHourlyDate').value || new Date().toISOString().slice(0,10));
+      const [uc, ud, ust, uh, us] = await Promise.all([
         supabase.rpc('fn_dashboard_guarded_user_daily_completions', { p_user_id: userId, p_days: range }),
         supabase.rpc('fn_dashboard_guarded_user_daily_changes', { p_user_id: userId, p_days: range }),
-        supabase.rpc('fn_dashboard_guarded_user_status_table', { p_user_id: userId, p_project: currentProject })
+        supabase.rpc('fn_dashboard_guarded_user_status_table', { p_user_id: userId, p_project: currentProject }),
+        supabase.rpc('fn_dashboard_guarded_user_hourly_changes', { p_user_id: userId, p_date: dateStr }),
+        supabase.rpc('fn_dashboard_guarded_user_summary_metrics', { p_user_id: userId, p_project: currentProject })
       ]);
       if (uc.error) showError(uc.error.message); else {
         const labels = (uc.data||[]).map(r=> new Date(r.day).toLocaleDateString('de-DE'));
