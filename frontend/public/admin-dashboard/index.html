@@ -511,6 +511,70 @@
     </section>
   </main>
 
+  <!-- PDF Export Modal -->
+  <div class="modal" id="pdfModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">
+          <i class="fas fa-file-pdf"></i> PDF-Report erstellen
+        </h3>
+        <button class="modal-close" onclick="closePDFModal()">&times;</button>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">Projekt auswählen:</label>
+        <select class="form-select" id="pdfProjectSelect">
+          <option value="">Bitte Projekt wählen...</option>
+        </select>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">Zeitraum:</label>
+        <select class="form-select" id="pdfTimeRange">
+          <option value="7">Letzte 7 Tage</option>
+          <option value="30" selected>Letzte 30 Tage</option>
+          <option value="90">Letzte 90 Tage</option>
+          <option value="365">Letztes Jahr</option>
+        </select>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">Report-Typ:</label>
+        <select class="form-select" id="pdfReportType">
+          <option value="full">Vollständiger Report (Projekt + alle Mitarbeiter)</option>
+          <option value="project">Nur Projekt-Übersicht</option>
+          <option value="summary">Executive Summary</option>
+        </select>
+      </div>
+      
+      <div class="modal-actions">
+        <button class="btn-modal btn-cancel" onclick="closePDFModal()">
+          <i class="fas fa-times"></i> Abbrechen
+        </button>
+        <button class="btn-modal btn-export" id="btnGeneratePDF" onclick="generatePDFReport()">
+          <i class="fas fa-file-pdf"></i> PDF generieren
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PDF Generation Overlay -->
+  <div class="pdf-overlay" id="pdfOverlay">
+    <div class="pdf-progress">
+      <h3><i class="fas fa-file-pdf"></i> PDF wird erstellt...</h3>
+      <p id="pdfStatus">Daten werden geladen...</p>
+      <div class="progress-bar">
+        <div class="progress-fill" id="pdfProgressFill"></div>
+      </div>
+      <p style="margin-top:16px;opacity:0.6">Bitte warten Sie einen Moment</p>
+    </div>
+  </div>
+
+  <!-- Hidden PDF Container for Generation -->
+  <div class="pdf-container" id="pdfContainer">
+    <!-- PDF content will be generated here -->
+  </div>
+
   <script>
     const SUPABASE_URL = 'https://whigasnqcvjkilkmbfld.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndoaWdhc25xY3Zqa2lsa21iZmxkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQyNDE1OTIsImV4cCI6MjA2OTgxNzU5Mn0.tfUnIP_oWy3N9UM6Ws9mPiKqsGtj8_kIOMW42E298rc';
