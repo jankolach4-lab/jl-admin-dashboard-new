@@ -260,11 +260,11 @@
 
   - task: "Admin Dashboard SQL Funktionen fehlend"
     implemented: true
-    working: false
+    working: true
     file: "scripts/supabase_dashboard_user_summary.sql"
     stuck_count: 1
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: false
         agent: "user"
@@ -272,6 +272,9 @@
       - working: "NA"
         agent: "main"
         comment: "Fehlende SQL-Funktionen identifiziert: fn_dashboard_user_summary_metrics und fn_dashboard_user_hourly_changes waren nicht in vorhandenen Scripts. Neue Datei supabase_dashboard_user_summary.sql erstellt mit korrigierter Join-Logik (ac.contact_key::text = ar.contact_id::text)"
+      - working: true
+        agent: "user"
+        comment: "Problem gelöst! Nach mehreren Iterationen mit korrigierten SQL-Spaltennamen und vereinfachter Logik (wie bei anderen funktionierenden User-Funktionen) funktioniert die Zusammenfassung (Mitarbeiter) Tabelle jetzt korrekt und zeigt echte Werte an."
 
 ## agent_communication:
   - agent: "main"
