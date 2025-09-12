@@ -129,6 +129,53 @@
       :root{--bg:#0f172a;--surface:#1e293b;--text:#f1f5f9;--muted:#94a3b8;--border:#334155}
       .live-status{background:rgba(16,185,129,.2)}
     }
+
+    /* PDF Export Modal */
+    .modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:1000;display:none;align-items:center;justify-content:center}
+    .modal-content{background:var(--surface);border-radius:var(--radius);padding:24px;max-width:500px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.3)}
+    .modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+    .modal-title{font-size:20px;font-weight:700;color:var(--text)}
+    .modal-close{background:none;border:none;font-size:24px;cursor:pointer;color:var(--muted);padding:0;width:24px;height:24px}
+    .modal-close:hover{color:var(--text)}
+    .form-group{margin-bottom:16px}
+    .form-label{display:block;margin-bottom:6px;font-weight:600;color:var(--text)}
+    .form-select{width:100%;padding:12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);font-size:14px}
+    .form-select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+    .modal-actions{display:flex;gap:12px;justify-content:flex-end;margin-top:24px}
+    .btn-modal{padding:10px 20px;border-radius:8px;font-weight:600;cursor:pointer;transition:all 0.2s}
+    .btn-cancel{background:var(--muted);color:white;border:none}
+    .btn-cancel:hover{background:#6b7280}
+    .btn-export{background:var(--accent);color:white;border:none}
+    .btn-export:hover{background:var(--accent-600)}
+    .btn-export:disabled{background:var(--muted);cursor:not-allowed}
+
+    /* PDF Generation Overlay */
+    .pdf-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:2000;display:none;align-items:center;justify-content:center;flex-direction:column}
+    .pdf-progress{color:white;text-align:center}
+    .pdf-progress h3{margin-bottom:16px;font-size:24px}
+    .pdf-progress p{margin-bottom:8px;opacity:0.8}
+    .progress-bar{width:300px;height:4px;background:rgba(255,255,255,0.2);border-radius:2px;overflow:hidden}
+    .progress-fill{height:100%;background:var(--accent);width:0%;transition:width 0.3s;border-radius:2px}
+
+    /* Hidden PDF Container */
+    .pdf-container{position:absolute;top:-10000px;left:-10000px;width:794px;background:white;color:#000;font-family:Arial,sans-serif;z-index:-1000}
+    .pdf-page{width:794px;min-height:1123px;padding:40px;box-sizing:border-box;background:white;page-break-after:always}
+    .pdf-header{text-align:center;margin-bottom:30px;border-bottom:2px solid #2563eb;padding-bottom:20px}
+    .pdf-title{font-size:28px;font-weight:bold;color:#2563eb;margin-bottom:8px}
+    .pdf-subtitle{font-size:16px;color:#666;margin-bottom:4px}
+    .pdf-date{font-size:14px;color:#888}
+    .pdf-section{margin-bottom:30px}
+    .pdf-section-title{font-size:18px;font-weight:bold;color:#2563eb;margin-bottom:15px;border-bottom:1px solid #e5e7eb;padding-bottom:5px}
+    .pdf-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px}
+    .pdf-chart{width:100%;height:250px;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:15px}
+    .pdf-table{width:100%;border-collapse:collapse;margin-bottom:20px}
+    .pdf-table th,.pdf-table td{padding:8px 12px;border:1px solid #e5e7eb;text-align:left;font-size:12px}
+    .pdf-table th{background:#f8fafc;font-weight:bold}
+    .pdf-kpi{display:flex;justify-content:space-between;margin-bottom:15px}
+    .pdf-kpi-item{text-align:center;flex:1}
+    .pdf-kpi-value{font-size:24px;font-weight:bold;color:#2563eb;margin-bottom:4px}
+    .pdf-kpi-label{font-size:12px;color:#666}
+    .pdf-footer{text-align:center;color:#888;font-size:12px;margin-top:30px;padding-top:20px;border-top:1px solid #e5e7eb}
   </style>
 </head>
 <body>
