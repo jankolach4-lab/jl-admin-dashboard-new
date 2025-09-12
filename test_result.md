@@ -251,11 +251,12 @@
 
 ## test_plan:
   current_focus:
-    - "Sidebar Navigation Klicks"
+    - "Admin Dashboard SQL Funktionen fehlend"
   stuck_tasks:
     - "Sidebar Navigation Klicks"
+    - "Admin Dashboard SQL Funktionen fehlend"
   test_all: false
-  test_priority: "stuck_first"
+  test_priority: "high_first"
 
   - task: "Admin Dashboard SQL Funktionen fehlend"
     implemented: true
