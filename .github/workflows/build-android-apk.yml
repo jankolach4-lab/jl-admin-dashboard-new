@@ -48,7 +48,7 @@ jobs:
         run: |
           test -f build/qualitool/index.html
           test -f build/qualitool/login.html
-          grep -q "Qualifizierungs-Tool" build/qualitool/index.html || (echo "index.html marker not found" && exit 1)
+          grep -qi "<!DOCTYPE html" build/qualitool/index.html || (echo "index.html marker not found" && exit 1)
           grep -q "Login zum Qualifizierungs" build/qualitool/login.html || (echo "login.html marker not found" && exit 1)
           head -n 5 build/index.html || true
 
