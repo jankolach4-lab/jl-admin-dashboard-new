@@ -1,43 +1,3 @@
--- Admin Dashboard Basics for Supabase (Projects & Users overview)
--- This script creates minimal tables, whitelist and SECURITY DEFINER functions
--- to expose cross-user analytics safely to authenticated admin users only.
-
-set check_function_bodies = off;
-
--- 1) Optional directory for display names
-create table if not exists public.user_directory (
-  user_id uuid primary key,
-  email text unique,
-  display_name text,
-  created_at timestamptz default now()
-);
-
--- 2) Admin whitelist (by email). Only emails listed here may call the RPCs below.
-create table if not exists public.admin_whitelist (
-  email text primary key,
-  created_at timestamptz default now()
-);
-
--- 3) Helper: get current JWT email
-create or replace function public.fn_current_email()
-returns text language sql stable as $$
-  select coalesce(
-    nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'email',
-    ''
-  );
-$$;
-
--- 4) Access guard: raises exception if email not whitelisted
-create or replace function public.fn_require_admin()
-returns void language plpgsql security definer as $$
-declare v_email text;
-begin
-  v_email := public.fn_current_email();
-  if v_email is null or not exists(select 1 from public.admin_whitelist where email = v_email) then
-    raise exception 'admin_only: %', coalesce(v_email, 'no_email');
-  end if;
-end; $$;
-
 -- 5) SECURITY DEFINER RPCs
 -- Note: Adjust field names if your analytics tables use different names.
 
@@ -46,12 +6,14 @@ create or replace function public.fn_dashboard_projects()
 returns table(project text, total_we bigint, user_count integer, users uuid[])
 language sql security definer set search_path = public as $$
   select
-    coalesce(ar.project, ar.city, ar.ort) as project,
-    count(*) as total_we,
-    count(distinct ar.user_id) as user_count,
+    coalesce(nullif(ac.ort,''), 'Unbekannt') as project,
+    count(*)::bigint as total_we,
+    count(distinct ar.user_id)::int as user_count,
     array_agg(distinct ar.user_id) as users
   from public.analytics_residents ar
+  join public.analytics_contacts ac on ac.contact_key::text = ar.contact_id::text
   group by 1
+  having count(*) &gt; 0
   order by 1
 $$;
 
@@ -60,17 +22,19 @@ create or replace function public.fn_dashboard_project_users(p_project text)
 returns table(user_id uuid, email text, display_name text, we_count bigint)
 language sql security definer set search_path = public as $$
   with base as (
-    select ar.user_id
+    select distinct ar.user_id
     from public.analytics_residents ar
-    where coalesce(ar.project, ar.city, ar.ort) = p_project
+    join public.analytics_contacts ac on ac.contact_key::text = ar.contact_id::text
+    where coalesce(nullif(ac.ort,''), 'Unbekannt') = p_project
   )
   select b.user_id,
          ud.email,
          coalesce(ud.display_name, ud.email) as display_name,
          (
-           select count(*) from public.analytics_residents ar2
+           select count(*)::bigint from public.analytics_residents ar2
+           join public.analytics_contacts ac2 on ac2.contact_key::text = ar2.contact_id::text
            where ar2.user_id = b.user_id
-             and coalesce(ar2.project, ar2.city, ar2.ort) = p_project
+             and coalesce(nullif(ac2.ort,''), 'Unbekannt') = p_project
          ) as we_count
   from base b
   left join public.user_directory ud on ud.user_id = b.user_id
@@ -88,14 +52,14 @@ returns jsonb language sql security definer set search_path = public as $$
      limit 1), '{}'::jsonb);
 $$;
 
--- 5.4 Daily user status changes over N days
+-- 5.4 Daily user status changes over N days (GLOBAL)
 create or replace function public.fn_dashboard_user_daily_changes(p_user_id uuid, p_days int)
 returns table(day date, changes integer)
 language sql security definer set search_path = public as $$
   select day::date, coalesce(changes,0)::int
   from public.v_daily_user_status_changes
   where user_id = p_user_id
-    and day >= (now() - (p_days||' days')::interval)
+    and day &gt;= (now() - (p_days||' days')::interval)
   order by day asc
 $$;
 
