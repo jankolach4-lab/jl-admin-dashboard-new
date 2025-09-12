@@ -257,9 +257,24 @@
   test_all: false
   test_priority: "stuck_first"
 
+  - task: "Admin Dashboard SQL Funktionen fehlend"
+    implemented: true
+    working: false
+    file: "scripts/supabase_dashboard_user_summary.sql"
+    stuck_count: 1
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "user"
+        comment: "Fehler: function public.fn_dashboard_user_summary_metrics(uuid, text) does not exist - Zusammenfassung (Mitarbeiter) funktioniert nicht"
+      - working: "NA"
+        agent: "main"
+        comment: "Fehlende SQL-Funktionen identifiziert: fn_dashboard_user_summary_metrics und fn_dashboard_user_hourly_changes waren nicht in vorhandenen Scripts. Neue Datei supabase_dashboard_user_summary.sql erstellt mit korrigierter Join-Logik (ac.contact_key::text = ar.contact_id::text)"
+
 ## agent_communication:
   - agent: "main"
-    message: "Bitte Frontend-Tests fokussiert auf Sidebar: 1) In login.html via localStorage offline_allowed=true und last_user_id='test-user' setzen (Offline-Fallback simulieren). 2) index.html laden und nacheinander die Sidebar-Icons (#import, #add, #stats, #calendar, #contacts) anklicken. 3) Verifizieren, dass die jeweils zugehörigen Sektionen sichtbar sind und alle anderen Hauptsektionen ausgeblendet werden. 4) Zusätzlich: Initial-Hash testen (#import direkt aufrufen) und sicherstellen, dass showSection korrekt greift. 5) Konsolenfehler und [QT-Click] Logs mit ausgeben."
+    message: "KRITISCHES PROBLEM IDENTIFIZIERT: Admin Dashboard ruft nicht-existierende SQL-Funktionen auf (fn_dashboard_user_summary_metrics, fn_dashboard_user_hourly_changes). Neue SQL-Datei erstellt mit diesen Funktionen. Problem: JOIN-Logik zwischen analytics_contacts und analytics_residents war fehlerhaft. KORREKTUR: Verwende ac.contact_key::text = ar.contact_id::text statt der alten Join-Bedingung. SQL-Skript muss in Supabase ausgeführt werden, bevor Admin Dashboard korrekt funktioniert."
   - agent: "testing"
     message: "Frontend-Tests abgeschlossen. KRITISCHER BEFUND: HTML-Struktur war fehlerhaft (fehlende DOCTYPE, html, head, body Tags) - wurde korrigiert. Login-Enforcement funktioniert korrekt, aber JavaScript-Funktionen laden nicht vollständig. SCHWERWIEGEND: Sichtbarer JavaScript-Code beim Scrollen gefunden - muss behoben werden. Import/Export-Buttons existieren aber sind nicht sichtbar. Sidebar-Navigation teilweise funktional."
   - agent: "testing"
