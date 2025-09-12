@@ -1256,6 +1256,343 @@
       window.location.href='./login.html'; 
     });
 
+    // PDF Export functionality
+    q('#btnExportPDF').addEventListener('click', openPDFModal);
+
+    function openPDFModal(){
+      // Populate project selector
+      const select = q('#pdfProjectSelect');
+      select.innerHTML = '<option value="">Bitte Projekt wählen...</option>';
+      
+      allProjects.forEach(project => {
+        const option = document.createElement('option');
+        option.value = project.project;
+        option.textContent = `${project.project} (${project.total_we} WE, ${project.user_count} MA)`;
+        select.appendChild(option);
+      });
+      
+      q('#pdfModal').style.display = 'flex';
+    }
+
+    function closePDFModal(){
+      q('#pdfModal').style.display = 'none';
+    }
+
+    async function generatePDFReport(){
+      const selectedProject = q('#pdfProjectSelect').value;
+      const timeRange = parseInt(q('#pdfTimeRange').value);
+      const reportType = q('#pdfReportType').value;
+      
+      if(!selectedProject){
+        alert('Bitte wählen Sie ein Projekt aus!');
+        return;
+      }
+      
+      // Close modal and show overlay
+      closePDFModal();
+      q('#pdfOverlay').style.display = 'flex';
+      
+      try {
+        await createPDFReport(selectedProject, timeRange, reportType);
+      } catch(error) {
+        console.error('PDF generation error:', error);
+        alert('Fehler beim Erstellen des PDF-Reports: ' + error.message);
+      } finally {
+        q('#pdfOverlay').style.display = 'none';
+      }
+    }
+
+    async function createPDFReport(projectName, timeRange, reportType){
+      updatePDFProgress('Projektdaten werden geladen...', 10);
+      
+      // Load project data
+      const projectData = allProjects.find(p => p.project === projectName);
+      if(!projectData){
+        throw new Error('Projekt nicht gefunden');
+      }
+      
+      updatePDFProgress('Mitarbeiterdaten werden geladen...', 20);
+      
+      // Load project users
+      const { data: users, error: usersError } = await supabase.rpc('fn_dashboard_guarded_project_users', { 
+        p_project: projectName 
+      });
+      if(usersError) throw usersError;
+      
+      updatePDFProgress('Analytics-Daten werden geladen...', 40);
+      
+      // Load analytics data
+      const [completionsData, changesData, statusData] = await Promise.all([
+        supabase.rpc('fn_dashboard_guarded_project_daily_completions', { 
+          p_project: projectName, 
+          p_days: timeRange 
+        }),
+        supabase.rpc('fn_dashboard_guarded_project_daily_changes', { 
+          p_project: projectName, 
+          p_days: timeRange 
+        }),
+        supabase.rpc('fn_dashboard_guarded_project_status_table', { 
+          p_project: projectName 
+        })
+      ]);
+      
+      if(completionsData.error) throw completionsData.error;
+      if(changesData.error) throw changesData.error;
+      if(statusData.error) throw statusData.error;
+      
+      updatePDFProgress('Mitarbeiter-Details werden geladen...', 60);
+      
+      // Load individual user data if full report
+      let userDetails = [];
+      if(reportType === 'full'){
+        for(let user of users || []){
+          const [userCompl, userChanges, userSummary] = await Promise.all([
+            supabase.rpc('fn_dashboard_guarded_user_daily_completions', { 
+              p_user_id: user.user_id, 
+              p_days: timeRange 
+            }),
+            supabase.rpc('fn_dashboard_guarded_user_daily_changes', { 
+              p_user_id: user.user_id, 
+              p_days: timeRange 
+            }),
+            supabase.rpc('fn_dashboard_guarded_user_summary_metrics', { 
+              p_user_id: user.user_id, 
+              p_project: projectName 
+            })
+          ]);
+          
+          userDetails.push({
+            user,
+            completions: userCompl.data || [],
+            changes: userChanges.data || [],
+            summary: userSummary.data || {}
+          });
+        }
+      }
+      
+      updatePDFProgress('PDF wird generiert...', 80);
+      
+      // Generate PDF content
+      const pdfHTML = generatePDFHTML({
+        project: projectData,
+        projectName,
+        users: users || [],
+        userDetails,
+        completions: completionsData.data || [],
+        changes: changesData.data || [],
+        status: statusData.data || {},
+        timeRange,
+        reportType,
+        generatedAt: new Date()
+      });
+      
+      // Insert into hidden container
+      q('#pdfContainer').innerHTML = pdfHTML;
+      
+      updatePDFProgress('PDF wird erstellt...', 90);
+      
+      // Generate PDF using html2canvas + jsPDF
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      
+      const pages = q('#pdfContainer').querySelectorAll('.pdf-page');
+      
+      for(let i = 0; i < pages.length; i++){
+        if(i > 0) pdf.addPage();
+        
+        const canvas = await html2canvas(pages[i], {
+          scale: 2,
+          backgroundColor: '#ffffff',
+          useCORS: true,
+          allowTaint: true,
+          width: 794,
+          height: 1123
+        });
+        
+        const imgData = canvas.toDataURL('image/png');
+        pdf.addImage(imgData, 'PNG', 0, 0, 210, 297);
+      }
+      
+      updatePDFProgress('PDF wird gespeichert...', 100);
+      
+      // Download PDF
+      const fileName = `${projectName}_Report_${new Date().toISOString().slice(0,10)}.pdf`;
+      pdf.save(fileName);
+      
+      // Clean up
+      q('#pdfContainer').innerHTML = '';
+      
+      showSuccess(`PDF-Report "${fileName}" wurde erfolgreich erstellt!`);
+    }
+
+    function updatePDFProgress(status, percent){
+      q('#pdfStatus').textContent = status;
+      q('#pdfProgressFill').style.width = percent + '%';
+    }
+
+    function generatePDFHTML(data){
+      const { project, projectName, users, userDetails, completions, changes, status, timeRange, reportType, generatedAt } = data;
+      
+      // Calculate summary stats
+      const totalCompletions = completions.reduce((sum, d) => sum + (d.completions || 0), 0);
+      const totalChanges = changes.reduce((sum, d) => sum + (d.changes || 0), 0);
+      const avgChangesPerDay = Math.round(totalChanges / timeRange);
+      
+      let html = `
+        <div class="pdf-page">
+          <div class="pdf-header">
+            <div class="pdf-title">Projekt-Report: ${projectName}</div>
+            <div class="pdf-subtitle">Zeitraum: ${timeRange} Tage • Erstellt am ${generatedAt.toLocaleDateString('de-DE')}</div>
+            <div class="pdf-date">Admin Dashboard Pro</div>
+          </div>
+          
+          <div class="pdf-section">
+            <div class="pdf-section-title">Projekt-Übersicht</div>
+            <div class="pdf-kpi">
+              <div class="pdf-kpi-item">
+                <div class="pdf-kpi-value">${project.total_we || 0}</div>
+                <div class="pdf-kpi-label">WE Gesamt</div>
+              </div>
+              <div class="pdf-kpi-item">
+                <div class="pdf-kpi-value">${project.user_count || 0}</div>
+                <div class="pdf-kpi-label">Mitarbeiter</div>
+              </div>
+              <div class="pdf-kpi-item">
+                <div class="pdf-kpi-value">${totalCompletions}</div>
+                <div class="pdf-kpi-label">Abschlüsse</div>
+              </div>
+              <div class="pdf-kpi-item">
+                <div class="pdf-kpi-value">${totalChanges}</div>
+                <div class="pdf-kpi-label">Änderungen</div>
+              </div>
+              <div class="pdf-kpi-item">
+                <div class="pdf-kpi-value">${avgChangesPerDay}</div>
+                <div class="pdf-kpi-label">Ø Änderungen/Tag</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="pdf-section">
+            <div class="pdf-section-title">Status-Verteilung</div>
+            <table class="pdf-table">
+              <thead>
+                <tr><th>Status</th><th>Anzahl</th><th>Anteil</th></tr>
+              </thead>
+              <tbody>`;
+      
+      (status.table || []).forEach(row => {
+        html += `<tr><td>${row.status}</td><td>${row.absolute}</td><td>${row.percent}%</td></tr>`;
+      });
+      
+      html += `</tbody></table></div>
+          
+          <div class="pdf-section">
+            <div class="pdf-section-title">Mitarbeiter-Übersicht</div>
+            <table class="pdf-table">
+              <thead>
+                <tr><th>Mitarbeiter</th><th>WE</th><th>Anteil am Projekt</th></tr>
+              </thead>
+              <tbody>`;
+      
+      users.forEach(user => {
+        const percentage = project.total_we > 0 ? ((user.we_count / project.total_we) * 100).toFixed(1) : 0;
+        const name = user.display_name || user.email || user.user_id;
+        html += `<tr><td>${name}</td><td>${user.we_count || 0}</td><td>${percentage}%</td></tr>`;
+      });
+      
+      html += `</tbody></table></div>
+          <div class="pdf-footer">
+            Erstellt mit Admin Dashboard Pro • ${new Date().toLocaleString('de-DE')}
+          </div>
+        </div>`;
+      
+      // Add detailed user pages for full report
+      if(reportType === 'full' && userDetails.length > 0){
+        userDetails.forEach(userDetail => {
+          const user = userDetail.user;
+          const summary = userDetail.summary;
+          const name = user.display_name || user.email || user.user_id;
+          
+          html += `
+            <div class="pdf-page">
+              <div class="pdf-header">
+                <div class="pdf-title">Mitarbeiter-Details: ${name}</div>
+                <div class="pdf-subtitle">Projekt: ${projectName} • Zeitraum: ${timeRange} Tage</div>
+                <div class="pdf-date">Erstellt am ${generatedAt.toLocaleDateString('de-DE')}</div>
+              </div>
+              
+              <div class="pdf-section">
+                <div class="pdf-section-title">Leistungsübersicht</div>
+                <div class="pdf-kpi">
+                  <div class="pdf-kpi-item">
+                    <div class="pdf-kpi-value">${summary.total_changes || 0}</div>
+                    <div class="pdf-kpi-label">Gesamt Änderungen</div>
+                  </div>
+                  <div class="pdf-kpi-item">
+                    <div class="pdf-kpi-value">${summary.completions || 0}</div>
+                    <div class="pdf-kpi-label">Abschlüsse</div>
+                  </div>
+                  <div class="pdf-kpi-item">
+                    <div class="pdf-kpi-value">${summary.avg_changes_per_completion || 0}</div>
+                    <div class="pdf-kpi-label">Ø Änderungen/Abschluss</div>
+                  </div>
+                  <div class="pdf-kpi-item">
+                    <div class="pdf-kpi-value">${summary.we_with_status || 0}</div>
+                    <div class="pdf-kpi-label">WE mit Status</div>
+                  </div>
+                  <div class="pdf-kpi-item">
+                    <div class="pdf-kpi-value">${(summary.we_with_status_percent || 0).toFixed(1)}%</div>
+                    <div class="pdf-kpi-label">Quote</div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="pdf-section">
+                <div class="pdf-section-title">Tägliche Aktivität</div>
+                <table class="pdf-table">
+                  <thead>
+                    <tr><th>Datum</th><th>Abschlüsse</th><th>Änderungen</th></tr>
+                  </thead>
+                  <tbody>`;
+          
+          // Combine completions and changes by date
+          const dailyActivity = new Map();
+          userDetail.completions.forEach(c => {
+            const date = new Date(c.day).toLocaleDateString('de-DE');
+            if(!dailyActivity.has(date)) dailyActivity.set(date, {completions: 0, changes: 0});
+            dailyActivity.get(date).completions = c.completions;
+          });
+          userDetail.changes.forEach(c => {
+            const date = new Date(c.day).toLocaleDateString('de-DE');
+            if(!dailyActivity.has(date)) dailyActivity.set(date, {completions: 0, changes: 0});
+            dailyActivity.get(date).changes = c.changes;
+          });
+          
+          Array.from(dailyActivity.entries())
+            .sort((a, b) => new Date(a[0].split('.').reverse().join('-')) - new Date(b[0].split('.').reverse().join('-')))
+            .slice(-7) // Last 7 days for space
+            .forEach(([date, activity]) => {
+              html += `<tr><td>${date}</td><td>${activity.completions}</td><td>${activity.changes}</td></tr>`;
+            });
+          
+          html += `</tbody></table></div>
+              <div class="pdf-footer">
+                Mitarbeiter-Report für ${name} • ${new Date().toLocaleString('de-DE')}
+              </div>
+            </div>`;
+        });
+      }
+      
+      return html;
+    }
+
+    // Close modal when clicking outside
+    q('#pdfModal').addEventListener('click', (e) => {
+      if(e.target === q('#pdfModal')){
+        closePDFModal();
+      }
+    });
+
     q('#range').addEventListener('change', async () => {
       if (currentProject) await refreshProjectCharts();
       if (currentUserId && currentProject) await selectUser(currentUserId, q('#selUser').textContent);
