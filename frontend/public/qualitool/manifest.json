@@ -1,0 +1,12 @@
+{
+  "name": "Qualifizierungs-Tool",
+  "short_name": "QualiTool",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "icons": [
+    { "src": "icon-192x192.svg", "sizes": "192x192", "type": "image/svg+xml" },
+    { "src": "qt-logo.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
