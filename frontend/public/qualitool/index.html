@@ -3338,7 +3338,11 @@
       if (Date.now()-start > maxMs) throw new Error('supabase-js nicht geladen');
       await sleep(100);
     }
-    if (!sb) sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false }});
+    if (window.supa) { sb = window.supa; return sb; }
+    if (!sb) {
+      sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false }});
+      window.supa = sb;
+    }
     return sb;
   }
 
