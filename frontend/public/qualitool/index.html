@@ -1699,6 +1699,7 @@
   }
   function saveContacts() {
     localStorage.setItem('contacts', JSON.stringify(contacts));
+    try { window.contacts = contacts; } catch(_) {}
   }
   function updateStreetFilter() {
     const streetFilter = document.getElementById('streetFilter');
