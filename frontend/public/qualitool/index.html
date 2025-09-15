@@ -3463,7 +3463,18 @@
           const { error } = await client.rpc('fn_public_log_status_event', payload);
           if (error) throw error;
           q.shift(); setQueue(q);
-        }catch(e){ console.warn('Status-Event Upload fehlgeschlagen:', e?.message||e); return; }
+        }catch(e){
+          // Wenn RPC nicht existiert (404) oder verboten (401/403), loggen und Backoff (nicht spammen)
+          const msg = e?.message || '';
+          if (/404|not\s*found|function/i.test(msg)){
+            console.warn('Status-Event RPC nicht verfügbar – wird später erneut versucht');
+          } else {
+            console.warn('Status-Event Upload fehlgeschlagen:', msg);
+          }
+          // Verzögerung, dann Abbruch für diesen Durchlauf (Item bleibt in Queue)
+          await sleep(2000);
+          return;
+        }
       }
 
       // Weiter iterieren, aber UI nicht blockieren
