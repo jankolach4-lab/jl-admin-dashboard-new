@@ -3440,18 +3440,20 @@
 
       const next = q[0];
       if (next.type === 'contacts'){
-        // Versuche RPC, ansonsten Fallback auf Table Upsert
+        // Zuerst: Table Upsert (vermeidet 404, falls RPC nicht existiert)
         let ok = false, lastErr = null;
         try{
+          const { error } = await client.from('user_contacts').upsert({ user_id: user.id, contacts: next.data }, { onConflict: 'user_id' });
+          if (error) throw error; ok = true;
+        }catch(e0){ lastErr = e0; try{
+          // Dann RPC Variante 1
           const { error } = await client.rpc('fn_public_upsert_user_contacts', { contacts: next.data });
           if (error) throw error; ok = true;
         }catch(e1){ lastErr = e1; try{
+          // Dann RPC Variante 2 (alternativer Paramname)
           const { error } = await client.rpc('fn_public_upsert_user_contacts', { contacts_json: next.data });
           if (error) throw error; ok = true;
-        }catch(e2){ lastErr = e2; try{
-          const { error } = await client.from('user_contacts').upsert({ user_id: user.id, contacts: next.data }, { onConflict: 'user_id' });
-          if (error) throw error; ok = true;
-        }catch(e3){ lastErr = e3; }} }
+        }catch(e2){ lastErr = e2; }}
         if (ok){ q.shift(); setQueue(q); }
         else { console.warn('Kontakt-Upload fehlgeschlagen:', lastErr?.message||lastErr); return; }
       }
