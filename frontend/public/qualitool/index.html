@@ -2188,7 +2188,8 @@
         } catch(_){}
       }
 
-      document.addEventListener('click', (e) => {
+      // Diagnose-Logger deaktiviert
+      /* document.addEventListener('click', (e) => {
         const t = e.target;
         const isSidebar = !!t.closest && !!t.closest('.sidebar-nav');
         const href = t.getAttribute && t.getAttribute('href');
