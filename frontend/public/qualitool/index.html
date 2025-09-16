@@ -3165,16 +3165,7 @@
     // UI-Beschriftungen beibehalten, kein Austausch der bestehenden Buttons (Performance)
     // Der vorhandene Input #excelImport ist bereits im DOM definiert.
     // Attach handlers programmatically to avoid inline issues in some preview containers
-    const btnX = document.getElementById('btnExportExcel');
-    if (btnX) btnX.addEventListener('click', async (e) => {
-      e.preventDefault();
-      try { await exportToExcel(); } catch(err){ console.error('Export error:', err); alert('Export fehlgeschlagen: '+(err.message||err)); }
-    });
-    const btnC = document.getElementById('btnExportCSV');
-    if (btnC) btnC.addEventListener('click', async (e) => {
-      e.preventDefault();
-      try { await exportToCSV(); } catch(err){ console.error('CSV export error:', err); alert('CSV-Export fehlgeschlagen: '+(err.message||err)); }
-    });
+    
   
     // Initialisieren sobald DOM geladen ist (direkt ausführen)
     (async () => {
