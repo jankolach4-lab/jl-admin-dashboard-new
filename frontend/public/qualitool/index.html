@@ -3420,56 +3420,67 @@
 
   async function flushQueue(){
     if (!navigator.onLine) return;
-    try{
+    try {
       const client = await awaitSupabase();
       const user = await getUser();
-      if (!user){ return; }
+      if (!user) return;
 
       let q = getQueue();
       if (!q.length) return;
 
       const next = q[0];
-      if (next.type === 'contacts'){
-        // Zuerst: Table Upsert (vermeidet 404, falls RPC nicht existiert)
+
+      if (next.type === 'contacts') {
         let ok = false, lastErr = null;
-        try{
+        try {
           const { error } = await client.from('user_contacts').upsert({ user_id: user.id, contacts: next.data }, { onConflict: 'user_id' });
-          if (error) throw error; ok = true;
-        }catch(e0){ lastErr = e0; try{
-          // Dann RPC Variante 1
-          const { error } = await client.rpc('fn_public_upsert_user_contacts', { contacts: next.data });
-          if (error) throw error; ok = true;
-        }catch(e1){ lastErr = e1; try{
-          // Dann RPC Variante 2 (alternativer Paramname)
-          const { error } = await client.rpc('fn_public_upsert_user_contacts', { contacts_json: next.data });
-          if (error) throw error; ok = true;
-        }catch(e2){ lastErr = e2; }}}
-        if (ok){ q.shift(); setQueue(q); }
-        else { console.warn('Kontakt-Upload fehlgeschlagen:', lastErr?.message||lastErr); return; }
-      }
-      else if (next.type === 'event'){
-        try{
+          if (error) throw error;
+          ok = true;
+        } catch (e0) {
+          lastErr = e0;
+          try {
+            const { error } = await client.rpc('fn_public_upsert_user_contacts', { contacts: next.data });
+            if (error) throw error;
+            ok = true;
+          } catch (e1) {
+            lastErr = e1;
+            try {
+              const { error } = await client.rpc('fn_public_upsert_user_contacts', { contacts_json: next.data });
+              if (error) throw error;
+              ok = true;
+            } catch (e2) {
+              lastErr = e2;
+            }
+          }
+        }
+        if (ok) {
+          q.shift(); setQueue(q);
+        } else {
+          console.warn('Kontakt-Upload fehlgeschlagen:', lastErr?.message || lastErr);
+          return;
+        }
+      } else if (next.type === 'event') {
+        try {
           const payload = Object.assign({ occurred_at: new Date().toISOString() }, next.data);
           const { error } = await client.rpc('fn_public_log_status_event', payload);
           if (error) throw error;
           q.shift(); setQueue(q);
-        }catch(e){
-          // Wenn RPC nicht existiert (404) oder verboten (401/403), loggen und Backoff (nicht spammen)
+        } catch (e) {
           const msg = e?.message || '';
-          if (/404|not\s*found|function/i.test(msg)){
+          if (/404|not\s*found|function/i.test(msg)) {
             console.warn('Status-Event RPC nicht verfügbar – wird später erneut versucht');
           } else {
             console.warn('Status-Event Upload fehlgeschlagen:', msg);
           }
-          // Verzögerung, dann Abbruch für diesen Durchlauf (Item bleibt in Queue)
           await sleep(2000);
           return;
         }
       }
 
-      // Weiter iterieren, aber UI nicht blockieren
       if (getQueue().length) setTimeout(flushQueue, 50);
-    }catch(e){ /* still offline oder kein Client */ }
+    } catch (e) {
+      // still offline oder kein Client
+    }
   }
 
   // 7) Hooks in bestehende Funktionen einfügen
