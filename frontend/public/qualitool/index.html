@@ -3162,12 +3162,8 @@
 
     // Hook into existing lifecycle after DOMContentLoaded at the bottom, without UI changes
 
-    document.querySelector('.import-export-buttons').innerHTML = `
-      <button onclick="document.getElementById('excelImport').click()" class="import-btn">Qualis importieren</button>
-      <button id="btnExportExcel" class="import-btn">Qualis exportieren (Excel)</button>
-      <button id="btnExportCSV" class="import-btn">CSV exportieren</button>
-      <input type="file" id="excelImport" style="display: none" accept=".xlsx,.xls" onchange="importFromExcel(this.files[0])">
-    `;
+    // UI-Beschriftungen beibehalten, kein Austausch der bestehenden Buttons (Performance)
+    // Der vorhandene Input #excelImport ist bereits im DOM definiert.
     // Attach handlers programmatically to avoid inline issues in some preview containers
     const btnX = document.getElementById('btnExportExcel');
     if (btnX) btnX.addEventListener('click', async (e) => {
