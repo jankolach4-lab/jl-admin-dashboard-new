@@ -2195,7 +2195,7 @@
         const href = t.getAttribute && t.getAttribute('href');
         const sec = href && href.startsWith('#') ? href.slice(1) : null;
         write(`Click target=${t.tagName}${isSidebar? ' [sidebar]':''} href=${href||'-'} sec=${sec||'-'}`);
-      }, { capture: true });
+      }, { capture: true }); */
 
       // Pointer-Events Diagnose
       document.querySelectorAll('.sidebar, .sidebar *').forEach(el => {
