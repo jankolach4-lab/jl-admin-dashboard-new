@@ -3190,7 +3190,8 @@
       const _save = window.saveContacts;
       window.saveContacts = function(){
         try { _save && _save(); } catch(e) { console.error(e); }
-        // Kein direkter Netz‑Sync mehr hier, Auto‑Sync Patch übernimmt das Flushen
+        // Snapshot + zeitnahes Flushen (einmal pro Speichervorgang)
+        try { enqueueContactsSnapshot(); flushSoon(); } catch(_) {}
       };
 
       // Erste Synchronisierung: Cloud -> Lokal (keine UI-Änderung)
