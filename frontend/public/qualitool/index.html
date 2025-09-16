@@ -3443,7 +3443,7 @@
           // Dann RPC Variante 2 (alternativer Paramname)
           const { error } = await client.rpc('fn_public_upsert_user_contacts', { contacts_json: next.data });
           if (error) throw error; ok = true;
-        }catch(e2){ lastErr = e2; }}
+        }catch(e2){ lastErr = e2; }}}
         if (ok){ q.shift(); setQueue(q); }
         else { console.warn('Kontakt-Upload fehlgeschlagen:', lastErr?.message||lastErr); return; }
       }
