@@ -68,7 +68,7 @@
     function setLoading(on){ $('loadingBox').style.display = on ? 'block' : 'none'; $('loginBtn').disabled = on; $('signupBtn').disabled = on; }
 
     async function getCloudContacts(){
-      const { data, error } = await supabase.from('user_contacts').select('contacts').single();
+      const { data, error } = await supabase.from('user_contacts').select('contacts').maybeSingle();
       if (error && error.code !== 'PGRST116') throw error;
       return (data && data.contacts) ? data.contacts : [];
     }
