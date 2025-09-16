@@ -3202,9 +3202,7 @@
       const _save = window.saveContacts;
       window.saveContacts = function(){
         try { _save && _save(); } catch(e) { console.error(e); }
-        // Hintergrund-Sync (best effort)
-        const data = JSON.parse(localStorage.getItem('contacts')||'[]');
-        cloudSync.upsertCloud(data).catch(err => console.warn('Cloud Sync Fehler:', err.message || err));
+        // Kein direkter Netz‑Sync mehr hier, Auto‑Sync Patch übernimmt das Flushen
       };
 
       // Erste Synchronisierung: Cloud -> Lokal (keine UI-Änderung)
