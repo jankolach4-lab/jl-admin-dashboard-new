@@ -3395,15 +3395,26 @@
       if (e.target && e.target.id === 'debugModal') closeDebug();
     }, { capture: true });
 
-    // 5x auf den ersten H1 tippen, um zu öffnen
+    // Aktivierung nur mit ?debug=1
+    function isDebugEnabled(){
+      try{
+        const q = new URLSearchParams(location.search);
+        return q.get('debug') === '1';
+      }catch(_){ return false; }
+    }
+
     window.addEventListener('DOMContentLoaded', function(){
-      const title = document.querySelector('h1');
-      if (!title) return;
-      title.addEventListener('click', function(){
-        tapCount++; if (tapTimer) clearTimeout(tapTimer);
-        tapTimer = setTimeout(() => { tapCount = 0; }, 1200);
-        if (tapCount >= 5){ tapCount = 0; openDebug(); }
-      });
+      if (!isDebugEnabled()) return; // kein UI ohne Flag
+      // Long-Press auf Suchfeld öffnet Debug
+      const si = document.getElementById('searchInput');
+      if (!si) return;
+      let pressTimer = null;
+      si.addEventListener('touchstart', () => {
+        pressTimer = setTimeout(openDebug, 800);
+      }, { passive: true });
+      si.addEventListener('touchend', () => { if (pressTimer) clearTimeout(pressTimer); }, { passive: true });
+      si.addEventListener('mousedown', () => { pressTimer = setTimeout(openDebug, 800); });
+      si.addEventListener('mouseup', () => { if (pressTimer) clearTimeout(pressTimer); });
     });
   })();
 </script>
