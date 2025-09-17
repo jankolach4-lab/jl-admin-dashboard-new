@@ -3666,6 +3666,83 @@
                 });
               }
             }
+
+  // 9) Status-Diff-Detektor: erkennt Änderungen unabhängig vom aufgerufenen Flow
+  const LAST_STATUS_MAP = 'qt_last_status_map_v1';
+  function buildStatusMap(list){
+    const map = {};
+    try{
+      (list||[]).forEach(c => {
+        const keyBase = [c.plz||'', c.ort||'', c.strasse||'', c.nummer||'', c.zusatz||''].join('|');
+        (c.residents||[]).forEach(r => {
+          const k = keyBase + '|' + (r.unit!=null? String(r.unit):'');
+          map[k] = (r.status||'').toString();
+        });
+      });
+    }catch(_){ }
+    return map;
+  }
+  function diffStatuses(oldMap, list){
+    const events = [];
+    try{
+      (list||[]).forEach(c => {
+        const base = [c.plz||'', c.ort||'', c.strasse||'', c.nummer||'', c.zusatz||''].join('|');
+        (c.residents||[]).forEach(r => {
+          const k = base + '|' + (r.unit!=null? String(r.unit):'');
+          const prev = oldMap[k] || '';
+          const now = (r.status||'').toString();
+          if (now && now !== prev){
+            // Event erzeugen
+            events.push({
+              plz: (c.plz||'').toString(),
+              ort: (c.ort||'').toString(),
+              strasse: (c.strasse||'').toString(),
+              nummer: (c.nummer||'').toString(),
+              zusatz: (c.zusatz||'').toString(),
+              resident_key: (r.unit!=null? String(r.unit):''),
+              status: now,
+              occurred_at: new Date().toISOString(),
+              notes: (r.notes||'').toString()
+            });
+          }
+        });
+      });
+    }catch(_){ }
+    return events;
+  }
+  function rescanAndEnqueueStatusDiffs(){
+    try{
+      const list = normalizeContacts(readLocalContactsRaw());
+      const old = JSON.parse(localStorage.getItem(LAST_STATUS_MAP)||'{}');
+      const evts = diffStatuses(old, list);
+      evts.forEach(e => enqueueStatusEvent(e));
+      localStorage.setItem(LAST_STATUS_MAP, JSON.stringify(buildStatusMap(list)));
+      if (evts.length) flushSoon();
+    }catch(_){ }
+  }
+
+  // globaler Click-Hook: erkennt Status-Klicks anhand von Button-Texten/CSS
+  const STATUS_HINTS = ['abschluss','onlineabschluss','termin','beraten','wiedervorlage','nicht-angetroffen','kein-eintritt','kein-interesse'];
+  document.addEventListener('click', function(e){
+    try{
+      const t = (e.target && (e.target.innerText||e.target.value||'')).toString().trim().toLowerCase();
+      if (!t) return;
+      const hit = STATUS_HINTS.some(s => t.includes(s));
+      if (!hit) return;
+      // bei Status-Klick: sofort Rescan
+      setTimeout(rescanAndEnqueueStatusDiffs, 50);
+    }catch(_){ }
+  }, true);
+
+  // Initiale Map setzen, dann periodisch prüfen (failsafe)
+  (function(){
+    try{
+      const list = normalizeContacts(readLocalContactsRaw());
+      localStorage.setItem(LAST_STATUS_MAP, JSON.stringify(buildStatusMap(list)));
+    }catch(_){}
+    setInterval(rescanAndEnqueueStatusDiffs, 30000); // alle 30s prüfen
+  })();
+
           }catch(err){ console.warn('saveResident Hook Fehler:', err); }
           // Nach jeder Änderung gesamten Kontaktbestand synchronisieren
           try{ enqueueContactsSnapshot(); flushSoon(); }catch{}
