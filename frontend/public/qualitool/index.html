@@ -3458,6 +3458,21 @@
           q.shift(); setQueue(q);
         } else {
           console.warn('Kontakt-Upload fehlgeschlagen:', lastErr?.message || lastErr);
+          // Blockade vermeiden: Item rotieren mit Retry-Counter
+          let item = q.shift();
+          item = Object.assign({ retries: 0 }, item);
+          item.retries += 1;
+          if (item.retries <= 3) { q.push(item); }
+          else {
+            // nach 3 Versuchen in Dead-Letter-Box ablegen
+            try {
+              const dl = JSON.parse(localStorage.getItem('qt_dead_contacts')||'[]');
+              dl.push({ ts: Date.now(), item, err: String(lastErr) });
+              localStorage.setItem('qt_dead_contacts', JSON.stringify(dl));
+            } catch(_){}
+          }
+          setQueue(q);
+          setTimeout(flushQueue, 50);
           return;
         }
       } else if (next.type === 'event') {
