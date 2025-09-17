@@ -3164,11 +3164,7 @@
 
     // Hook into existing lifecycle after DOMContentLoaded at the bottom, without UI changes
 
-    // UI-Beschriftungen beibehalten, kein Austausch der bestehenden Buttons (Performance)
-    // Der vorhandene Input #excelImport ist bereits im DOM definiert.
-    // Attach handlers programmatically to avoid inline issues in some preview containers
-    
-  
+
     // Initialisieren sobald DOM geladen ist (direkt ausführen)
     (async () => {
       const user = await requireAuthOrRedirect();
