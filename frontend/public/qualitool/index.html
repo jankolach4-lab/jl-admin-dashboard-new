@@ -3594,23 +3594,36 @@
         }
       } else if (next.type === 'event') {
         try {
-          const payload = Object.assign({ occurred_at: new Date().toISOString() }, next.data);
-          const { error } = await client.rpc('fn_public_log_status_event', payload);
+          // Primär: Debug-Wrapper mit expliziter user_id (stabilste Variante)
+          const { data: { user: u } } = await client.auth.getUser();
+          const payload = Object.assign({ occurred_at: new Date().toISOString(), user_id: u?.id || null }, next.data);
+          const { error } = await client.rpc('fn_debug_log_status_event', payload);
           if (error) throw error;
           q.shift(); setQueue(q);
         } catch (e) {
-          // Fallback: versuche Debug-Wrapper mit expliziter user_id
+          // Fallback: öffentliche RPC (ohne user_id)
           try {
-            const { data: { user: u } } = await client.auth.getUser();
-            const payload2 = Object.assign({ occurred_at: new Date().toISOString(), user_id: u?.id || null }, next.data);
-            const { error: e2 } = await client.rpc('fn_debug_log_status_event', payload2);
+            const payload2 = Object.assign({ occurred_at: new Date().toISOString() }, next.data);
+            const { error: e2 } = await client.rpc('fn_public_log_status_event', payload2);
             if (e2) throw e2;
             q.shift(); setQueue(q);
           } catch (e2) {
             const msg = (e2 && e2.message) || (e && e.message) || 'unbekannter Fehler';
             try { localStorage.setItem('qt_last_event_err', JSON.stringify({ t: Date.now(), msg, first: (e && e.message)||String(e) })); } catch(_) { }
-            // Backoff (nicht spammen); Item bleibt in Queue
-            await sleep(2000);
+            // Item rotieren, damit die Queue nicht blockiert
+            let q2 = getQueue();
+            let item = q2.shift();
+            item = Object.assign({ retries: 0 }, item);
+            item.retries += 1;
+            if (item.retries <= 5) { q2.push(item); } else {
+              try {
+                const dl = JSON.parse(localStorage.getItem('qt_dead_events')||'[]');
+                dl.push({ ts: Date.now(), item, err: msg });
+                localStorage.setItem('qt_dead_events', JSON.stringify(dl));
+              } catch(_) { }
+            }
+            setQueue(q2);
+            await sleep(500);
             return;
           }
         }
