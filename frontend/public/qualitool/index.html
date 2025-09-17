@@ -3399,19 +3399,29 @@
     function isDebugEnabled(){
       try{
         const q = new URLSearchParams(location.search);
-        return q.get('debug') === '1';
-      }catch(_){ return false; }
+        if (q.get('debug') === '1') return true;
+        return localStorage.getItem('qt_debug') === '1';
+      }catch(_){ return localStorage.getItem('qt_debug') === '1'; }
     }
 
     window.addEventListener('DOMContentLoaded', function(){
+      // Geheim-Activator: 5x auf den Import/Export-Bereich tippen → Debug aktivieren & öffnen
+      let tCount = 0, tTimer = null;
+      const imp = document.querySelector('.import-export-buttons');
+      if (imp){
+        imp.addEventListener('click', function(){
+          tCount++; if (tTimer) clearTimeout(tTimer);
+          tTimer = setTimeout(() => { tCount = 0; }, 1200);
+          if (tCount >= 5){ tCount = 0; try{ localStorage.setItem('qt_debug','1'); }catch(_){ } openDebug(); }
+        }, { capture: true });
+      }
+
       if (!isDebugEnabled()) return; // kein UI ohne Flag
-      // Long-Press auf Suchfeld öffnet Debug
+      // Long-Press auf Suchfeld öffnet Debug (kein sichtbarer Button, keine Interferenz mit Click)
       const si = document.getElementById('searchInput');
       if (!si) return;
       let pressTimer = null;
-      si.addEventListener('touchstart', () => {
-        pressTimer = setTimeout(openDebug, 800);
-      }, { passive: true });
+      si.addEventListener('touchstart', () => { pressTimer = setTimeout(openDebug, 800); }, { passive: true });
       si.addEventListener('touchend', () => { if (pressTimer) clearTimeout(pressTimer); }, { passive: true });
       si.addEventListener('mousedown', () => { pressTimer = setTimeout(openDebug, 800); });
       si.addEventListener('mouseup', () => { if (pressTimer) clearTimeout(pressTimer); });
