@@ -1158,6 +1158,7 @@
           <div class="import-export-buttons">
             <button onclick="document.getElementById('excelImport').click()" class="import-btn">Excel importieren</button>
             <button onclick="exportToExcel()" class="import-btn">Excel exportieren</button>
+            <button onclick="exportToCSV()" class="import-btn">CSV exportieren</button>
             <input type="file" id="excelImport" style="display: none" accept=".xlsx,.xls" onchange="importFromExcel(this.files[0])">
           </div>
         </div>
