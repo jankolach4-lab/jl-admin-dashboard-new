@@ -3312,6 +3312,102 @@
   const DEFAULT_SUPABASE_URL = 'https://whigasnqcvjkilkmbfld.supabase.co';
   const DEFAULT_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndoaWdhc25xY3Zqa2lsa21iZmxkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQyNDE1OTIsImV4cCI6MjA2OTgxNzU5Mn0.tfUnIP_oWy3N9UM6Ws9mPiKqsGtj8_kIOMW42E298rc';
   const SUPABASE_URL = window.SUPABASE_URL || DEFAULT_SUPABASE_URL;
+
+<!-- Debug Overlay (Hidden) -->
+<div id="debugModal" class="modal" style="display:none;">
+  <div class="modal-content" style="max-width: 860px; width: 92%; max-height: 80vh; overflow: auto;">
+    <h3>Debug-Informationen (Qualitool)</h3>
+    <div style="display:flex; gap:8px; justify-content:flex-end; margin-bottom:8px;">
+      <button id="dbgRefreshBtn" class="unit-btn">Aktualisieren</button>
+      <button id="dbgCopyBtn" class="unit-btn">In Zwischenablage</button>
+      <button id="dbgCloseBtn" class="unit-btn" style="background:#111827;">Schließen</button>
+    </div>
+    <pre id="debugContent" style="background:#0b1020; color:#e5e7eb; padding:12px; border-radius:8px; font-size:12px; line-height:1.4; white-space:pre-wrap; word-break:break-word;">
+    </pre>
+  </div>
+</div>
+
+<script>
+  // Debug Overlay Logic (5x auf den Titel tippen)
+  (function(){
+    let tapCount = 0, tapTimer = null;
+
+    async function getSupabaseUserId(){
+      try {
+        const client = window.supa || (window.supabase && window.supabase.createClient ? null : null);
+        if (window.supa && window.supa.auth){
+          const { data: { user } } = await window.supa.auth.getUser();
+          return user?.id || null;
+        }
+      } catch(_) {}
+      return null;
+    }
+
+    function safeParse(str){ try { return JSON.parse(str || 'null'); } catch { return str || null; } }
+
+    async function collectDebug(){
+      const info = {};
+      info.now = new Date().toISOString();
+      info.online = navigator.onLine;
+      info.userId = await getSupabaseUserId();
+      info.last_event_err = safeParse(localStorage.getItem('qt_last_event_err'));
+      let q = safeParse(localStorage.getItem('qt_sync_queue_v1')) || [];
+      info.queue_total = Array.isArray(q) ? q.length : 0;
+      info.queue_events = Array.isArray(q) ? q.filter(it => it && it.type === 'event') : [];
+      info.dead_contacts = safeParse(localStorage.getItem('qt_dead_contacts')) || [];
+      return info;
+    }
+
+    async function renderDebug(){
+      const pre = document.getElementById('debugContent');
+      const data = await collectDebug();
+      pre.textContent = JSON.stringify(data, null, 2);
+    }
+
+    function openDebug(){
+      const modal = document.getElementById('debugModal');
+      if (!modal) return;
+      modal.style.display = 'block';
+      renderDebug();
+    }
+    function closeDebug(){
+      const modal = document.getElementById('debugModal');
+      if (modal) modal.style.display = 'none';
+    }
+
+    function copyDebug(){
+      try{
+        const txt = document.getElementById('debugContent').textContent || '';
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(txt).then(()=>{ /* noop */ });
+        } else {
+          const ta = document.createElement('textarea'); ta.value = txt; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+        }
+      }catch(_){}
+    }
+
+    // Buttons
+    document.addEventListener('click', (e) => {
+      if (e.target && e.target.id === 'dbgCloseBtn') closeDebug();
+      if (e.target && e.target.id === 'dbgCopyBtn') copyDebug();
+      if (e.target && e.target.id === 'dbgRefreshBtn') renderDebug();
+      // Modal Klick außerhalb schließen
+      if (e.target && e.target.id === 'debugModal') closeDebug();
+    }, { capture: true });
+
+    // 5x auf den ersten H1 tippen, um zu öffnen
+    window.addEventListener('DOMContentLoaded', function(){
+      const title = document.querySelector('h1');
+      if (!title) return;
+      title.addEventListener('click', function(){
+        tapCount++; if (tapTimer) clearTimeout(tapTimer);
+        tapTimer = setTimeout(() => { tapCount = 0; }, 1200);
+        if (tapCount >= 5){ tapCount = 0; openDebug(); }
+      });
+    });
+  })();
+</script>
+
   const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || DEFAULT_SUPABASE_ANON_KEY;
 
   // 2) Warten bis supabase-js geladen ist und Client initialisieren (Session wird von supabase-js verwaltet)
