@@ -2481,6 +2481,8 @@
   }
   // Helper: robust file download handling (works in preview/iframe)
   function triggerDownload(blob, filename){
+    // iOS Safari/Android Browser compatibility: ensure filename is safe
+    filename = (filename || 'export.csv').replace(/[\/:*?"<>|]+/g, '-');
     try {
       if (window.showSaveFilePicker) {
         const opts = { suggestedName: filename, types: [{ description: 'Datei', accept: { 'application/octet-stream': ['.bin'], 'text/csv': ['.csv'], 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'] } }] };
