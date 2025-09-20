@@ -244,7 +244,7 @@
   current_focus:
     - "Status-Persistenz + Snapshot-Event-Trigger (Phase 1)"
   stuck_tasks:
-    - "Admin Dashboard SQL Funktionen fehlend"
+    - "Status-Persistenz + Snapshot-Event-Trigger (Phase 1)"
   test_all: false
   test_priority: "high_first"
 
