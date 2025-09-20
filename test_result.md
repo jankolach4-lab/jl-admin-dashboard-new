@@ -160,7 +160,7 @@
     implemented: true
     working: false
     file: "frontend/public/qualitool/index.html"
-    stuck_count: 4
+    stuck_count: 5
     priority: "high"
     needs_retesting: false
     status_history:
@@ -182,6 +182,9 @@
       - working: false
         agent: "testing"
         comment: "❌ VIERTER AUTOMATISIERTER TEST NACH HÄRTUNG MIT NO-OP-STUBS (20.09.2025): Umfassende Tests der Phase 1 Patch Funktionalität durchgeführt. POSITIV: ✅ window.enqueueContactsSnapshot() VERFÜGBAR (typeof === 'function'), ✅ window.rescanAndEnqueueStatusDiffs() VERFÜGBAR (typeof === 'function'), ✅ window.flushSoon() VERFÜGBAR (typeof === 'function'), ✅ window.flushQueue() VERFÜGBAR (typeof === 'function'), ✅ Offline-Fallback funktioniert (localStorage offline_allowed='true', last_user_id='test-user-1'), ✅ Kontakt-Erstellung erfolgreich (PLZ 12345, Ort Teststadt, Straße Musterweg, Nr 1, WE 1), ✅ saveResident() Funktion aufrufbar (manuelle Tests erfolgreich). KRITISCHE DEFEKTE: ❌ Import/Export-Buttons NICHT SICHTBAR nach Header-Klick, ❌ SICHTBARER JAVASCRIPT-CODE beim Scrollen (function(, addEventListener, localStorage.setItem), ❌ localStorage Queue 'qt_sync_queue_v1' wird NICHT erstellt trotz saveResident() Aufrufen, ❌ KEINE Netzwerk-RPC-Aufrufe zu Supabase getriggert trotz flushSoon() Aufrufen. FAZIT: Window-Funktionen sind jetzt verfügbar (Stubs funktionieren), aber Queue-Management und Netzwerk-Sync sind NICHT funktional."
+      - working: false
+        agent: "testing"
+        comment: "❌ FÜNFTER AUTOMATISIERTER TEST NACH UI/INIT-HÄRTUNG (20.09.2025): Umfassende Tests der Phase 1 Patch Funktionalität durchgeführt. POSITIV: ✅ Offline-Fallback funktioniert korrekt (localStorage offline_allowed='true', last_user_id='test-user-1'), ✅ Import/Export-Buttons SICHTBAR nach Header-Klick (Excel importieren, Excel exportieren, CSV exportieren), ✅ window.enqueueContactsSnapshot() VERFÜGBAR, ✅ window.rescanAndEnqueueStatusDiffs() VERFÜGBAR, ✅ window.flushSoon() VERFÜGBAR, ✅ window.flushQueue() VERFÜGBAR, ✅ Kontakt-Erstellung erfolgreich (PLZ 12345, Ort Teststadt, Straße Musterweg, Nr 1, WE 1). KRITISCHE DEFEKTE BESTÄTIGT: ❌ SICHTBARER JAVASCRIPT-CODE beim Scrollen (function( pattern gefunden), ❌ Status-Änderung NICHT MÖGLICH (Status-Select-Elemente nicht sichtbar/interagierbar), ❌ localStorage Queue 'qt_sync_queue_v1' wird NICHT erstellt, ❌ KEINE Netzwerk-RPC-Aufrufe zu Supabase getriggert trotz flushSoon() Aufrufen. FAZIT: UI-Verbesserungen erkennbar, aber Kern-Sync-Funktionen (Status-Änderung, Queue-Management, Netzwerk-Sync) sind NICHT funktional."
   - task: "Sichtbarer Code beim Scrollen entfernen"
     implemented: true
     working: false
