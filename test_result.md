@@ -160,9 +160,9 @@
     implemented: true
     working: false
     file: "frontend/public/qualitool/index.html"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
@@ -188,6 +188,9 @@
       - working: false
         agent: "testing"
         comment: "❌ SIDEBAR NAVIGATION TEILWEISE DEFEKT: Automatisierte UI-Tests durchgeführt. POSITIV: ✅ Alle 7 Sidebar-Links gefunden und klickbar, ✅ Alle Sektionen werden sichtbar (import/add/stats/calendar/contacts), ✅ Hashchange-Handling funktioniert (#import, #contacts), ✅ Offline-Setup funktioniert, ✅ Kein sichtbarer JS-Code. KRITISCHE PROBLEME: ❌ Active-Klasse wird nicht gesetzt bei Klicks, ❌ Andere Sektionen werden nicht ausgeblendet (display:none fehlt), ❌ navTo/showSection Funktionen nicht definiert (Console-Errors). Navigation funktioniert nur visuell, aber Zustandsverwaltung defekt."
+      - working: false
+        agent: "testing"
+        comment: "❌ KRITISCHE PHASE 1 PATCH PROBLEME: Umfassende Tests der Status-Persistenz und Snapshot-Event-Trigger durchgeführt. POSITIV: ✅ Offline-Fallback funktioniert korrekt (localStorage flags), ✅ Sidebar-Navigation (7 Links klickbar), ✅ Kontakt hinzufügen funktioniert, ✅ Status-Änderung auf 'termin'/'abschluss' möglich, ✅ saveResident/saveContacts Funktionen verfügbar. KRITISCHE PROBLEME: ❌ enqueueContactsSnapshot() Funktion NICHT VERFÜGBAR (undefined), ❌ flushSoon() Funktion NICHT VERFÜGBAR (undefined), ❌ localStorage Queue 'qt_sync_queue_v1' wird NICHT erstellt, ❌ Keine Netzwerk-RPC-Aufrufe zu Supabase, ❌ Sichtbarer JavaScript-Code beim Scrollen. FAZIT: Phase 1 Patch ist NICHT funktional - Kern-Sync-Funktionen fehlen komplett."
   - task: "Sichtbarer Code beim Scrollen entfernen"
     implemented: true
     working: true
