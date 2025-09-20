@@ -254,9 +254,8 @@
 
 ## test_plan:
   current_focus:
-    - "Admin Dashboard SQL Funktionen fehlend"
+    - "Status-Persistenz + Snapshot-Event-Trigger (Phase 1)"
   stuck_tasks:
-    - "Sidebar Navigation Klicks"
     - "Admin Dashboard SQL Funktionen fehlend"
   test_all: false
   test_priority: "high_first"
