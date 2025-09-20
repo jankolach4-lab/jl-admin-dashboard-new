@@ -1533,8 +1533,14 @@
   }
   function toggleImportSection() {
     const section = document.querySelector('.import-section');
-    section.classList.toggle('collapsed');
-    section.classList.toggle('expanded');
+    if (!section) return;
+    const content = section.querySelector('.import-content');
+    const btns = section.querySelector('.import-export-buttons');
+    const willExpand = !section.classList.contains('expanded');
+    section.classList.toggle('collapsed', !willExpand);
+    section.classList.toggle('expanded', willExpand);
+    if (content) content.style.display = willExpand ? 'block' : 'none';
+    if (btns) btns.style.display = willExpand ? 'flex' : 'none';
   }
   function toggleEntrySection() {
     const section = document.querySelector('.entry-section');
