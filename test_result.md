@@ -236,7 +236,7 @@
         comment: "CI Icon-Generation-Pfad korrigiert; verwendet frontend/resources/icon.png"
   - task: "Import/Export Buttons Sichtbarkeit"
     implemented: true
-    working: false
+    working: true
     file: "frontend/public/qualitool/index.html"
     stuck_count: 3
     priority: "medium"
@@ -257,6 +257,9 @@
       - working: false
         agent: "testing"
         comment: "❌ VIERTER TEST BESTÄTIGT REGRESSION: Import/Export-Buttons sind NICHT SICHTBAR! Automatisierter Test (20.09.2025) nach Härtung mit No-Op-Stubs. Import-Section Header gefunden und geklickt (h3:has-text('Import')), aber alle 3 Buttons (Excel importieren, Excel exportieren, CSV exportieren) bleiben unsichtbar (visible=False). Buttons existieren im DOM aber werden nicht angezeigt. REGRESSION BESTÄTIGT."
+      - working: true
+        agent: "testing"
+        comment: "✅ FÜNFTER TEST ERFOLGREICH: Import/Export-Buttons sind SICHTBAR! Automatisierter Test nach UI/Init-Härtung (20.09.2025). Nach Klick auf Import-Section Header (h3:has-text('Adressen importieren')) werden alle 3 Buttons sichtbar: Excel importieren (visible=True), Excel exportieren (visible=True), CSV exportieren (visible=True). FUNKTIONALITÄT WIEDERHERGESTELLT!"
 
 ## metadata:
   created_by: "main_agent"
