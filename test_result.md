@@ -229,7 +229,7 @@
     implemented: true
     working: false
     file: "frontend/public/qualitool/index.html"
-    stuck_count: 2
+    stuck_count: 3
     priority: "medium"
     needs_retesting: false
     status_history:
@@ -245,6 +245,9 @@
       - working: false
         agent: "testing"
         comment: "❌ REGRESSION BESTÄTIGT: Import/Export-Buttons sind NICHT SICHTBAR! Dritter automatisierter Test (20.09.2025) zeigt Regression. Alle 3 Buttons (Excel importieren, Excel exportieren, CSV exportieren) sind nach Expansion der Import-Sektion nicht sichtbar (visible=False). Funktionalität ist defekt."
+      - working: false
+        agent: "testing"
+        comment: "❌ VIERTER TEST BESTÄTIGT REGRESSION: Import/Export-Buttons sind NICHT SICHTBAR! Automatisierter Test (20.09.2025) nach Härtung mit No-Op-Stubs. Import-Section Header gefunden und geklickt (h3:has-text('Import')), aber alle 3 Buttons (Excel importieren, Excel exportieren, CSV exportieren) bleiben unsichtbar (visible=False). Buttons existieren im DOM aber werden nicht angezeigt. REGRESSION BESTÄTIGT."
 
 ## metadata:
   created_by: "main_agent"
