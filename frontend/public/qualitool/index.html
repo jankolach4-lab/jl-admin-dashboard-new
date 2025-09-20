@@ -3575,6 +3575,13 @@
           }
         }
         if (ok) {
+          // Nach erfolgreichem Upsert sofort serverseitige Event-Generierung auslösen (Option 2A)
+          try {
+            const { error: procErr } = await client.rpc('fn_log_events_from_contacts_snapshot');
+            if (procErr) console.warn('Event-Generierung (Snapshot) RPC Warnung:', procErr.message || procErr);
+          } catch(procCallErr){
+            console.warn('Event-Generierung RPC Aufruf fehlgeschlagen:', procCallErr?.message || procCallErr);
+          }
           q.shift(); setQueue(q);
         } else {
           console.warn('Kontakt-Upload fehlgeschlagen:', lastErr?.message || lastErr);
