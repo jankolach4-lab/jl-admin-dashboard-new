@@ -3679,6 +3679,14 @@
 
   // 7) Hooks in bestehende Funktionen einfügen
   function hookFunctions(){
+    // Schutz: Falls saveContacts früher geladen/verwendet wird, existiert Queue-API bereits
+    try {
+      window.enqueueContactsSnapshot = window.enqueueContactsSnapshot || enqueueContactsSnapshot;
+      window.rescanAndEnqueueStatusDiffs = window.rescanAndEnqueueStatusDiffs || rescanAndEnqueueStatusDiffs;
+      window.flushSoon = window.flushSoon || flushSoon;
+      window.flushQueue = window.flushQueue || flushQueue;
+    } catch(_) {}
+
     try{
       // saveResident Hook
       if (typeof window.saveResident === 'function'){
