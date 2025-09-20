@@ -160,9 +160,9 @@
     implemented: true
     working: false
     file: "frontend/public/qualitool/index.html"
-    stuck_count: 1
+    stuck_count: 2
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
@@ -173,6 +173,9 @@
       - working: "NA"
         agent: "main"
         comment: "Fix: Script-Blöcke korrekt getrennt (IIFE sauber geschlossen), damit enqueueContactsSnapshot()/flushSoon() und Queue-Logik geladen werden. Zusätzlich RPC-Aufruf fn_log_events_from_contacts_snapshot nach Upsert beibehalten (2A)."
+      - working: false
+        agent: "testing"
+        comment: "❌ PHASE 1 PATCH WEITERHIN DEFEKT: Umfassende automatisierte Tests durchgeführt nach Script-Struktur-Fix. FUNKTIONAL: ✅ Offline-Fallback (localStorage flags), ✅ Kontakt hinzufügen (PLZ=12345, Ort=Teststadt, Straße=Musterweg, Nr=1, WE=1), ✅ Status-Änderungen (termin/abschluss), ✅ saveResident/saveContacts verfügbar, ✅ UI-Regression (Import/Export-Buttons sichtbar, Kalender/Statistik aufklappbar). KRITISCHE DEFEKTE: ❌ enqueueContactsSnapshot() NICHT im window-Scope verfügbar (Funktion existiert im Quellcode aber nicht global exponiert), ❌ rescanAndEnqueueStatusDiffs() NICHT im window-Scope verfügbar, ❌ flushSoon() NICHT im window-Scope verfügbar, ❌ localStorage Queue 'qt_sync_queue_v1' wird NICHT erstellt, ❌ Keine Netzwerk-RPC-Aufrufe zu Supabase möglich. FAZIT: Kern-Sync-Funktionen sind implementiert aber nicht korrekt exponiert - Phase 1 Patch ist NICHT funktional."
   - task: "Sichtbarer Code beim Scrollen entfernen"
     implemented: true
     working: true
