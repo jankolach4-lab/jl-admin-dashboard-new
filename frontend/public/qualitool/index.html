@@ -3068,6 +3068,21 @@
   }
 
   document.addEventListener('DOMContentLoaded', () => {
+    // Hardening: stelle sicher, dass Import-Sektion initial klickbar ist und Buttons sichtbar werden
+    try {
+      const h3 = document.querySelector('.import-section h3');
+      if (h3) {
+        h3.addEventListener('click', (e)=>{ e.preventDefault(); e.stopPropagation(); toggleImportSection(); }, { passive:false });
+      }
+      const section = document.querySelector('.import-section');
+      if (section && section.classList.contains('expanded')) {
+        const content = section.querySelector('.import-content');
+        const btns = section.querySelector('.import-export-buttons');
+        if (content) content.style.display = 'block';
+        if (btns) btns.style.display = 'flex';
+      }
+    } catch(_) {}
+
     // Initial Hash berücksichtigen (z.B. Direktaufruf mit #import)
     const initial = (location.hash||'').slice(1);
     if (initial) {
