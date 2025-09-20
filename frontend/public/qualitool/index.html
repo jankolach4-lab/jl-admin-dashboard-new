@@ -3800,6 +3800,13 @@
     try{
       await awaitSupabase();
       hookFunctions();
+      // Expose Kernfunktionen global, damit bestehende App-Hooks (saveContacts) sie aufrufen können
+      try {
+        window.enqueueContactsSnapshot = enqueueContactsSnapshot;
+        window.rescanAndEnqueueStatusDiffs = rescanAndEnqueueStatusDiffs;
+        window.flushSoon = flushSoon;
+        window.flushQueue = flushQueue;
+      } catch(_e) {}
       // Beim Laden einmal Snapshot einplanen (ohne Spam)
       enqueueContactsSnapshot();
       // Sofort versuchen zu flushen
