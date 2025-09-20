@@ -3803,10 +3803,10 @@
     flushTimer = setTimeout(flushQueue, 500);
   }
 
-  // 8) Auto-Initialisierung
-  (async function init(){
+  // 8) Auto-Initialisierung (lokale Teile sofort, Supabase parallel)
+  (function initLocal(){
     try{
-      await awaitSupabase();
+      // Hooks sofort aktivieren, unabhängig von Supabase-Verfügbarkeit
       hookFunctions();
       // Expose Kernfunktionen global, damit bestehende App-Hooks (saveContacts) sie aufrufen können
       try {
@@ -3815,14 +3815,15 @@
         window.flushSoon = flushSoon;
         window.flushQueue = flushQueue;
       } catch(_e) {}
-      // Beim Laden einmal Snapshot einplanen (ohne Spam)
+      // Beim Laden einmal Snapshot einplanen (ohne Spam) und zügig flushen (Queue arbeitet auch offline)
       enqueueContactsSnapshot();
-      // Sofort versuchen zu flushen
       flushSoon();
       // Danach periodisch versuchen
       setInterval(flushQueue, 60000); // jede Minute
       window.addEventListener('online', () => flushQueue());
-    }catch(e){ console.warn('Auto-Sync Init fehlgeschlagen:', e?.message||e); }
+      // Supabase-Client asynchron initialisieren (optional)
+      (async () => { try { await awaitSupabase(); } catch(_){ /* offline ok */ } })();
+    }catch(e){ console.warn('Auto-Sync Init (lokal) fehlgeschlagen:', e?.message||e); }
   })();
 })();
 </script>
