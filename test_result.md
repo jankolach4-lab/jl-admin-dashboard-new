@@ -186,7 +186,7 @@
     implemented: true
     working: false
     file: "frontend/public/qualitool/index.html"
-    stuck_count: 5
+    stuck_count: 6
     priority: "high"
     needs_retesting: false
     status_history:
@@ -211,6 +211,9 @@
       - working: false
         agent: "testing"
         comment: "❌ REGRESSION BESTÄTIGT: Sichtbarer JavaScript-Code ist WIEDER DA! Dritter automatisierter Test (20.09.2025) zeigt kritische Regression. GEFUNDENE PATTERNS: function(, addEventListener, localStorage.setItem. Der JavaScript-Code ist beim Scrollen durch die Seite als Text sichtbar. SCHWERWIEGENDER UI-FEHLER ist zurückgekehrt - SOFORTIGE BEHEBUNG ERFORDERLICH!"
+      - working: false
+        agent: "testing"
+        comment: "❌ VIERTER TEST BESTÄTIGT REGRESSION: Sichtbarer JavaScript-Code ist WEITERHIN DA! Automatisierter Test (20.09.2025) nach Härtung mit No-Op-Stubs. GEFUNDENE PATTERNS: function(, addEventListener, localStorage.setItem. Der JavaScript-Code wird als sichtbarer Text im Seiteninhalt gerendert. KRITISCHER UI-FEHLER BESTÄTIGT - SOFORTIGE BEHEBUNG ERFORDERLICH!"
   - task: "App-Icon korrekt"
     implemented: true
     working: false
