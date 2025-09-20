@@ -1,85 +1,80 @@
 <analysis>
-The previous AI engineer's work involved an extensive, multi-phase effort to evolve a web tool into an Android APK and build a standalone Admin Dashboard. The initial focus was on resolving numerous SQL-related bugs within the Supabase database, primarily around function definitions, column name mismatches ( vs ), data type inconsistencies, and join logic in analytics functions. This iterative debugging process for the dashboard's data presentation was a significant part of the early interactions.
+The previous AI engineer's work primarily focused on stabilizing the Qualifizierungstool (tablet app) and its integration with Supabase, while concurrently resolving numerous database and frontend issues for an Admin Dashboard. The initial tasks involved fixing complex SQL functions for dashboard analytics, handling  and  errors, and addressing Vercel deployment issues.
 
-Following the stabilization of the dashboard's data, the work shifted to implementing requested UI/UX enhancements and deployment to a custom domain () via Vercel and GitHub. This phase introduced new challenges, including Vercel deployment specifics (e.g., the  folder for static assets) and further UI component integration.
+A major iterative effort was dedicated to establishing reliable data synchronization for user contacts and status events from the tablet app to Supabase. This involved developing and repeatedly refining Supabase RPCs (, ), ensuring correct RLS policies, and implementing client-side queuing mechanisms. Persistent SQL syntax errors, particularly around dollar-quoting and ambiguous function overloads, required multiple iterations of dropping and recreating functions.
 
-Subsequently, critical Supabase security issues (RLS, function search paths, OTP expiry) were addressed, which temporarily broke the dashboard due to stricter access controls. This led to refining the admin whitelist and ensuring user permissions. Most recently, a major data synchronization bug was tackled: status changes from the tablet-based Qualifizierungstool were not reaching Supabase. The proposed fix involved adding client-side JavaScript logic to the Qualifizierungstool to  and handle offline queuing, ensuring data consistency across the ecosystem. The very last message indicates a build workflow error after these Qualifizierungstool changes.
+The most recent phase concentrated on resolving the missing events issue from the new app version (Tablet 1). This led to a deep dive into Supabase's behavior with  in the SQL editor,  properties, and conflicting unique indexes (). The core problem was identified as a client-side failure to reliably persist status changes in the  snapshot and/or send RPCs, compounded by an incorrect unique key definition that hampered server-side backfill attempts. The AI proposed and implemented various server-side patches (logging, internal functions, trigger, backfill logic using ) and client-side patches (robust event flush, status-diff detector, generic click-hook). The current state is that client-side status persistence remains an issue, and the user has explicitly requested a final app-side patch to resolve this.
 </analysis>
 
 <product_requirements>
-The overall project goal was to transform a static web tool into a Capacitor-based Android APK and build a separate Admin Dashboard. Key requirements included:
-1.  **APK Conversion**: Packaging the static HTML/CSS/JS web tool into an Android APK, ensuring existing functions (e.g., Excel import/export) work natively.
-2.  **User Management**: Implementing multi-user login with Supabase (Postgres, Auth, RLS) for data isolation, with offline capabilities for the Qualifizierungstool.
-3.  **UI/UX Fixes**: Addressing bugs like Excel import/export, sidebar navigation, and native file export in the Qualifizierungstool, and modernizing its appearance.
-4.  **Admin Dashboard**: Developing a *standalone* dashboard for Supabase analytics, providing:
-    *   **Project-level Analytics**: Total WE, employees per project (city).
-    *   **Employee-level Analytics**: Daily status changes, status overview, hourly status changes, and a summary table with total changes, completions, average changes, total WE, WE with status (absolute & percentage).
-    *   **Dashboard UI**: Clean, modern design with charts (bar, doughnut), KPIs, and tables, with custom branding.
-    *   **Data Consistency**: Map employee names to email addresses, ensuring correct data flow from the Qualifizierungstool to Supabase.
-    *   **Enhancements**: Export functions (PNG, CSV, PDF), advanced filters (date, project), performance optimization (SQL indices), real-time updates, mobile optimization, and enhanced user management.
+The project aims to transform a web-based Qualifizierungstool into a Capacitor-based Android APK and create a corresponding Admin Dashboard. Core requirements included native Android functionalities (e.g., Excel export), multi-user authentication with Supabase (Postgres, Auth, RLS) and offline capabilities for the tablet app. A key objective was the Admin Dashboard, which needed to display project and employee analytics (KPIs, charts, tables) with custom branding, ensuring robust data consistency and project-isolated views. Data synchronization from the Qualifizierungstool to Supabase was crucial for status changes and contact list updates, with offline handling. The system needed export capabilities (PNG, CSV, PDF), advanced filtering, and performance optimizations. So far, the Android APK conversion is progressing, user management is partially implemented through Supabase (with , , ,  tables), and the Admin Dashboard is under development. Excel import/export functionality was a primary focus. Client-side logic for offline queuing and data synchronization to Supabase via RPCs was implemented, but encountered significant database-side challenges with function definitions, RLS, and unique constraints.
 </product_requirements>
 
 <key_technical_concepts>
--   **Frontend**: HTML (Vanilla JS, CSS), Chart.js, date-fns, localStorage, jsPDF, html2canvas (for PDF export).
--   **Mobile Packaging**: Capacitor (@capacitor/core, @capacitor/filesystem, @capacitor/share).
--   **Backend/Database**: Supabase (Postgres, Auth, RLS, SQL functions/RPCs, triggers, views), , , , , .
--   **CI/CD**: GitHub Actions (for Android APK builds and Vercel deployments).
--   **Deployment**: Vercel (static site hosting, custom domains, GitHub integration).
+- **Frontend**: HTML (Vanilla JS, CSS), Capacitor, Chart.js, date-fns, localStorage (offline queuing).
+- **Backend/Database**: Supabase (Postgres, Auth, RLS, SQL/PL/pgSQL functions/RPCs, triggers, views, ,  for UUIDs).
+- **CI/CD**: GitHub Actions (Android APK builds).
+- **Deployment**: Vercel.
+- **SQL Concepts**: CTEs, , , , , , .
 </key_technical_concepts>
 
 <code_architecture>
 
 
--   :
-    -   **Importance**: The main UI for the Admin Dashboard.
-    -   **Changes Made**: This file underwent extensive modifications. Initially created from scratch to display project and user analytics, it was iteratively updated to resolve display issues (e.g., zero values in tables). Later, it was significantly refactored to incorporate enhanced features like various chart types (bar, line, doughnut), comprehensive tables, dynamic filtering (project, date range), export capabilities (PNG, CSV, PDF), and a responsive design. Chart.js, date-fns, jsPDF, and html2canvas were integrated for visualization and export. Crucially, the Supabase RPC calls for analytics data were refined here. The file was provided multiple times to the user to reflect the latest working version.
--   :
-    -   **Importance**: The login page for the Admin Dashboard.
-    -   **Changes Made**: Created from scratch to handle Supabase authentication for admin users.
--   :
-    -   **Importance**: Introduced new Supabase functions for detailed user analytics summary.
-    -   **Changes Made**: Created to define  and , along with their  (admin-checked) versions. This script was heavily debugged to fix SQL syntax errors (return types), column name mismatches ( vs ), data type conflicts, and incorrect join conditions between , , and . The final version simplified joins for  to rely primarily on  directly.
--   :
-    -   **Importance**: Contains SQL for performance optimizations and advanced analytics features.
-    -   **Changes Made**: Created to add various PostgreSQL indices (e.g., on , ,  for analytics tables). It also defined new analytics functions like , , , , and , including their  versions and grants. This script also faced and resolved errors related to function return types.
--   :
-    -   **Importance**: The core UI and logic for the Qualifizierungstool (tablet app).
-    -   **Changes Made**: Significantly updated to include Supabase integration for data synchronization. A new  function was added to insert status changes into the  table in Supabase, with an offline queuing mechanism for failed syncs. The  function was modified to call  upon status changes. A  function was also added to push pending offline events to Supabase.  class was added to sync contacts to/from Supabase.
--   , , :
-    -   **Importance**: Core Supabase schema and initial dashboard functions.
-    -   **Changes Made**: These files were referenced for schema details and working join patterns during SQL debugging. Security fixes (RLS enablement,  for functions) were applied directly to functions defined in these scripts as well.
--   :
-    -   **Importance**: A temporary directory created to provide  and  of the Admin Dashboard for user download and manual upload to Vercel/GitHub.
-    -   **Changes Made**: Contains  (the full dashboard UI),  (dashboard login), and a  with upload instructions.
+- :
+    - **Importance**: The main UI and logic for the Qualifizierungstool. Contains the client-side JavaScript for Supabase integration, offline queuing, and event synchronization logic.
+    - **Changes Made**:
+        - Initial JavaScript patch for auto-sync of contacts and status events was inserted.
+        - Supabase client initialization (global ) and error handling for RPCs (,  error logging ) were refined.
+        - Integration hooks (, , , etc.) modified to enqueue sync operations.
+        - Excel import performance optimized by decoupling from immediate cloud sync.
+        - Diagnostic logger () removed.
+        - Implementation of  and  to more robustly detect and enqueue status changes.
+        - Debug overlay functionality added (initially with visible button, later concealed behind a multi-tap gesture).
+- :
+    - **Importance**: Login page for the Qualifizierungstool.
+    - **Changes Made**: Initialized  here to ensure a single Supabase client instance across the app.
+- :
+    - **Importance**: Web App Manifest for PWA features.
+    - **Changes Made**: Created with basic metadata to resolve Manifest syntax error and 404 warnings. Icons updated.
+- SQL Functions/Triggers in Supabase (e.g., , , , , ):
+    - **Importance**: Server-side logic for data ingestion, processing, and event generation from the tablet app. Define how contacts, residents, and status events are stored and linked.
+    - **Changes Made**: Underwent extensive iterative refinement to address:
+        -  errors.
+        -  (e.g., , ).
+        -  (function overloading) errors by enforcing single, canonical function signatures.
+        -  due to  being NULL in SQL editor and NOT NULL constraints.
+        -  by prefixing parameters with .
+        -  and  errors by refining upsert logic for  (from  to ) and ensuring deduplication before inserts.
+        - Implementation of  table for server-side function debugging.
+        - Implementation of  and  to generate status events from  snapshots, including logic to derive status from  and correctly set .
+- , , , :
+    - **Importance**: Core data tables for contact information, residents, status events, and user-specific contact lists.
+    - **Changes Made**:
+        - RLS policies were consistently reviewed and updated to allow authenticated users to interact with their own data ().
+        - Unique indexes were adjusted, specifically on , to correctly reflect uniqueness by .
+        - Indexing for performance (, , ).
 </code_architecture>
 
 <pending_tasks>
-- Investigate deeper analytics requirements (e.g., granular activity log).
-- Implement a release build workflow with keystore and signing for Play Store distribution.
-- Potentially integrate a more robust Storage Access Framework (SAF) Save As dialog for Android 11+ in a separate, stable branch.
-- Implement more specific time-filtered versions of analytics queries (e.g., monthly/weekly).
-- Precisely define the WE (Wohnungseinheiten) logic for total_we/we_count/percentage calculations.
-- Implement additional dashboard features: CSV/PNG export for charts/tables, project/user dropdown filters, persistent range selection, additional charts (weekday/hour, monthly funnel).
-- Add performance indices to Supabase tables (analytics_status_events, analytics_contacts).
-- Resolve the  build workflow error for the Qualifizierungstool.
-- The PDF export button in the Admin Dashboard is not visible, which the user deprioritized but is an unaddressed bug.
+- **Client-side Status Persistence Patch**: Implement a minimal app-side patch to ensure  is reliably updated in the  snapshot upon status changes, and that  and  are triggered.
+- **Dashboard Tile Values**: Correct the values displayed in the Admin Dashboard tiles.
+- **Project List Filtering**: Implement functionality to filter the project list to show only active projects (e.g., those with events in the last X days).
+- **PDF Export Button**: Make the PDF export button in the Admin Dashboard visible and functional.
+- **Excel Export Fix**: (Optional, user deferred) Fix the broken Excel export functionality.
 </pending_tasks>
 
 <current_work>
-Immediately before this summary request, the AI engineer was addressing a critical data synchronization issue with the Qualifizierungstool (tablet app). The user reported that status changes made on the physical tablet were not reflecting in Supabase or the Admin Dashboard, even though the preview version of the Qualifizierungstool () correctly showed these changes.
+Immediately prior to this summary, the AI engineer was deep into diagnosing and resolving why status changes from Tablet 1 (running the new app version) were not appearing in Supabase's  table, despite numerous server-side and client-side patches.
 
-The root cause was identified: the tablet version was only storing changes locally (), while the preview version had newer code that included Supabase synchronization. To fix this, the AI engineer provided a comprehensive update to . Key changes included:
+The AI engineer has established the following:
+1.  **Server-side Robustness**: Supabase functions (, , , ) and a trigger () are now correctly defined and configured. The internal function includes logging to a  table for traceability. It correctly handles upserting contacts and residents, and generating events based on status changes (now also considering  from the  snapshot). Unique indexes on  have been corrected to .
+2.  **Client-side Sync Mechanisms (Existing)**: The app has a comprehensive JavaScript patch that initializes the Supabase client, uses offline queuing (), includes heuristics for local contact data, and attempts to call  for contacts and  for status changes. Robust fallbacks (e.g., ), retry logic, and error persistence () are in place. A  and  were added to capture changes more reliably.
+3.  **Current Problem**: Despite server-side logic working and client-side detection mechanisms, new events from Tablet 1 are not reaching the database. Debugging revealed that either RPC calls are not being sent from the client, or more critically, the status changes made in the app are *not reliably persisting into the  (or ) fields within the local  snapshot* before synchronization attempts. This means the server-side trigger, which relies on the  snapshot, cannot detect changes, and the direct RPC calls are also not firing.
 
--   A new  asynchronous function to insert status changes into the  table in Supabase.
--   An offline queuing mechanism, where if Supabase sync fails, the event is stored in  () for later retry.
--   The  function was modified to call  after updating the resident's status locally.
--   A  function was added to process and upload any queued offline events when an internet connection is available.
--   The  class was introduced to handle general contact data synchronization with Supabase.
--   The application's  function was updated to load contacts from local storage, then from the cloud, and then sync any pending offline status events, with a periodic sync every 5 minutes.
-
-After providing this updated  code for the Qualifizierungstool, the user initiated a new workflow, which resulted in an error:  produced  with . This indicates a problem in the build or testing process for the Qualifizierungstool, likely related to the location or presence of  within the  directory.
+The user has explicitly chosen Option A: implementing a minimal app-side patch to ensure status changes are reliably persisted in the local snapshot and then triggering the server-side snapshot processing.
 </current_work>
 
 <optional_next_step>
-Investigate and resolve the  error during the Qualifizierungstool build workflow.
+Implement the minimal app-side patch to reliably persist  changes in the local  snapshot and trigger snapshot-based event generation.
 </optional_next_step>
