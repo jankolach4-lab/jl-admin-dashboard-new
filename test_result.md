@@ -181,9 +181,9 @@
         comment: "❌ DRITTER AUTOMATISIERTER RE-TEST BESTÄTIGT DEFEKTE: Umfassende Tests der Phase 1 Patch Funktionalität durchgeführt (20.09.2025). FUNKTIONAL: ✅ Offline-Fallback korrekt (localStorage offline_allowed='true', last_user_id='test-user-1'), ✅ Kontakt-Erstellung (PLZ 12345, Ort Teststadt, Straße Musterweg, Nr 1, WE 1) erfolgreich, ✅ Status-Änderungen (termin → abschluss) möglich, ✅ Kalender/Statistik-Sektionen aufklappbar. KRITISCHE DEFEKTE BESTÄTIGT: ❌ window.enqueueContactsSnapshot() NICHT VERFÜGBAR, ❌ window.rescanAndEnqueueStatusDiffs() NICHT VERFÜGBAR, ❌ window.flushSoon() NICHT VERFÜGBAR, ❌ window.flushQueue() NICHT VERFÜGBAR, ❌ localStorage Queue 'qt_sync_queue_v1' wird NICHT erstellt, ❌ KEINE Netzwerk-RPC-Aufrufe zu Supabase möglich, ❌ SICHTBARER JAVASCRIPT-CODE beim Scrollen (function(, addEventListener, localStorage.setItem), ❌ Import/Export-Buttons NICHT SICHTBAR. FAZIT: Phase 1 Patch ist NICHT funktional - Kern-Sync-Funktionen sind implementiert aber nicht korrekt im window-Scope exponiert."
   - task: "Sichtbarer Code beim Scrollen entfernen"
     implemented: true
-    working: true
+    working: false
     file: "frontend/public/qualitool/index.html"
-    stuck_count: 4
+    stuck_count: 5
     priority: "high"
     needs_retesting: false
     status_history:
@@ -205,6 +205,9 @@
       - working: true
         agent: "testing"
         comment: "✅ PASSED: Sichtbarer JavaScript-Code Problem BEHOBEN! Nach umfassenden Tests beim Scrollen durch die gesamte Seite (Höhe: 1080px) wurden KEINE JavaScript-Code-Patterns mehr gefunden. Getestete Patterns: renderCalendar, importExcelFile, filterByStatus, function(, addEventListener, localStorage.setItem, document.querySelector - alle nicht mehr sichtbar. Das kritische UI-Problem wurde erfolgreich gelöst."
+      - working: false
+        agent: "testing"
+        comment: "❌ REGRESSION BESTÄTIGT: Sichtbarer JavaScript-Code ist WIEDER DA! Dritter automatisierter Test (20.09.2025) zeigt kritische Regression. GEFUNDENE PATTERNS: function(, addEventListener, localStorage.setItem. Der JavaScript-Code ist beim Scrollen durch die Seite als Text sichtbar. SCHWERWIEGENDER UI-FEHLER ist zurückgekehrt - SOFORTIGE BEHEBUNG ERFORDERLICH!"
   - task: "App-Icon korrekt"
     implemented: true
     working: false
