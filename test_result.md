@@ -156,14 +156,17 @@
       - working: true
         agent: "testing"
         comment: "✅ PASSED: Offline-Fallback BEHOBEN! Problem war in requireAuthOrRedirect() Funktion - Reihenfolge der Prüfungen korrigiert. Jetzt werden localStorage-Flags ZUERST geprüft vor Supabase-Session. A) Ohne Flags: Redirect zu login.html funktioniert. B) Mit Flags: Bleibt auf index.html und zeigt Hauptanwendung. Beide Szenarien funktionieren korrekt."
-  - task: "Sidebar Navigation Klicks"
+  - task: "Status-Persistenz + Snapshot-Event-Trigger (Phase 1)"
     implemented: true
     working: false
     file: "frontend/public/qualitool/index.html"
-    stuck_count: 2
+    stuck_count: 0
     priority: "high"
     needs_retesting: true
     status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Client-seitiger Patch implementiert: saveResident aktualisiert resident.status und statusHistory; saveContacts() triggert enqueueContactsSnapshot(); Offline-Queue flush; und nach erfolgreichem Upsert wird fn_log_events_from_contacts_snapshot (2A) direkt aufgerufen."
       - working: false
         agent: "user"
         comment: "Buttons reagieren nicht"
