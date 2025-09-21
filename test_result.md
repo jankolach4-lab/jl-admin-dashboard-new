@@ -304,6 +304,18 @@
         agent: "main"
         comment: "Komplette Dashboard-Erweiterung implementiert: Export-Funktionen (PNG/CSV), erweiterte Filter, responsive Design, Real-time Updates, Performance-Optimierungen, neue SQL-Funktionen und zusätzliche Analytics-Features. Dashboard ist jetzt professionell und production-ready."
 
+  - task: "Sync/Debug Panel Integration"
+    implemented: true
+    working: "NA"
+    file: "frontend/public/qualitool/index.html"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Neues sichtbares Sync/Debug Panel implementiert mit Sidebar-Icon und Overlay-Modal. Enthält Buttons: Jetzt synchronisieren, Session prüfen, Aktualisieren, In Zwischenablage, Schließen. RPC-Parameter für fn_public_upsert_user_contacts und fn_log_events_from_contacts_snapshot korrigiert."
+
 ## agent_communication:
   - agent: "main"
     message: "KRITISCHES PROBLEM IDENTIFIZIERT: Admin Dashboard ruft nicht-existierende SQL-Funktionen auf (fn_dashboard_user_summary_metrics, fn_dashboard_user_hourly_changes). Neue SQL-Datei erstellt mit diesen Funktionen. Problem: JOIN-Logik zwischen analytics_contacts und analytics_residents war fehlerhaft. KORREKTUR: Verwende ac.contact_key::text = ar.contact_id::text statt der alten Join-Bedingung. SQL-Skript muss in Supabase ausgeführt werden, bevor Admin Dashboard korrekt funktioniert."
@@ -333,3 +345,5 @@
     message: "QUALITOOL PHASE 1 PATCH DRITTER AUTOMATISIERTER RE-TEST ABGESCHLOSSEN (20.09.2025): Umfassende Tests der clientseitigen Status-Persistenz und Snapshot-basierten Event-Trigger durchgeführt. ✅ FUNKTIONAL: Offline-Fallback (localStorage offline_allowed='true', last_user_id='test-user-1'), Kontakt-Erstellung (PLZ 12345, Ort Teststadt, Straße Musterweg, Nr 1, WE 1), Status-Änderungen (termin → abschluss), Kalender/Statistik-Navigation. ❌ KRITISCHE DEFEKTE BESTÄTIGT: window.enqueueContactsSnapshot() NICHT VERFÜGBAR, window.rescanAndEnqueueStatusDiffs() NICHT VERFÜGBAR, window.flushSoon() NICHT VERFÜGBAR, window.flushQueue() NICHT VERFÜGBAR, localStorage Queue 'qt_sync_queue_v1' wird NICHT erstellt, KEINE Netzwerk-RPC-Aufrufe zu Supabase möglich. ❌ UI-REGRESSIONEN: Sichtbarer JavaScript-Code beim Scrollen (function(, addEventListener, localStorage.setItem), Import/Export-Buttons NICHT SICHTBAR. FAZIT: Phase 1 Patch ist NICHT funktional - Kern-Sync-Funktionen sind implementiert aber nicht korrekt im window-Scope exponiert. Zusätzlich sind kritische UI-Probleme zurückgekehrt."
   - agent: "testing"
     message: "QUALITOOL PHASE 1 PATCH FÜNFTER AUTOMATISIERTER TEST NACH UI/INIT-HÄRTUNG ABGESCHLOSSEN (20.09.2025): Umfassende Tests der clientseitigen Status-Persistenz und Snapshot-basierten Event-Trigger durchgeführt. ✅ FUNKTIONAL: Offline-Fallback funktioniert korrekt (localStorage offline_allowed='true', last_user_id='test-user-1'), Import/Export-Buttons SICHTBAR nach Header-Klick (Excel importieren, Excel exportieren, CSV exportieren), window.enqueueContactsSnapshot() VERFÜGBAR, window.rescanAndEnqueueStatusDiffs() VERFÜGBAR, window.flushSoon() VERFÜGBAR, window.flushQueue() VERFÜGBAR, Kontakt-Erstellung erfolgreich (PLZ 12345, Ort Teststadt, Straße Musterweg, Nr 1, WE 1). ❌ KRITISCHE DEFEKTE BESTÄTIGT: Sichtbarer JavaScript-Code beim Scrollen ('function(' pattern gefunden), Status-Änderung NICHT MÖGLICH (Status-Select-Elemente nicht sichtbar/interagierbar), localStorage Queue 'qt_sync_queue_v1' wird NICHT erstellt, KEINE Netzwerk-RPC-Aufrufe zu Supabase getriggert trotz flushSoon() Aufrufen. FAZIT: UI-Verbesserungen erkennbar (Import/Export-Buttons funktionieren), aber Kern-Sync-Funktionen (Status-Änderung, Queue-Management, Netzwerk-Sync) sind NICHT funktional. Hauptagent muss Status-Interaktion und Queue-Erstellung implementieren."
+  - agent: "testing"
+    message: "SYNC/DEBUG PANEL TESTING REQUESTED (15.01.2025): User requested automated frontend tests for corrected RPC parameters and new visible Sync/Debug panel. Testing requirements: 1) Sidebar contains new Sync/Debug entry with icon, click opens overlay with buttons (Jetzt synchronisieren, Session prüfen, Aktualisieren, In Zwischenablage, Schließen). 2) Contact creation (PLZ 12345, Ort Teststadt, Straße Musterweg, Nr 1, WE 1) with status 'termin' for WE1. 3) Sync/Debug panel 'Jetzt synchronisieren' should trigger RPC calls: fn_public_upsert_user_contacts with p_contacts parameter, followed by fn_log_events_from_contacts_snapshot with p_user_id and p_contacts parameters. 4) localStorage qt_last_event_err should remain empty or show exact error message, qt_sync_queue_v1 should empty after success. Starting comprehensive testing now."
