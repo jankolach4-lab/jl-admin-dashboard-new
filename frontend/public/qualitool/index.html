@@ -3564,6 +3564,35 @@
       try { localStorage.setItem(LAST_HASH_KEY, stableStringify(normalized)); } catch(_){ }
     }catch(e){ console.warn('Full-Snapshot fehlgeschlagen:', e); }
   }
+  try { window.enqueueFullContactsSnapshot = enqueueFullContactsSnapshot; } catch(_){ }
+
+  // Direkter Sync ohne Queue: Upsert + Events-RPC (2A)
+  async function manualDirectSyncNow(){
+    try{
+      const client = await awaitSupabase();
+      const { data: { user } } = await client.auth.getUser();
+      if (!user) throw new Error('Keine Session vorhanden');
+      const snapshot = normalizeContacts(readLocalContactsRaw());
+      // Upsert über RPC (korrekte Signatur)
+      try{
+        const { error } = await client.rpc('fn_public_upsert_user_contacts', { p_contacts: snapshot });
+        if (error) throw error;
+      }catch(e1){
+        // Fallback Tabellen-Upsert
+        const { error: e2 } = await client.from('user_contacts').upsert({ user_id: user.id, contacts: snapshot }, { onConflict: 'user_id' });
+        if (e2) throw e2;
+      }
+      // Events generieren (2A)
+      const { error: e3 } = await client.rpc('fn_log_events_from_contacts_snapshot', { p_user_id: user.id, p_contacts: snapshot });
+      if (e3) throw e3;
+      try { localStorage.removeItem('qt_last_event_err'); } catch(_){ }
+      return true;
+    }catch(err){
+      try { localStorage.setItem('qt_last_event_err', JSON.stringify({ t: Date.now(), stage: 'manual_direct_sync', msg: String(err&&err.message||err) })); } catch(_){ }
+      console.warn('Manual Sync Fehler:', err);
+      return false;
+    }
+  }
 
   // 5) Status-Event erfassen
   function enqueueStatusEvent(evt){
