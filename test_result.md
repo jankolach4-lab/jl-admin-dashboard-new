@@ -191,7 +191,7 @@
     file: "frontend/public/qualitool/index.html"
     stuck_count: 7
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: false
         agent: "user"
