@@ -314,7 +314,7 @@
     status_history:
       - working: "NA"
         agent: "main"
-        comment: "Neues sichtbares Sync/Debug Panel implementiert mit Sidebar-Icon und Overlay-Modal. Enthält Buttons: Jetzt synchronisieren, Session prüfen, Aktualisieren, In Zwischenablage, Schließen. RPC-Parameter für fn_public_upsert_user_contacts und fn_log_events_from_contacts_snapshot korrigiert."
+        comment: "Neues sichtbares Sync/Debug Panel implementiert mit Sidebar-Icon und Overlay-Modal. Enthält Buttons: Jetzt synchronisieren, Session prüfen, Aktualisieren, In Zwischenablage, Schließen, Lokale Kontakte leeren, Leeren + Sync. RPC-Parameter für fn_public_upsert_user_contacts (p_contacts) und fn_log_events_from_contacts_snapshot (p_user_id, p_contacts) korrigiert. manualDirectSyncNow global verfügbar gemacht."
       - working: false
         agent: "testing"
         comment: "❌ SYNC/DEBUG PANEL NICHT TESTBAR: Offline-Zugang funktioniert nicht trotz korrekter localStorage-Flags (offline_allowed='true', last_user_id='ccffa60f-5be8-49a3-a782-ed67c9aaf1ec'). Weiterleitung zu login.html erfolgt weiterhin. PROBLEM: requireAuthOrRedirect() prüft Supabase-Session VOR localStorage-Flags. LÖSUNG: Reihenfolge in requireAuthOrRedirect() ändern - ZUERST localStorage prüfen, DANN Supabase-Session. Sync/Debug-Panel-Code ist implementiert (Sidebar-Icon #dbgNavItem, Modal #debugModal, RPC-Funktionen), aber aufgrund Offline-Problem nicht erreichbar."
