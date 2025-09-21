@@ -3556,6 +3556,15 @@
     }catch(e){ console.warn('Kontakt-Snapshot fehlgeschlagen:', e); }
   }
 
+  // Erzwinge Enqueue des kompletten Snapshots (ohne Hash-Prüfung)
+  function enqueueFullContactsSnapshot(){
+    try{
+      const normalized = normalizeContacts(readLocalContactsRaw());
+      enqueue({ type: 'contacts', data: normalized, ts: Date.now(), force: true });
+      try { localStorage.setItem(LAST_HASH_KEY, stableStringify(normalized)); } catch(_){ }
+    }catch(e){ console.warn('Full-Snapshot fehlgeschlagen:', e); }
+  }
+
   // 5) Status-Event erfassen
   function enqueueStatusEvent(evt){
     // erwartet Felder: { plz, ort, strasse, nummer, zusatz, resident_key, status, occurred_at, notes }
