@@ -162,7 +162,7 @@
     file: "frontend/public/qualitool/index.html"
     stuck_count: 5
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: "NA"
         agent: "main"
