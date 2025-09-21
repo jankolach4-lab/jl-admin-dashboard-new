@@ -3425,34 +3425,42 @@
       }catch(_){}
     }
 
-    // Buttons
-    // Sichtbare Buttons + Aktionen
-    document.addEventListener('click', async (e) => {
-      if (e.target && e.target.id === 'dbgCloseBtn') return closeDebug();
-      if (e.target && e.target.id === 'dbgCopyBtn') return copyDebug();
-      if (e.target && e.target.id === 'dbgRefreshBtn') return renderDebug();
-      if (e.target && e.target.id === 'dbgSessBtn'){
-        try{
-          const u = await (window.supa ? window.supa.auth.getUser() : { data: { user: null }});
-          alert('Session: ' + JSON.stringify(u && u.data && u.data.user ? { id: u.data.user.id, email: u.data.user.email } : null));
-        }catch(err){ alert('Session Fehler: '+(err&&err.message||err)); }
-        return;
-      }
-      if (e.target && e.target.id === 'dbgSyncBtn'){
-        try{
-          // Direkter Sync ohne Queue (Upsert + Events-RPC)
-          (async()=>{
-            const ok = await manualDirectSyncNow();
-            if (ok) alert('Synchronisation gestartet/erfolgreich. Bitte in Supabase prüfen.');
-            else alert('Synchronisation fehlgeschlagen. Siehe letzte Fehlermeldung im Panel.');
-            renderDebug();
-          })();
-        }catch(err){ alert('Sync Fehler: '+(err&&err.message||err)); }
-        return;
-      }
-      // Modal Klick außerhalb schließen
-      if (e.target && e.target.id === 'debugModal') return closeDebug();
-    }, { capture: true });
+    // Buttons explizit binden (robust gegen Event Delegation)
+    window.addEventListener('DOMContentLoaded', function(){
+      try{
+        const closeBtn = document.getElementById('dbgCloseBtn');
+        const copyBtn = document.getElementById('dbgCopyBtn');
+        const refreshBtn = document.getElementById('dbgRefreshBtn');
+        const sessBtn = document.getElementById('dbgSessBtn');
+        const syncBtn = document.getElementById('dbgSyncBtn');
+        if (closeBtn) closeBtn.addEventListener('click', function(ev){ ev.preventDefault(); closeDebug(); });
+        if (copyBtn) copyBtn.addEventListener('click', function(ev){ ev.preventDefault(); copyDebug(); });
+        if (refreshBtn) refreshBtn.addEventListener('click', function(ev){ ev.preventDefault(); renderDebug(); });
+        if (sessBtn) sessBtn.addEventListener('click', async function(ev){ ev.preventDefault(); try{ const u = await (window.supa ? window.supa.auth.getUser() : { data: { user: null }}); const s = (u && u.data && u.data.user) ? `ok id=${u.data.user.id}` : 'keine Session'; setPanelStatus(`session: ${s}`); }catch(err){ setPanelStatus('session fehler: '+(err&&err.message||err)); } renderDebug(); });
+        if (syncBtn) syncBtn.addEventListener('click', async function(ev){ ev.preventDefault(); await runDirectSyncAndReport(); });
+      }catch(_){ }
+    });
+
+    function setPanelStatus(msg){
+      try{
+        const pre = document.getElementById('debugContent');
+        const data = safeParse(pre.textContent) || {};
+        data.status = msg;
+        pre.textContent = JSON.stringify(data, null, 2);
+      }catch(_){ }
+    }
+
+    async function runDirectSyncAndReport(){
+      try{
+        setPanelStatus('start');
+        const ok = await manualDirectSyncNow();
+        setPanelStatus(ok ? 'events_ok' : 'failed');
+      }catch(err){ setPanelStatus('error: '+(err&&err.message||err)); }
+      await renderDebug();
+    }
+
+    // Modal Klick außerhalb schließen (Delegation)
+    document.addEventListener('click', function(e){ if (e.target && e.target.id === 'debugModal') closeDebug(); }, { capture: true });
 
     // Sidebar-Icon hinzufügen
     window.addEventListener('DOMContentLoaded', function(){
