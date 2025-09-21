@@ -3414,15 +3414,19 @@
 
     function clearLocalContacts(){
       try{
-        localStorage.setItem('contacts', '[]');
+        // Kontakte vollständig entfernen (nicht nur auf [] setzen)
+        localStorage.removeItem('contacts');
+        const uid = localStorage.getItem('last_user_id');
+        if (uid) { try { localStorage.removeItem(`contacts:${uid}`); } catch(_e){} }
         localStorage.removeItem('qt_last_contacts_hash');
+        // Erneut Snapshot der (nun leeren) Kontakte einreihen und flushen
         if (typeof window.enqueueFullContactsSnapshot === 'function') {
           window.enqueueFullContactsSnapshot();
         }
         if (typeof window.flushSoon === 'function') {
           window.flushSoon();
         }
-      }catch(_){ }
+      }catch(_e){ }
     }
     function closeDebug(){
       const modal = document.getElementById('debugModal');
