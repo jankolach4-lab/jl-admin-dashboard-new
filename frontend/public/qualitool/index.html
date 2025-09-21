@@ -3348,11 +3348,13 @@
 })();
 </script>
 
-<!-- Debug Overlay (Hidden) -->
+<!-- Sichtbares Sync/Debug Panel -->
 <div id="debugModal" class="modal" style="display:none;">
   <div class="modal-content" style="max-width: 860px; width: 92%; max-height: 80vh; overflow: auto;">
-    <h3>Debug-Informationen (Qualitool)</h3>
+    <h3>Sync / Debug</h3>
     <div style="display:flex; gap:8px; justify-content:flex-end; margin-bottom:8px;">
+      <button id="dbgSyncBtn" class="unit-btn">Jetzt synchronisieren</button>
+      <button id="dbgSessBtn" class="unit-btn">Session prüfen</button>
       <button id="dbgRefreshBtn" class="unit-btn">Aktualisieren</button>
       <button id="dbgCopyBtn" class="unit-btn">In Zwischenablage</button>
       <button id="dbgCloseBtn" class="unit-btn" style="background:#111827;">Schließen</button>
