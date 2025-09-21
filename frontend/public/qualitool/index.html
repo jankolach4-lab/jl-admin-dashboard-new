@@ -3382,7 +3382,7 @@
       return null;
     }
 
-    function safeParse(str){ try { return JSON.parse(str || 'null'); } catch { return str || null; } }
+    function safeParse(str){ try { return JSON.parse(str || 'null'); } catch(_e) { return str || null; } }
 
     async function collectDebug(){
       const info = {};
