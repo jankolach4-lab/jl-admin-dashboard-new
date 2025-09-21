@@ -3177,7 +3177,7 @@
       } catch (e) {
         console.warn('Signout Warnung:', e?.message || e);
       } finally {
-        try { localStorage.removeItem('contacts'); } catch {}
+        try { localStorage.removeItem('contacts'); } catch(_e) {}
         window.location.href = './login.html';
       }
     }
