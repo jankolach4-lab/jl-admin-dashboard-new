@@ -2864,7 +2864,7 @@
         if (val == null || val === '') return fallback;
         if (typeof val !== 'string') return Array.isArray(val) ? val : fallback;
         return JSON.parse(val);
-      } catch { return fallback; }
+      } catch(_e) { return fallback; }
     }
 
     reader.onload = function(e) {
