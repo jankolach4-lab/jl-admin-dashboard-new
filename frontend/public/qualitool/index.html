@@ -3438,8 +3438,8 @@
       }
       if (e.target && e.target.id === 'dbgSyncBtn'){
         try{
-          // Snapshot enqueuen und direkt flushen
-          try{ window.enqueueContactsSnapshot && window.enqueueContactsSnapshot(); }catch(_){ }
+          // Full-Snapshot enqueuen und direkt flushen
+          try{ window.enqueueFullContactsSnapshot && window.enqueueFullContactsSnapshot(); }catch(_){ }
           try{ window.flushSoon && window.flushSoon(); }catch(_){ }
         }catch(err){ alert('Sync Fehler: '+(err&&err.message||err)); }
         return;
