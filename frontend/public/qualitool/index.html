@@ -3602,7 +3602,6 @@
 
   // Direkter Sync ohne Queue: Upsert + Events-RPC (2A)
   async function manualDirectSyncNow(){
-    try { window.manualDirectSyncNow = manualDirectSyncNow; } catch(_){ }
 
     const stamp = Date.now();
     try{
