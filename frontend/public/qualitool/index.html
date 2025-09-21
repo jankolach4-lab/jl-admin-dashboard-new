@@ -3907,7 +3907,7 @@
           const orig = window[fnName];
           window[fnName] = function(){
             const r = orig.apply(this, arguments);
-            try{ enqueueContactsSnapshot(); flushSoon(); }catch{}
+            try{ enqueueContactsSnapshot(); flushSoon(); }catch(_e){}
             return r;
           };
         }
