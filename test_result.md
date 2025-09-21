@@ -269,8 +269,7 @@
 
 ## test_plan:
   current_focus:
-    - "Sync/Debug Panel Integration"
-    - "Status-Persistenz + Snapshot-Event-Trigger (Phase 1)"
+    - "Qualitool index.html: Debug Panel + Direktsync + Queue"
   stuck_tasks:
     - "Status-Persistenz + Snapshot-Event-Trigger (Phase 1)"
   test_all: false
