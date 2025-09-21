@@ -3202,7 +3202,7 @@
         if (!localContacts || !Array.isArray(localContacts)) {
           localStorage.setItem('contacts','[]');
         }
-      } catch { localStorage.setItem('contacts','[]'); }
+      } catch(_e) { localStorage.setItem('contacts','[]'); }
 
       // Originale Initialisierung: Immer zuerst zur Adressliste (Kontaktliste)
       showSection('contacts');
