@@ -269,6 +269,7 @@
 
 ## test_plan:
   current_focus:
+    - "Sync/Debug Panel Integration"
     - "Status-Persistenz + Snapshot-Event-Trigger (Phase 1)"
   stuck_tasks:
     - "Status-Persistenz + Snapshot-Event-Trigger (Phase 1)"
