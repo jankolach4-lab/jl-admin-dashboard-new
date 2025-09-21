@@ -3388,10 +3388,12 @@
       info.online = navigator.onLine;
       info.userId = await getSupabaseUserId();
       info.last_event_err = safeParse(localStorage.getItem('qt_last_event_err'));
+      info.last_sync_try = safeParse(localStorage.getItem('qt_last_sync_try'));
       let q = safeParse(localStorage.getItem('qt_sync_queue_v1')) || [];
       info.queue_total = Array.isArray(q) ? q.length : 0;
       info.queue_events = Array.isArray(q) ? q.filter(it => it && it.type === 'event') : [];
       info.dead_contacts = safeParse(localStorage.getItem('qt_dead_contacts')) || [];
+      try { const cs = JSON.parse(localStorage.getItem('contacts')||'[]'); info.contacts_count = Array.isArray(cs)? cs.length : 0; } catch(_){ info.contacts_count = 'err'; }
       return info;
     }
 
