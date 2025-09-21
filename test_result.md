@@ -240,7 +240,7 @@
     file: "frontend/public/qualitool/index.html"
     stuck_count: 3
     priority: "medium"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: false
         agent: "testing"
