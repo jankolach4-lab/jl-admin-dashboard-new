@@ -3438,9 +3438,13 @@
       }
       if (e.target && e.target.id === 'dbgSyncBtn'){
         try{
-          // Full-Snapshot enqueuen und direkt flushen
-          try{ window.enqueueFullContactsSnapshot && window.enqueueFullContactsSnapshot(); }catch(_){ }
-          try{ window.flushSoon && window.flushSoon(); }catch(_){ }
+          // Direkter Sync ohne Queue (Upsert + Events-RPC)
+          (async()=>{
+            const ok = await manualDirectSyncNow();
+            if (ok) alert('Synchronisation gestartet/erfolgreich. Bitte in Supabase prüfen.');
+            else alert('Synchronisation fehlgeschlagen. Siehe letzte Fehlermeldung im Panel.');
+            renderDebug();
+          })();
         }catch(err){ alert('Sync Fehler: '+(err&&err.message||err)); }
         return;
       }
