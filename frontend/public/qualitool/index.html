@@ -3542,7 +3542,7 @@
     try {
       const raw = JSON.parse(localStorage.getItem('contacts') || '[]');
       if (Array.isArray(raw) && raw.length) return raw;
-    } catch {}
+    } catch(_e) {}
     try {
       const uid = localStorage.getItem('last_user_id');
       if (uid){
