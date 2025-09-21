@@ -3625,8 +3625,8 @@
           // Nach erfolgreichem Upsert sofort serverseitige Event-Generierung auslösen (Option 2A)
           try {
             const { data: { user: u } } = await client.auth.getUser();
-            const { error: procErr } = await client.rpc('fn_log_events_from_contacts_snapshot', { p_user_id: u?.id || user.id, p_contacts: next.data });
-            if (procErr) console.warn('Event-Generierung (Snapshot) RPC Warnung:', procErr.message || procErr);
+            const { error: procErr } = await client.rpc('fn_log_events_from_contacts_snapshot', { p_user_id: (u && u.id) || (user && user.id) || null, p_contacts: next.data });
+            if (procErr) throw procErr;
           } catch(procCallErr){
             console.warn('Event-Generierung RPC Aufruf fehlgeschlagen:', procCallErr?.message || procCallErr);
             try { localStorage.setItem('qt_last_event_err', JSON.stringify({ t: Date.now(), stage: 'snapshot_events_rpc', msg: String(procCallErr&&procCallErr.message||procCallErr) })); } catch(_) {}
