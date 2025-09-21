@@ -3453,7 +3453,8 @@
     async function runDirectSyncAndReport(){
       try{
         setPanelStatus('start');
-        const ok = await manualDirectSyncNow();
+        const fn = (window && window.manualDirectSyncNow) ? window.manualDirectSyncNow : manualDirectSyncNow;
+        const ok = await fn();
         setPanelStatus(ok ? 'events_ok' : 'failed');
       }catch(err){ setPanelStatus('error: '+(err&&err.message||err)); }
       await renderDebug();
