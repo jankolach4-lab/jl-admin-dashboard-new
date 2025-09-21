@@ -3581,16 +3581,21 @@
   }
 
   async function flushQueue(){
-    if (!navigator.onLine) return;
-    try {
-      const client = await awaitSupabase();
-      const user = await getUser();
-      if (!user) return;
+    const client = await awaitSupabase().catch(()=>null);
+    // auch offline: Queue sichtbar halten; Network nur wenn online + Session
+    const online = typeof navigator==='object' ? navigator.onLine : true;
+    const user = client ? (await getUser().catch(()=>null)) : null;
 
-      let q = getQueue();
-      if (!q.length) return;
+    let q = getQueue();
+    if (!q.length) return;
 
-      const next = q[0];
+    const next = q[0];
+
+    if (!online || !client || !user){
+      // Kein Netz oder keine Session: nicht verwerfen, später erneut versuchen
+      setTimeout(flushQueue, 3000);
+      return;
+    }
 
       if (next.type === 'contacts') {
         let ok = false, lastErr = null;
