@@ -3453,6 +3453,10 @@
         if (refreshBtn) refreshBtn.addEventListener('click', function(ev){ ev.preventDefault(); renderDebug(); });
         if (sessBtn) sessBtn.addEventListener('click', async function(ev){ ev.preventDefault(); try{ const u = await (window.supa ? window.supa.auth.getUser() : { data: { user: null }}); const s = (u && u.data && u.data.user) ? `ok id=${u.data.user.id}` : 'keine Session'; setPanelStatus(`session: ${s}`); }catch(err){ setPanelStatus('session fehler: '+(err&&err.message||err)); } renderDebug(); });
         if (syncBtn) syncBtn.addEventListener('click', async function(ev){ ev.preventDefault(); await runDirectSyncAndReport(); });
+        const clearBtn = document.getElementById('dbgClearBtn');
+        const clearSyncBtn = document.getElementById('dbgClearSyncBtn');
+        if (clearBtn) clearBtn.addEventListener('click', function(ev){ ev.preventDefault(); clearLocalContacts(); renderDebug(); alert('Lokale Kontakte geleert.'); });
+        if (clearSyncBtn) clearSyncBtn.addEventListener('click', async function(ev){ ev.preventDefault(); clearLocalContacts(); await runDirectSyncAndReport(); alert('Leeren + Sync ausgeführt.'); });
       }catch(_){ }
     });
 
