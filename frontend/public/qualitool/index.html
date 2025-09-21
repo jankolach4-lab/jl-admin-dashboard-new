@@ -3533,7 +3533,7 @@
   function enqueue(item){ const q=getQueue(); q.push(item); setQueue(q); }
 
   function stableStringify(obj){
-    try { return JSON.stringify(obj, Object.keys(obj).sort()); } catch { try{ return JSON.stringify(obj);}catch{return '';} }
+    try { return JSON.stringify(obj, Object.keys(obj).sort()); } catch(_e1) { try{ return JSON.stringify(obj);}catch(_e2){return '';} }
   }
 
   // 4) Kontakte lesen/vereinheitlichen (heuristisch)
