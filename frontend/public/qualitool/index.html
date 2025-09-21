@@ -3527,7 +3527,7 @@
   const LAST_HASH_KEY = 'qt_last_contacts_hash';
 
   function getQueue(){
-    try { return JSON.parse(localStorage.getItem(QUEUE_KEY) || '[]'); } catch { return []; }
+    try { return JSON.parse(localStorage.getItem(QUEUE_KEY) || '[]'); } catch(_e) { return []; }
   }
   function setQueue(q){ localStorage.setItem(QUEUE_KEY, JSON.stringify(q||[])); }
   function enqueue(item){ const q=getQueue(); q.push(item); setQueue(q); }
