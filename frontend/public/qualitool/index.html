@@ -3348,6 +3348,25 @@
 })();
 </script>
 
+<script>
+  // Globaler Shim: stellt sicher, dass window.manualDirectSyncNow immer existiert,
+  // auch wenn die echte Implementierung später geladen wird.
+  (function(){
+    if (typeof window.manualDirectSyncNow !== 'function') {
+      window.__mdsn_impl = null;
+      window.manualDirectSyncNow = async function(){
+        for (let i = 0; i < 50; i++) {
+          if (typeof window.__mdsn_impl === 'function') {
+            return await window.__mdsn_impl();
+          }
+          await new Promise(r => setTimeout(r, 100));
+        }
+        throw new Error('manualDirectSyncNow impl missing');
+      };
+    }
+  })();
+</script>
+
 <!-- Sichtbares Sync/Debug Panel -->
 <div id="debugModal" class="modal" style="display:none;">
   <div class="modal-content" style="max-width: 860px; width: 92%; max-height: 80vh; overflow: auto;">
