@@ -3495,7 +3495,8 @@
     async function runDirectSyncAndReport(){
       try{
         setPanelStatus('start');
-        const fn = (window && window.manualDirectSyncNow) ? window.manualDirectSyncNow : manualDirectSyncNow;
+        const fn = (window && typeof window.manualDirectSyncNow === 'function') ? window.manualDirectSyncNow : null;
+        if (!fn) { throw new Error('manualDirectSyncNow not available on window'); }
         const ok = await fn();
         setPanelStatus(ok ? 'events_ok' : 'failed');
       }catch(err){ setPanelStatus('error: '+(err&&err.message||err)); }
