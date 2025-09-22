@@ -3625,9 +3625,13 @@
   try { window.enqueueFullContactsSnapshot = enqueueFullContactsSnapshot; } catch(_){ }
 
   // Direkter Sync ohne Queue: Upsert + Events-RPC (2A)
-  try { window.manualDirectSyncNow = manualDirectSyncNow; } catch(_e) {}
-
   async function manualDirectSyncNow(){
+  // globale Registrierung der echten Implementierung
+  try {
+    window.__mdsn_impl = manualDirectSyncNow;
+    window.manualDirectSyncNow = manualDirectSyncNow;
+  } catch(_e) {}
+
 
     const stamp = Date.now();
     try{
