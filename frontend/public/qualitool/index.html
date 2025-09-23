@@ -3641,6 +3641,13 @@
   // globale Registrierung der echten Implementierung
   try {
     window.__mdsn_impl = manualDirectSyncNow;
+
+// Registrierung der echten Implementierung NACH der Funktionsdefinition (überschreibt den Shim)
+try {
+  window.__mdsn_impl = manualDirectSyncNow;
+  window.manualDirectSyncNow = manualDirectSyncNow;
+} catch(_e) {}
+
     window.manualDirectSyncNow = manualDirectSyncNow;
   } catch(_e) {}
 
