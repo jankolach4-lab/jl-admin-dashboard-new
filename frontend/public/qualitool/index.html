@@ -3529,12 +3529,18 @@
 
   function sleep(ms){ return new Promise(r=>setTimeout(r, ms)); }
   async function awaitSupabase(maxMs=10000){
+    // Sofort vorhandenen globalen Client nutzen (z. B. aus login.html), auch wenn supabase-js (CDN) noch nicht geladen ist
+    if (window.supa && !sb) { sb = window.supa; }
+    if (sb) { return sb; }
+
     const start = Date.now();
+    // Falls noch kein globaler Client vorhanden ist, warte auf supabase-js und initialisiere
     while(!(window.supabase && window.supabase.createClient)){
       if (Date.now()-start > maxMs) throw new Error('supabase-js nicht geladen');
       await sleep(100);
+      // während wir warten, könnte login.html bereits window.supa gesetzt haben
+      if (window.supa) { sb = window.supa; return sb; }
     }
-    if (window.supa) { sb = window.supa; return sb; }
     if (!sb) {
       function getCapacitorStorage(){
         try{
@@ -3548,8 +3554,11 @@
         }catch(e){ return null; }
       }
       const capStore = getCapacitorStorage();
-      sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { persistSession: true, storage: capStore || undefined, autoRefreshToken: true, detectSessionInUrl: false }});
-      window.supa = sb;
+      if (window.supabase && window.supabase.createClient) {
+        sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { persistSession: true, storage: capStore || undefined, autoRefreshToken: true, detectSessionInUrl: false }});
+      }
+      if (!sb && window.supa) { sb = window.supa; }
+      if (sb) { window.supa = sb; }
     }
     return sb;
   }
