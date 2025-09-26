@@ -3998,7 +3998,7 @@ try {
       window.addEventListener('online', () => flushQueue());
       document.addEventListener('visibilitychange', () => { if (!document.hidden) flushQueue(); });
       // Supabase-Client asynchron initialisieren (optional)
-      (async () => { try { await awaitSupabase(); } catch(_){ /* offline ok */ } })();
+      (async () => { try { await awaitSupabase(); flushSoon(); } catch(_){ /* offline ok */ } })();
     }catch(e){ console.warn('Auto-Sync Init (lokal) fehlgeschlagen:', e?.message||e); }
   })();
 })();
