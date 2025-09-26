@@ -3664,7 +3664,7 @@ try {
       localStorage.setItem('qt_last_sync_try', JSON.stringify({ t: stamp, stage: 'snapshot_ready', count: snapshot.length }));
       // Upsert über RPC (korrekte Signatur)
       try{
-        const { error } = await client.rpc('fn_public_upsert_user_contacts', { p_contacts: snapshot });
+        const { error } = await client.rpc('fn_public_upsert_user_contacts', { p_user_id: user.id, p_contacts: snapshot });
         if (error) throw error;
       }catch(e1){
         localStorage.setItem('qt_last_sync_try', JSON.stringify({ t: stamp, stage: 'rpc_upsert_failed', err: String(e1&&e1.message||e1) }));
