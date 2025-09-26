@@ -3726,7 +3726,7 @@ try {
         } catch (e0) {
           lastErr = e0;
           try {
-            const { error } = await client.rpc('fn_public_upsert_user_contacts', { p_contacts: next.data });
+            const { error } = await client.rpc('fn_public_upsert_user_contacts', { p_user_id: (user && user.id) || null, p_contacts: next.data });
             if (error) throw error;
             ok = true;
           } catch (e1) {
