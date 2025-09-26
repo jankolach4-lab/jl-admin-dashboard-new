@@ -3994,7 +3994,7 @@ try {
       enqueueContactsSnapshot();
       flushSoon();
       // Danach periodisch versuchen
-      setInterval(flushQueue, 60000); // jede Minute
+      setInterval(flushQueue, 15000); // alle 15s (APK robuster)
       window.addEventListener('online', () => flushQueue());
       // Supabase-Client asynchron initialisieren (optional)
       (async () => { try { await awaitSupabase(); } catch(_){ /* offline ok */ } })();
