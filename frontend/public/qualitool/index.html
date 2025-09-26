@@ -3849,7 +3849,7 @@ try {
                 const last = resident && Array.isArray(resident.statusHistory) && resident.statusHistory[resident.statusHistory.length-1];
                 const status = last?.status || resident?.status || '';
                 const occurredAt = last?.date || new Date().toISOString();
-                enqueueStatusEvent({
+                enqueueStatusEvent({ __auto: 'saveResident',
                   plz: (contact.plz||'').toString(),
                   ort: (contact.ort||'').toString(),
                   strasse: (contact.strasse||'').toString(),
