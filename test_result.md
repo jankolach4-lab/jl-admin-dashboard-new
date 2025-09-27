@@ -187,11 +187,11 @@
         comment: "❌ FÜNFTER AUTOMATISIERTER TEST NACH UI/INIT-HÄRTUNG (20.09.2025): Umfassende Tests der Phase 1 Patch Funktionalität durchgeführt. POSITIV: ✅ Offline-Fallback funktioniert korrekt (localStorage offline_allowed='true', last_user_id='test-user-1'), ✅ Import/Export-Buttons SICHTBAR nach Header-Klick (Excel importieren, Excel exportieren, CSV exportieren), ✅ window.enqueueContactsSnapshot() VERFÜGBAR, ✅ window.rescanAndEnqueueStatusDiffs() VERFÜGBAR, ✅ window.flushSoon() VERFÜGBAR, ✅ window.flushQueue() VERFÜGBAR, ✅ Kontakt-Erstellung erfolgreich (PLZ 12345, Ort Teststadt, Straße Musterweg, Nr 1, WE 1). KRITISCHE DEFEKTE BESTÄTIGT: ❌ SICHTBARER JAVASCRIPT-CODE beim Scrollen (function( pattern gefunden), ❌ Status-Änderung NICHT MÖGLICH (Status-Select-Elemente nicht sichtbar/interagierbar), ❌ localStorage Queue 'qt_sync_queue_v1' wird NICHT erstellt, ❌ KEINE Netzwerk-RPC-Aufrufe zu Supabase getriggert trotz flushSoon() Aufrufen. FAZIT: UI-Verbesserungen erkennbar, aber Kern-Sync-Funktionen (Status-Änderung, Queue-Management, Netzwerk-Sync) sind NICHT funktional."
   - task: "Sichtbarer Code beim Scrollen entfernen"
     implemented: true
-    working: false
+    working: true
     file: "frontend/public/qualitool/index.html"
     stuck_count: 7
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: false
         agent: "user"
@@ -220,6 +220,9 @@
       - working: false
         agent: "testing"
         comment: "❌ FÜNFTER TEST BESTÄTIGT REGRESSION: Sichtbarer JavaScript-Code ist WEITERHIN DA! Automatisierter Test nach UI/Init-Härtung (20.09.2025). GEFUNDENES PATTERN: 'function(' beim Scrollen durch die Seite sichtbar. Der JavaScript-Code wird als sichtbarer Text im Seiteninhalt gerendert. KRITISCHER UI-FEHLER BESTÄTIGT - SOFORTIGE BEHEBUNG ERFORDERLICH!"
+      - working: true
+        agent: "testing"
+        comment: "✅ SICHTBARER JAVASCRIPT-CODE PROBLEM BEHOBEN! (27.09.2025) Umfassende Tests durchgeführt mit detaillierter Scroll-Analyse über die gesamte Seitenhöhe (1080px). KEINE sichtbaren JavaScript-Patterns mehr gefunden beim Scrollen. Getestete Patterns: function(, addEventListener, localStorage.setItem, document.querySelector, renderCalendar, importExcelFile, filterByStatus, saveContacts, toggleImportSection, addContact, deleteContact, window., var, const, let, if(, for(, while(, try{, catch(, return, .forEach, .map(, .filter(, console.log, alert(, confirm( - ALLE NICHT MEHR SICHTBAR. Problem erfolgreich gelöst. Minor: 2 DOM-Elemente (HTML/BODY) enthalten noch JS-ähnlichen Content, aber dieser ist nicht beim normalen Scrollen sichtbar."
   - task: "App-Icon korrekt"
     implemented: true
     working: false
