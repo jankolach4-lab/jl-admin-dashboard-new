@@ -3141,6 +3141,11 @@
           return session.user;
         }
         
+        // Fallback: Wenn offline erlaubt und User vorhanden, offline fortfahren
+        if (offlineAllowed && lastUser) {
+          return { id: lastUser };
+        }
+        
         // Sonst zur Login-Seite leiten
         window.location.href = './login.html';
         return null;
