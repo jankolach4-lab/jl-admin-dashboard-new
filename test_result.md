@@ -133,7 +133,7 @@
     file: "frontend/public/qualitool/index.html"
     stuck_count: 2
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: false
         agent: "user"
@@ -156,6 +156,9 @@
       - working: true
         agent: "testing"
         comment: "✅ PASSED: Offline-Fallback BEHOBEN! Problem war in requireAuthOrRedirect() Funktion - Reihenfolge der Prüfungen korrigiert. Jetzt werden localStorage-Flags ZUERST geprüft vor Supabase-Session. A) Ohne Flags: Redirect zu login.html funktioniert. B) Mit Flags: Bleibt auf index.html und zeigt Hauptanwendung. Beide Szenarien funktionieren korrekt."
+      - working: true
+        agent: "testing"
+        comment: "✅ OFFLINE-FALLBACK BESTÄTIGT FUNKTIONAL! (27.09.2025) Umfassende Tests durchgeführt: 1) Ohne localStorage flags erfolgt korrekter Redirect zu login.html, 2) Mit gesetzten flags (offline_allowed='true', last_user_id='test-user-debug') bleibt App erfolgreich auf index.html und lädt Hauptanwendung vollständig. Beide Szenarien funktionieren einwandfrei. Login-Enforcement und Offline-Fallback arbeiten wie erwartet."
   - task: "Status-Persistenz + Snapshot-Event-Trigger (Phase 1)"
     implemented: true
     working: false
