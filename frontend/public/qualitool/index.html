@@ -3146,9 +3146,48 @@
     }
 
     async function requireAuthOrRedirect(){
-      // TEMPORÄR VEREINFACHT - Für Debugging immer Success zurückgeben
-      console.log('requireAuthOrRedirect - DEBUG MODE: Always returning user');
-      return { id: 'debug-user' };
+      try {
+        // Offline-/No-CDN-Fallback ZUERST prüfen
+        const offlineAllowed = localStorage.getItem('offline_allowed') === 'true';
+        const lastUser = localStorage.getItem('last_user_id');
+        
+        console.log('requireAuthOrRedirect check:', { offlineAllowed, lastUser });
+        
+        if (offlineAllowed && lastUser) {
+          console.log('Offline access granted');  
+          return { id: lastUser };
+        }
+        
+        // Auch bei nur einem Flag offline erlauben (großzügiger)
+        if (offlineAllowed || lastUser) {
+          const userId = lastUser || 'offline-user';
+          console.log('Partial offline access granted for:', userId);
+          return { id: userId };
+        }
+        
+        // Online-Fall: Supabase verfügbar -> Sitzung prüfen
+        if (supa) {
+          try {
+            const { data: { session } } = await supa.auth.getSession();
+            if (session) {
+              console.log('Supabase session found');
+              return session.user;
+            }
+          } catch (e) {
+            console.warn('Supabase session check failed:', e);
+          }
+        }
+        
+        // Letzter Fallback vor Redirect
+        console.log('No auth found - would redirect to login');
+        window.location.href = './login.html';
+        return null;
+        
+      } catch (e) {
+        console.warn('Auth check failed:', e?.message || e);
+        // Bei Fehler großzügig sein und offline erlauben
+        return { id: 'error-fallback-user' };
+      }
     }
 
     class CloudSync {
