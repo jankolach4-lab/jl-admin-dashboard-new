@@ -3242,6 +3242,18 @@
     })();
 
     // XLSX lädt bereits dynamisch oben; zusätzlicher Loader entfernt, um Fehler zu vermeiden.
+    
+    // CRITICAL FIX: Kontakte-Sektion standardmäßig anzeigen (fallback)
+    setTimeout(() => {
+      try {
+        if (typeof showSection === 'function') {
+          showSection('contacts');
+          console.log('Fallback: Default section "contacts" loaded via DOMContentLoaded');
+        }
+      } catch(e) {
+        console.error('Fallback showSection failed:', e);
+      }
+    }, 100);
   });
 
 
