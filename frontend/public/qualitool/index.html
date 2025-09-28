@@ -18,16 +18,26 @@
 
 <body>
 <script>
-  // Verbesserte Offline-Prüfung - nur umleiten wenn definitiv kein Offline-Zugang
+  // ROBUSTE Offline-Prüfung - erst nach vollständiger Initialisierung umleiten
   (function(){
     try {
-      var offlineAllowed = localStorage.getItem('offline_allowed') === 'true';
-      var lastUser = localStorage.getItem('last_user_id');
-      // Nur umleiten wenn beide Werte fehlen (nicht nur einer)
-      if (!offlineAllowed && !lastUser) {
-        window.location.replace('./login.html');
-      }
-    } catch (e) { /* ignore */ }
+      // Verzögerung um sicherzustellen, dass localStorage vollständig geladen ist
+      setTimeout(function() {
+        var offlineAllowed = localStorage.getItem('offline_allowed') === 'true';
+        var lastUser = localStorage.getItem('last_user_id');
+        console.log('Offline Check:', { offlineAllowed, lastUser });
+        
+        // Nur umleiten wenn BEIDE Werte definitiv fehlen
+        if (!offlineAllowed && !lastUser) {
+          console.log('Redirecting to login - no offline access');
+          window.location.replace('./login.html');
+        } else {
+          console.log('Offline access granted - staying on main page');
+        }
+      }, 200); // 200ms Verzögerung
+    } catch (e) { 
+      console.warn('Offline check failed:', e);
+    }
   })();
 </script>
 <!-- HTML structure -->
