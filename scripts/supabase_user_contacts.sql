@@ -53,3 +53,55 @@ select u.id as user_id, u.email, u.created_at as user_created,
 from auth.users u
 left join public.user_contacts uc on uc.user_id = u.id
 order by uc.updated_at desc nulls last;
+
+-- 7) RPC-Funktion für sichere Upsert-Operation mit expliziter user_id
+create or replace function public.fn_public_upsert_user_contacts(
+  p_user_id uuid,
+  p_contacts jsonb
+)
+returns void
+security definer
+language plpgsql
+as $$
+begin
+  -- Nur wenn authentifiziert und user_id stimmt überein
+  if auth.uid() is null then
+    raise exception 'Not authenticated';
+  end if;
+  
+  if auth.uid() != p_user_id then
+    raise exception 'Access denied: user_id mismatch';
+  end if;
+
+  -- Upsert mit UPDATE-dann-INSERT Pattern für Robustheit
+  update public.user_contacts 
+  set 
+    contacts = p_contacts,
+    updated_at = now(),
+    version = version + 1
+  where user_id = p_user_id;
+  
+  if not found then
+    insert into public.user_contacts (user_id, contacts)
+    values (p_user_id, p_contacts);
+  end if;
+end;
+$$;
+
+-- 8) Wrapper für alte Clients ohne p_user_id Parameter
+create or replace function public.fn_public_upsert_user_contacts(
+  p_contacts jsonb
+)
+returns void
+security definer
+language plpgsql
+as $$
+begin
+  -- user_id aus auth.uid() ableiten
+  if auth.uid() is null then
+    raise exception 'Not authenticated';
+  end if;
+  
+  perform public.fn_public_upsert_user_contacts(auth.uid(), p_contacts);
+end;
+$$;
