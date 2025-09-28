@@ -2136,6 +2136,28 @@
     return hours * 60 + minutes;
   }
 
+  function isVisitRecommendedNow(resident) {
+    if (!resident.statusHistory || resident.status !== 'nicht-angetroffen') {
+      return false;
+    }
+    
+    const now = new Date();
+    const currentHour = now.getHours();
+    const currentMinutes = currentHour * 60 + now.getMinutes();
+    
+    const lastEntry = resident.statusHistory
+      .filter(entry => entry.status === 'nicht-angetroffen')
+      .sort((a, b) => b.timestamp - a.timestamp)[0];
+    
+    if (!lastEntry) return false;
+    
+    const visitTime = new Date(lastEntry.date);
+    const visitMinutes = visitTime.getHours() * 60 + visitTime.getMinutes();
+    
+    // Empfohlen wenn letzter Besuch nicht zur aktuellen Stunde war
+    return Math.abs(visitMinutes - currentMinutes) > 60; // Nicht in der aktuellen Stunde (+/- 60 Min)
+  }
+
   function displayRecommendations(recommendations) {
     const resultsDiv = document.getElementById('recommendationResults');
     if (recommendations.length === 0) {
