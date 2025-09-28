@@ -802,11 +802,11 @@
         projectFilter.appendChild(option);
       });
       
-      // Render projects table
+      // Render projects table - nur aktive Projekte
       const tbody = q('#tblProjects tbody');
       tbody.innerHTML='';
       
-      allProjects.forEach((row, index) => {
+      activeProjects.forEach((row, index) => {
         const tr = document.createElement('tr');
         tr.className = index % 2 === 0 ? 'even' : 'odd';
         
