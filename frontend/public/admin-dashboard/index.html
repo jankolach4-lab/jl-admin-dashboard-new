@@ -1166,6 +1166,14 @@
       showSuccess('Alle Charts werden exportiert...');
     });
 
+    q('#btnExportPDF').addEventListener('click', async () => {
+      try {
+        await exportDashboardToPDF();
+      } catch (error) {
+        showError('PDF-Export fehlgeschlagen: ' + error.message);
+      }
+    });
+
     q('#btnLogout').addEventListener('click', async () => { 
       if(autoRefreshInterval) clearInterval(autoRefreshInterval);
       await supabase.auth.signOut(); 
