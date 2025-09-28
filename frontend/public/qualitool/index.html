@@ -1706,12 +1706,14 @@
     }
   }
   function saveContacts() {
-    localStorage.setItem('contacts', JSON.stringify(contacts));
-    try { window.contacts = contacts; } catch(_) {}
-    try { enqueueContactsSnapshot(); } catch(_) {}
-    try { rescanAndEnqueueStatusDiffs(); } catch(_) {}
-    try { flushSoon(); } catch(_) {}
-  }
+  localStorage.setItem('contacts', JSON.stringify(contacts));
+  try { window.contacts = contacts; } catch(_) {}
+  try { enqueueContactsSnapshot(); } catch(_) {}
+  try { rescanAndEnqueueStatusDiffs(); } catch(_) {}
+  try { flushSoon(); } catch(_) {}
+  // NEU: Auto‑Sync nach Änderungen zuverlässig anstoßen (debounced)
+  try { scheduleAutoSync('saveContacts'); } catch(_) {}
+}
   function updateStreetFilter() {
     const streetFilter = document.getElementById('streetFilter');
     const streets = new Set();
@@ -2257,9 +2259,6 @@
       setDisp('.status-filters','none');
       setDisp('.contact-list','none');
       setDisp('.street-filter-container','none');
-      // Auch Inhalte verstecken
-      setDisp('.import-content','none');
-      setDisp('.entry-content','none');
       // Defensive: Nur setzen, wenn Container existiert
       if (document.querySelector('.import-export-buttons')) {
         setDisp('.import-export-buttons','flex');
@@ -2281,30 +2280,22 @@
         case 'import': {
           setDisp('.import-section','block');
           addCls('.import-section','expanded');
-          // Sicherstellen, dass der Import-Inhalt auch sichtbar ist
-          setDisp('.import-content','block');
           break;
         }
         case 'add': {
           setDisp('.entry-section','block');
           addCls('.entry-section','expanded');
-          // Sicherstellen, dass der Inhalt auch sichtbar ist
-          setDisp('.entry-content','block');
           break;
         }
         case 'stats': {
           setDisp('.statistics-section','block');
           const ss = document.getElementById('statusStats'); if (ss) ss.style.display='block';
-          // Sicherstellen, dass Statistik-Inhalte sichtbar sind
-          addCls('.statistics-section','expanded');
           if (typeof updateStatistics==='function') updateStatistics();
           break;
         }
         case 'calendar': {
           setDisp('.calendar-section','block');
           const cal = document.getElementById('calendar'); if (cal) cal.style.display='block';
-          // Sicherstellen, dass Kalender-Sektion erweitert ist
-          addCls('.calendar-section','expanded');
           if (typeof renderCalendar==='function') renderCalendar();
           break;
         }
@@ -3220,11 +3211,6 @@
       filterByStatus('all');
       updateStreetFilter();
 
-      // Originale Initialisierung: Immer zuerst zur Adressliste (Kontaktliste)
-      showSection('contacts');
-      filterByStatus('all');
-      updateStreetFilter();
-
       // saveContacts erweitern, ohne UI zu ändern
       const _save = window.saveContacts;
       window.saveContacts = function(){
@@ -3662,21 +3648,45 @@
   try { window.enqueueFullContactsSnapshot = enqueueFullContactsSnapshot; } catch(_){ }
 
   // Direkter Sync ohne Queue: Upsert + Events-RPC (2A)
-  async function manualDirectSyncNow(){
-  // globale Registrierung der echten Implementierung
-  try {
-    window.__mdsn_impl = manualDirectSyncNow;
+async function manualDirectSyncNow(){
+  const stamp = Date.now();
+  try{
+    localStorage.setItem('qt_last_sync_try', JSON.stringify({ t: stamp, stage: 'start' }));
+    const client = await awaitSupabase();
+    localStorage.setItem('qt_last_sync_try', JSON.stringify({ t: stamp, stage: 'client_ready' }));
+    const { data: { user } } = await client.auth.getUser();
+    localStorage.setItem('qt_last_sync_try', JSON.stringify({ t: stamp, stage: 'got_user', user: (user?{id:user.id,email:user.email}:null) }));
+    if (!user) throw new Error('Keine Session vorhanden');
 
-// Registrierung der echten Implementierung NACH der Funktionsdefinition (überschreibt den Shim)
-try {
-  window.__mdsn_impl = manualDirectSyncNow;
-  window.manualDirectSyncNow = manualDirectSyncNow;
-} catch(_e) {}
+    const snapshot = normalizeContacts(readLocalContactsRaw());
+    localStorage.setItem('qt_last_sync_try', JSON.stringify({ t: stamp, stage: 'snapshot_ready', count: snapshot.length }));
 
-    window.manualDirectSyncNow = manualDirectSyncNow;
-  } catch(_e) {}
+    // Primär: RPC mit p_user_id
+    try{
+      const { error } = await client.rpc('fn_public_upsert_user_contacts', { p_user_id: user.id, p_contacts: snapshot });
+      if (error) throw error;
+    }catch(e1){
+      localStorage.setItem('qt_last_sync_try', JSON.stringify({ t: stamp, stage: 'rpc_upsert_failed', err: String(e1 && e1.message || e1) }));
+      // Fallback: Tabellen-Upsert
+      const { error: e2 } = await client.from('user_contacts').upsert({ user_id: user.id, contacts: snapshot }, { onConflict: 'user_id' });
+      if (e2) throw e2;
+    }
+    localStorage.setItem('qt_last_sync_try', JSON.stringify({ t: stamp, stage: 'upsert_ok' }));
 
+    // Events aus Snapshot erzeugen
+    const { error: e3 } = await client.rpc('fn_log_events_from_contacts_snapshot', { p_user_id: user.id, p_contacts: snapshot });
+    if (e3) throw e3;
 
+    localStorage.setItem('qt_last_sync_try', JSON.stringify({ t: stamp, stage: 'events_ok' }));
+    try { localStorage.removeItem('qt_last_event_err'); } catch(_){}
+    return true;
+  } catch(err){
+    try { localStorage.setItem('qt_last_event_err', JSON.stringify({ t: Date.now(), stage: 'manual_direct_sync', msg: String(err && err.message || err) })); } catch(_){}
+    return false;
+  }
+}
+// Globale Registrierung (überschreibt den Shim nur 1x)
+try { window.__mdsn_impl = manualDirectSyncNow; window.manualDirectSyncNow = manualDirectSyncNow; } catch(_){}
     const stamp = Date.now();
     try{
       localStorage.setItem('qt_last_sync_try', JSON.stringify({ t: stamp, stage: 'start' }));
@@ -4012,6 +4022,24 @@ try {
       // Danach periodisch versuchen
       setInterval(flushQueue, 15000); // alle 15s (APK robuster)
       window.addEventListener('online', () => flushQueue());
+      // Zusätzliche Auto‑Sync Trigger
+try {
+  // Wenn App/Tab in den Vordergrund kommt
+  document.addEventListener('visibilitychange', () => {
+    try { if (!document.hidden) scheduleAutoSync('visible'); } catch(_){}
+  });
+
+  // Wenn Netzwerk wieder online ist
+  window.addEventListener('online', () => { try { scheduleAutoSync('online'); } catch(_){} });
+
+  // Capacitor App‑Resume (Android/iOS)
+  const App = window.Capacitor && window.Capacitor.App;
+  if (App && typeof App.addListener === 'function') {
+    App.addListener('appStateChange', ({ isActive }) => {
+      try { if (isActive) scheduleAutoSync('app_resume'); } catch(_){}
+    });
+  }
+} catch(_) {}
       document.addEventListener('visibilitychange', () => { if (!document.hidden) flushQueue(); });
       // Supabase-Client asynchron initialisieren (optional)
       (async () => { try { await awaitSupabase(); flushSoon(); } catch(_){ /* offline ok */ } })();
@@ -4019,6 +4047,385 @@ try {
   })();
 })();
 </script>
+<script>
+/*
+  Add-on Sync + Session Stabilisierung (append-only, UI-neutral)
+  - Garantiert window.manualDirectSyncNow
+  - Persistente Supabase-Session via Capacitor Preferences (Fallback)
+  - RPC: fn_public_upsert_user_contacts(p_contacts) -> Fallback Upsert -> fn_log_events_from_contacts_snapshot
+*/
+(function(){
+  const SUPABASE_URL = 'https://whigasnqcvjkilkmbfld.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndoaWdhc25xY3Zqa2lsa21iZmxkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQyNDE1OTIsImV4cCI6MjA2OTgxNzU5Mn0.tfUnIP_oWy3N9UM6Ws9mPiKqsGtj8_kIOMW42E298rc';
 
+  // Capacitor Preferences als Storage (persistente Session). Fallback auf Default, falls nicht vorhanden.
+  function getCapacitorStorage(){
+    try{
+      const P = (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Preferences) || null;
+      if (!P) return null;
+      return {
+        getItem: async (key) => { const r = await P.get({ key }); return (r && typeof r.value==='string') ? r.value : null; },
+        setItem: async (key, value) => { await P.set({ key, value: String(value ?? '') }); },
+        removeItem: async (key) => { await P.remove({ key }); }
+      };
+    }catch(_e){ return null; }
+  }
+
+  function sleep(ms){ return new Promise(r=>setTimeout(r, ms)); }
+  async function awaitSupabase(maxMs=15000){
+    const t0 = Date.now();
+    while(!(window.supabase && typeof window.supabase.createClient === 'function')){
+      if (Date.now()-t0 > maxMs) throw new Error('Supabase SDK nicht geladen');
+      await sleep(100);
+    }
+    return window.supabase;
+  }
+
+  // Einen (1) globalen Client bereitstellen/weiterverwenden – verändert bestehende Logik nicht.
+  let __supa = null;
+  async function getClient(){
+    if (window.supa) return window.supa;
+    if (__supa) return __supa;
+    const lib = await awaitSupabase();
+    const capStore = getCapacitorStorage();
+    __supa = lib.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: { persistSession: true, storage: capStore || undefined, autoRefreshToken: true, detectSessionInUrl: false }
+    });
+    try { window.supa = __supa; } catch(_e){}
+    return __supa;
+  }
+
+  // Shim: stelle sicher, dass window.manualDirectSyncNow existiert und ggf. auf echte Implementierung wartet
+  if (typeof window.manualDirectSyncNow !== 'function') {
+    window.__mdsn_impl = null;
+    window.manualDirectSyncNow = async function(){
+      for (let i = 0; i < 80; i++) {
+        if (typeof window.__mdsn_impl === 'function') {
+          return await window.__mdsn_impl();
+        }
+        await sleep(100);
+      }
+      throw new Error('manualDirectSyncNow impl missing');
+    };
+  }
+
+  // Echte Implementierung (UI-neutral; liest nur localStorage 'contacts')
+  async function __manualDirectSyncNow(){
+    const setTry=(stage, extra)=>{ try{ localStorage.setItem('qt_last_sync_try', JSON.stringify(Object.assign({ t: Date.now(), stage }, extra||{}))); }catch(_e){} };
+    const setErr=(stage, msg)=>{ try{ localStorage.setItem('qt_last_event_err', JSON.stringify({ t: Date.now(), stage, msg: String(msg||'') })); }catch(_e){} };
+
+    try{
+      setTry('start');
+
+      const sb = await getClient();
+      setTry('client_ready');
+
+      const { data:{ user } } = await sb.auth.getUser();
+      if (!user) throw new Error('Keine Session vorhanden');
+      setTry('got_user', { user: { id: user.id } });
+
+      let snapshot = [];
+      try { snapshot = JSON.parse(localStorage.getItem('contacts')||'[]'); } catch(_e){ snapshot = []; }
+      if (!Array.isArray(snapshot)) snapshot = [];
+      setTry('snapshot_ready', { count: snapshot.length });
+
+      // 1) RPC zuerst
+      try{
+        const { error } = await sb.rpc('fn_public_upsert_user_contacts', { p_contacts: snapshot });
+        if (error) throw error;
+      }catch(e1){
+        setTry('rpc_upsert_failed', { err: String(e1?.message || e1) });
+        // 2) Fallback Tabellen-Upsert
+        const { error: e2 } = await sb.from('user_contacts').upsert({ user_id: user.id, contacts: snapshot }, { onConflict: 'user_id' });
+        if (e2) throw e2;
+      }
+      setTry('upsert_ok');
+
+      // 3) Events aus Snapshot generieren
+      const { error: e3 } = await sb.rpc('fn_log_events_from_contacts_snapshot', { p_user_id: user.id, p_contacts: snapshot });
+      if (e3) throw e3;
+      setTry('events_ok');
+      try { localStorage.removeItem('qt_last_event_err'); } catch(_e){}
+
+      return true;
+    }catch(err){
+      setErr('manual_direct_sync', err?.message || err);
+      return false;
+    }
+  }
+
+  // Registrierung der echten Implementierung (überschreibt Shim, falls vorhanden)
+  try { window.__mdsn_impl = __manualDirectSyncNow; window.manualDirectSyncNow = __manualDirectSyncNow; } catch(_e){}
+
+  // Zusätzliche, nicht-invasive Absicherung: Button im Debug-Panel auf window.manualDirectSyncNow binden
+  try{
+    document.addEventListener('DOMContentLoaded', function(){
+      const b = document.getElementById('dbgSyncBtn');
+      if (b) {
+        // Doppelte Bindungen verhindern
+        if (!b.__qt_bound) {
+          b.addEventListener('click', async function(ev){
+            try{
+              // Falls dein Panel setPanelStatus nutzt, bleibt das unverändert – diese Bindung ruft nur die Funktion zusätzlich sicher auf
+              await window.manualDirectSyncNow();
+            }catch(_e){}
+          });
+          b.__qt_bound = true;
+        }
+      }
+    });
+  }catch(_e){}
+})();
+</script>
+  <script>
+/*
+  Add-on: Upsert ohne ON CONFLICT (UI-neutral)
+  - Versucht zuerst RPC (fn_public_upsert_user_contacts)
+  - Fällt dann auf SELECT->UPDATE/INSERT zurück (ohne onConflict)
+  - Triggert danach Events-RPC
+  - Schreibt Debug-Stages in qt_last_sync_try / qt_last_event_err
+*/
+(function(){
+  const SUPABASE_URL = 'https://whigasnqcvjkilkmbfld.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndoaWdhc25xY3Zqa2lsa21iZmxkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQyNDE1OTIsImV4cCI6MjA2OTgxNzU5Mn0.tfUnIP_oWy3N9UM6Ws9mPiKqsGtj8_kIOMW42E298rc';
+
+  function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+  async function awaitSupabase(maxMs=15000){
+    const t0=Date.now();
+    while(!(window.supabase && window.supabase.createClient)){
+      if (Date.now()-t0>maxMs) throw new Error('Supabase SDK nicht geladen');
+      await sleep(100);
+    }
+    return window.supabase;
+  }
+  function getCapacitorStorage(){
+    try{
+      const P=(window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Preferences)||null;
+      if (!P) return null;
+      return {
+        getItem: async (k)=>{ const r=await P.get({key:k}); return (r && typeof r.value==='string')? r.value:null; },
+        setItem: async (k,v)=>{ await P.set({key:k, value:String(v??'')}); },
+        removeItem: async (k)=>{ await P.remove({key:k}); }
+      };
+    }catch(_e){ return null; }
+  }
+  let __supa=null;
+  async function getClient(){
+    if (window.supa) return window.supa;
+    if (__supa) return __supa;
+    const lib = await awaitSupabase();
+    const cap = getCapacitorStorage();
+    __supa = lib.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: { persistSession:true, storage:cap||undefined, autoRefreshToken:true, detectSessionInUrl:false }
+    });
+    try{ window.supa=__supa; }catch(_e){}
+    return __supa;
+  }
+
+  function setTry(stage, extra){
+    try{ localStorage.setItem('qt_last_sync_try', JSON.stringify(Object.assign({ t: Date.now(), stage }, extra||{}))); }catch(_e){}
+  }
+  function setErr(stage, msg){
+    try{ localStorage.setItem('qt_last_event_err', JSON.stringify({ t: Date.now(), stage, msg: String(msg||'') })); }catch(_e){}
+  }
+
+  async function safeUpsertWithoutOnConflict(sb, userId, snapshot){
+    // 1) Existiert Zeile?
+    const { data: existing, error: selErr } = await sb
+      .from('user_contacts')
+      .select('user_id, version')
+      .eq('user_id', userId)
+      .maybeSingle();
+    if (selErr && selErr.code !== 'PGRST116') throw selErr;
+
+    if (existing && existing.user_id){
+      const newVersion = (existing.version||0) + 1;
+      const { error: updErr } = await sb
+        .from('user_contacts')
+        .update({ contacts: snapshot, version: newVersion, updated_at: new Date().toISOString() })
+        .eq('user_id', userId);
+      if (updErr) throw updErr;
+    } else {
+      // version ist NOT NULL – setze initial auf 1
+      const { error: insErr } = await sb
+        .from('user_contacts')
+        .insert({ user_id: userId, contacts: snapshot, version: 1 });
+      if (insErr) throw insErr;
+    }
+  }
+
+  async function __manualDirectSyncNoConflict(){
+    try{
+      setTry('start');
+      const sb = await getClient();
+      setTry('client_ready');
+
+      const { data:{ user } } = await sb.auth.getUser();
+      if (!user) throw new Error('Keine Session vorhanden');
+      setTry('got_user', { user: { id: user.id } });
+
+      let snapshot=[];
+      try{ snapshot = JSON.parse(localStorage.getItem('contacts')||'[]'); }catch(_e){ snapshot=[]; }
+      if (!Array.isArray(snapshot)) snapshot=[];
+      setTry('snapshot_ready', { count: snapshot.length });
+
+      // 1) RPC versuchen
+      try{
+        const { error } = await sb.rpc('fn_public_upsert_user_contacts', { p_contacts: snapshot });
+        if (error) throw error;
+        setTry('rpc_ok');
+      }catch(e1){
+        setTry('rpc_upsert_failed', { err: String(e1?.message||e1) });
+        // 2) Fallback ohne ON CONFLICT
+        await safeUpsertWithoutOnConflict(sb, user.id, snapshot);
+        setTry('fallback_upsert_ok');
+      }
+
+      // 3) Events
+      const { error: e3 } = await sb.rpc('fn_log_events_from_contacts_snapshot', { p_user_id:user.id, p_contacts:snapshot });
+      if (e3) throw e3;
+      setTry('events_ok');
+      try{ localStorage.removeItem('qt_last_event_err'); }catch(_e){}
+      return true;
+    }catch(err){
+      setErr('manual_direct_sync', err?.message||err);
+      return false;
+    }
+  }
+
+  // Sicher registrieren (überschreibt ggf. vorherige Implementierung/Shim)
+  try{
+    window.__mdsn_impl = __manualDirectSyncNoConflict;
+    window.manualDirectSyncNow = __manualDirectSyncNoConflict;
+  }catch(_e){}
+
+  // Zusätzliche Absicherung: Debug-Button an window.manualDirectSyncNow hängen
+  try{
+    document.addEventListener('DOMContentLoaded', function(){
+      const b = document.getElementById('dbgSyncBtn');
+      if (b && !b.__qt_no_conflict_bound){
+        b.addEventListener('click', async function(){ try{ await window.manualDirectSyncNow(); }catch(_e){} });
+        b.__qt_no_conflict_bound = true;
+      }
+    });
+  }catch(_e){}
+})();
+</script>
+  <script>
+// Auto‑Sync: löst manualDirectSyncNow() automatisch aus (debounced), ohne UI-Button
+(function(){
+  let __autoSyncTimer = null;
+  let __autoSyncInFlight = false;
+
+  function debounceSync(reason){
+    try {
+      if (__autoSyncTimer) clearTimeout(__autoSyncTimer);
+      __autoSyncTimer = setTimeout(() => { void tryAutoSyncNow(reason); }, 800);
+    } catch(_){}
+  }
+
+  async function ensureReady(){
+    try{
+      // Supabase bereit?
+      if (!(window.supabase && window.supabase.createClient) && !window.supa) return false;
+      // Globalen Client verwenden (login.html setzt window.supa)
+      const client = window.supa;
+      if (!client) return false;
+      // Online?
+      const online = typeof navigator==='object' ? navigator.onLine : true;
+      if (!online) return false;
+      // Session?
+      const { data: { user } } = await client.auth.getUser();
+      return !!user;
+    }catch(_){ return false; }
+  }
+
+  async function tryAutoSyncNow(reason){
+    if (__autoSyncInFlight) return;
+    try{
+      const okToSync = await ensureReady();
+      if (!okToSync) return;
+      __autoSyncInFlight = true;
+      if (typeof window.manualDirectSyncNow === 'function') {
+        await window.manualDirectSyncNow();
+      }
+    } catch(_){}
+    finally {
+      __autoSyncInFlight = false;
+    }
+  }
+
+  // 1) Änderungen abfangen: saveContacts / saveResident falls vorhanden "hooken"
+  try{
+    if (typeof window.saveContacts === 'function'){
+      const __origSaveContacts = window.saveContacts;
+      window.saveContacts = function(){
+        const r = __origSaveContacts.apply(this, arguments);
+        try { debounceSync('saveContacts'); } catch(_){}
+        return r;
+      };
+    }
+    if (typeof window.saveResident === 'function'){
+      const __origSaveResident = window.saveResident;
+      window.saveResident = function(){
+        const r = __origSaveResident.apply(this, arguments);
+        try { debounceSync('saveResident'); } catch(_){}
+        return r;
+      };
+    }
+  }catch(_){}
+
+  // 2) UI‑Events: Status‑Select, Notizen, etc.
+  document.addEventListener('change', (e) => {
+    try{
+      const t = e.target;
+      if (!t) return;
+      // Ihre Status‑Selects tragen class="status-select"
+      if (t.classList && t.classList.contains('status-select')) {
+        debounceSync('status_change');
+      }
+    }catch(_){}
+  }, true);
+
+  document.addEventListener('input', (e) => {
+    try{
+      const t = e.target;
+      if (!t) return;
+      // Notes/Telefon/Name lösen einen leicht verzögerten Sync aus
+      if (t.tagName === 'TEXTAREA' || t.tagName === 'INPUT') {
+        debounceSync('input_change');
+      }
+    }catch(_){}
+  }, true);
+
+  // 3) App/Seite wieder im Vordergrund → Sync
+  try {
+    document.addEventListener('visibilitychange', () => {
+      try { if (!document.hidden) debounceSync('visible'); } catch(_){}
+    });
+  } catch(_){}
+
+  // 4) Wieder online → Sync
+  try {
+    window.addEventListener('online', () => { try { debounceSync('online'); } catch(_){ } });
+  } catch(_){}
+
+  // 5) Capacitor App Resume → Sync
+  try {
+    const App = window.Capacitor && window.Capacitor.App;
+    if (App && typeof App.addListener === 'function') {
+      App.addListener('appStateChange', ({ isActive }) => {
+        try { if (isActive) debounceSync('app_resume'); } catch(_){}
+      });
+    }
+  } catch(_){}
+
+  // 6) Failsafe: Intervall-Sync (leicht, damit Batterie geschont wird)
+  try { setInterval(() => debounceSync('interval'), 15000); } catch(_){}
+
+  // 7) Beim Laden einmal vorsichtig anstoßen
+  try { debounceSync('boot'); } catch(_){}
+})();
+</script>
 </body>
 </html>
