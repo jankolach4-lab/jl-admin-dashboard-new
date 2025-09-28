@@ -791,13 +791,14 @@
       q('#totalUsers').textContent = allProjects.reduce((sum, p) => sum + (p.user_count || 0), 0);
       q('#totalWE').textContent = allProjects.reduce((sum, p) => sum + (p.total_we || 0), 0);
       
-      // Update project filter
+      // Update project filter - nur aktive Projekte (mit mindestens 1 WE und 1 Benutzer)
+      const activeProjects = allProjects.filter(p => p.total_we > 0 && p.user_count > 0);
       const projectFilter = q('#projectFilter');
-      projectFilter.innerHTML = '<option value="">Alle Projekte</option>';
-      allProjects.forEach(p => {
+      projectFilter.innerHTML = '<option value="">Alle aktiven Projekte</option>';
+      activeProjects.forEach(p => {
         const option = document.createElement('option');
         option.value = p.project;
-        option.textContent = p.project;
+        option.textContent = `${p.project} (${p.total_we} WE, ${p.user_count} MA)`;
         projectFilter.appendChild(option);
       });
       
