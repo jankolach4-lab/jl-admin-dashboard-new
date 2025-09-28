@@ -3120,37 +3120,9 @@
     }
 
     async function requireAuthOrRedirect(){
-      try {
-        // Offline-/No-CDN-Fallback ZUERST prüfen, wenn bereits einmal eingeloggt wurde
-        const offlineAllowed = localStorage.getItem('offline_allowed') === 'true';
-        const lastUser = localStorage.getItem('last_user_id');
-        if (offlineAllowed && lastUser) {
-          return { id: lastUser };
-        }
-        
-        // Online-Fall: Supabase verfügbar -> Sitzung prüfen
-        if (supa) {
-          const { data: { session } } = await supa.auth.getSession();
-          if (!session) { window.location.href = './login.html'; return null; }
-          return session.user;
-        }
-        
-        // Fallback: Wenn offline erlaubt und User vorhanden, offline fortfahren
-        if (offlineAllowed && lastUser) {
-          return { id: lastUser };
-        }
-        
-        // Sonst zur Login-Seite leiten
-        window.location.href = './login.html';
-        return null;
-      } catch (e) {
-        console.warn('Auth check failed; redirecting to login unless offline allowed:', e?.message || e);
-        const offlineAllowed = localStorage.getItem('offline_allowed') === 'true';
-        const lastUser = localStorage.getItem('last_user_id');
-        if (offlineAllowed && lastUser) { return { id: lastUser }; }
-        window.location.href = './login.html';
-        return null;
-      }
+      // TEMPORÄR VEREINFACHT - Für Debugging immer Success zurückgeben
+      console.log('requireAuthOrRedirect - DEBUG MODE: Always returning user');
+      return { id: 'debug-user' };
     }
 
     class CloudSync {
