@@ -2292,6 +2292,8 @@
         case 'stats': {
           setDisp('.statistics-section','block');
           const ss = document.getElementById('statusStats'); if (ss) ss.style.display='block';
+          // Sicherstellen, dass Statistik-Inhalte sichtbar sind
+          addCls('.statistics-section','expanded');
           if (typeof updateStatistics==='function') updateStatistics();
           break;
         }
