@@ -2283,6 +2283,8 @@
         case 'add': {
           setDisp('.entry-section','block');
           addCls('.entry-section','expanded');
+          // Sicherstellen, dass der Inhalt auch sichtbar ist
+          setDisp('.entry-content','block');
           break;
         }
         case 'stats': {
