@@ -3209,6 +3209,11 @@
       filterByStatus('all');
       updateStreetFilter();
 
+      // Originale Initialisierung: Immer zuerst zur Adressliste (Kontaktliste)
+      showSection('contacts');
+      filterByStatus('all');
+      updateStreetFilter();
+
       // saveContacts erweitern, ohne UI zu ändern
       const _save = window.saveContacts;
       window.saveContacts = function(){
