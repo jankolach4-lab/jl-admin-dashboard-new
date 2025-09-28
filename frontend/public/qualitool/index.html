@@ -18,26 +18,10 @@
 
 <body>
 <script>
-  // ROBUSTE Offline-Prüfung - erst nach vollständiger Initialisierung umleiten
+  // TEMPORÄR DEAKTIVIERT - Redirect komplett abgeschaltet für Debugging
   (function(){
-    try {
-      // Verzögerung um sicherzustellen, dass localStorage vollständig geladen ist
-      setTimeout(function() {
-        var offlineAllowed = localStorage.getItem('offline_allowed') === 'true';
-        var lastUser = localStorage.getItem('last_user_id');
-        console.log('Offline Check:', { offlineAllowed, lastUser });
-        
-        // Nur umleiten wenn BEIDE Werte definitiv fehlen
-        if (!offlineAllowed && !lastUser) {
-          console.log('Redirecting to login - no offline access');
-          window.location.replace('./login.html');
-        } else {
-          console.log('Offline access granted - staying on main page');
-        }
-      }, 200); // 200ms Verzögerung
-    } catch (e) { 
-      console.warn('Offline check failed:', e);
-    }
+    console.log('Redirect deaktiviert für Debugging - App bleibt auf index.html');
+    // Redirect komplett deaktiviert
   })();
 </script>
 <!-- HTML structure -->
