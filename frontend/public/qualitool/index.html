@@ -3195,14 +3195,6 @@
     (async () => {
       const user = await requireAuthOrRedirect();
       if (!user) return;
-      
-      // CRITICAL: Standardmäßig Kontakte-Sektion anzeigen
-      try {
-        showSection('contacts');
-        console.log('Default section "contacts" loaded');
-      } catch(e) {
-        console.error('Failed to show default section:', e);
-      }
 
       // Vorhandene lokale Daten laden
       try {
