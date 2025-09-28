@@ -2300,6 +2300,8 @@
         case 'calendar': {
           setDisp('.calendar-section','block');
           const cal = document.getElementById('calendar'); if (cal) cal.style.display='block';
+          // Sicherstellen, dass Kalender-Sektion erweitert ist
+          addCls('.calendar-section','expanded');
           if (typeof renderCalendar==='function') renderCalendar();
           break;
         }
