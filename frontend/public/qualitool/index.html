@@ -18,35 +18,43 @@
 
 <body>
 <script>
-  // INTELLIGENTER Offline-Check - Redirect nur wenn absolut nötig
+  // ENDGÜLTIGE LÖSUNG - Offline-Check nur nach User-Interaktion
   (function(){
     try {
-      // Erstmal prüfen ob wir bereits offline erlaubt sind
+      // Keine sofortige Umleitung - erst nach Benutzerinteraktion oder lange Verzögerung
       const offlineAllowed = localStorage.getItem('offline_allowed') === 'true';
       const lastUser = localStorage.getItem('last_user_id');
       
-      console.log('Smart Offline Check:', { offlineAllowed, lastUser });
+      console.log('Final Offline Check:', { offlineAllowed, lastUser });
       
-      // Wenn mindestens ein Offline-Flag gesetzt ist, bleiben wir hier
+      // Wenn IRGENDEIN Offline-Flag vorhanden ist, nie umleiten
       if (offlineAllowed || lastUser) {
-        console.log('Offline access detected - staying on main page');
-        return; // Kein Redirect
+        console.log('Offline access granted - no redirect ever');
+        return;
       }
       
-      // Nur umleiten wenn BEIDE Werte fehlen UND nach kurzer Verzögerung
+      // Nur umleiten nach sehr langer Verzögerung und nur wenn User nicht interagiert hat
+      let userInteracted = false;
+      document.addEventListener('click', () => { userInteracted = true; });
+      document.addEventListener('keydown', () => { userInteracted = true; });
+      
       setTimeout(function() {
+        if (userInteracted) {
+          console.log('User interacted - staying on page');
+          return;
+        }
+        
         const recheckOffline = localStorage.getItem('offline_allowed') === 'true';
         const recheckUser = localStorage.getItem('last_user_id');
         
         if (!recheckOffline && !recheckUser) {
-          console.log('No offline access after recheck - redirecting to login');
+          console.log('No offline access and no interaction - redirecting');
           window.location.replace('./login.html');
         }
-      }, 500); // 500ms für localStorage persistence
+      }, 3000); // 3 Sekunden Verzögerung
       
     } catch (e) { 
-      console.warn('Offline check failed:', e);
-      // Bei Fehler nicht umleiten
+      console.warn('Offline check failed - staying on page:', e);
     }
   })();
 </script>
