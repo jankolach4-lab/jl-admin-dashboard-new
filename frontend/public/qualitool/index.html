@@ -18,10 +18,36 @@
 
 <body>
 <script>
-  // TEMPORÄR DEAKTIVIERT - Redirect komplett abgeschaltet für Debugging
+  // INTELLIGENTER Offline-Check - Redirect nur wenn absolut nötig
   (function(){
-    console.log('Redirect deaktiviert für Debugging - App bleibt auf index.html');
-    // Redirect komplett deaktiviert
+    try {
+      // Erstmal prüfen ob wir bereits offline erlaubt sind
+      const offlineAllowed = localStorage.getItem('offline_allowed') === 'true';
+      const lastUser = localStorage.getItem('last_user_id');
+      
+      console.log('Smart Offline Check:', { offlineAllowed, lastUser });
+      
+      // Wenn mindestens ein Offline-Flag gesetzt ist, bleiben wir hier
+      if (offlineAllowed || lastUser) {
+        console.log('Offline access detected - staying on main page');
+        return; // Kein Redirect
+      }
+      
+      // Nur umleiten wenn BEIDE Werte fehlen UND nach kurzer Verzögerung
+      setTimeout(function() {
+        const recheckOffline = localStorage.getItem('offline_allowed') === 'true';
+        const recheckUser = localStorage.getItem('last_user_id');
+        
+        if (!recheckOffline && !recheckUser) {
+          console.log('No offline access after recheck - redirecting to login');
+          window.location.replace('./login.html');
+        }
+      }, 500); // 500ms für localStorage persistence
+      
+    } catch (e) { 
+      console.warn('Offline check failed:', e);
+      // Bei Fehler nicht umleiten
+    }
   })();
 </script>
 <!-- HTML structure -->
