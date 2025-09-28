@@ -2278,6 +2278,8 @@
         case 'import': {
           setDisp('.import-section','block');
           addCls('.import-section','expanded');
+          // Sicherstellen, dass der Import-Inhalt auch sichtbar ist
+          setDisp('.import-content','block');
           break;
         }
         case 'add': {
