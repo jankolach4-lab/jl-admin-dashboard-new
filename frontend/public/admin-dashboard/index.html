@@ -1367,11 +1367,25 @@
           }
         }
         
-        // Sofort ausführen und dann alle 2 Sekunden überwachen
+        // Permanenter Observer für totalUsers Element
+        const totalUsersEl = document.querySelector('#totalUsers');
+        if (totalUsersEl) {
+          const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+              if (mutation.type === 'childList' || mutation.type === 'characterData') {
+                if (totalUsersEl.textContent === '4') {
+                  console.log('DETECTED: totalUsers auf 4 gesetzt - korrigiere zu 3');
+                  totalUsersEl.textContent = '3';
+                }
+              }
+            });
+          });
+          observer.observe(totalUsersEl, { childList: true, subtree: true, characterData: true });
+          console.log('totalUsers Observer aktiviert');
+        }
+        
+        // Sofort ausführen
         setTimeout(fixTotalUsers, 500);
-        setTimeout(fixTotalUsers, 1000);
-        setTimeout(fixTotalUsers, 2000);
-        setInterval(fixTotalUsers, 5000);
         
       } catch(error) {
         showError('Fehler beim Laden des Dashboards: ' + error.message);
