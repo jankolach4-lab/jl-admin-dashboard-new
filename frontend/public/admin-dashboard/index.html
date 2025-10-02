@@ -533,7 +533,18 @@
     }
 
     function formatDate(dateStr){
-      return new Date(dateStr).toLocaleDateString('de-DE', {
+      if (!dateStr) return '–';
+      
+      // Handle PostgreSQL date format (YYYY-MM-DD) or ISO strings
+      const date = new Date(dateStr);
+      
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        console.warn('Invalid date:', dateStr);
+        return '–';
+      }
+      
+      return date.toLocaleDateString('de-DE', {
         day: '2-digit', month: '2-digit', year: '2-digit'
       });
     }
