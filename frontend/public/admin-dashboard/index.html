@@ -1343,6 +1343,30 @@
       }
     }
 
+    // Debug Functions for Console
+    window.loadUserData = selectUser; // Alias for console debugging
+    window.debugDashboard = function() {
+      console.log('=== Dashboard Debug Info ===');
+      console.log('allProjects:', allProjects);
+      console.log('allUsers:', allUsers);
+      console.log('currentProject:', currentProject);
+      console.log('currentUserId:', currentUserId);
+      console.log('projectTotalWE:', projectTotalWE);
+      
+      // Verify functions exist
+      console.log('selectUser function:', typeof selectUser);
+      console.log('loadProjects function:', typeof loadProjects);
+      console.log('selectProject function:', typeof selectProject);
+      
+      return {
+        projects: allProjects,
+        users: allUsers,
+        currentProject,
+        currentUserId,
+        projectTotalWE
+      };
+    };
+
     // Initialize Dashboard
     (async () => { 
       try {
@@ -1386,6 +1410,13 @@
         
         // Sofort ausführen
         setTimeout(fixTotalUsers, 500);
+        
+        // Make dashboard functions available in console
+        console.log('Dashboard Debug - Verfügbare Funktionen:');
+        console.log('- loadUserData(userId, userName) // Alias für selectUser');
+        console.log('- debugDashboard() // Debug-Informationen anzeigen');
+        console.log('- selectProject(projectName, totalWE)');
+        console.log('- loadProjects()');
         
       } catch(error) {
         showError('Fehler beim Laden des Dashboards: ' + error.message);
