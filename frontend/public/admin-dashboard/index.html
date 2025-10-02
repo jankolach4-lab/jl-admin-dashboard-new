@@ -1351,7 +1351,7 @@
         showSuccess('Dashboard geladen!');
         
         // GARANTIERTER FIX für Total Users
-        setTimeout(() => {
+        function fixTotalUsers() {
           const totalUsersEl = document.querySelector('#totalUsers');
           if (totalUsersEl && allProjects) {
             const uniqueUsers = new Set();
@@ -1360,10 +1360,18 @@
                 p.users.forEach(u => uniqueUsers.add(u));
               }
             });
-            totalUsersEl.textContent = uniqueUsers.size;
-            console.log('Fixed Total Users:', uniqueUsers.size);
+            if (totalUsersEl.textContent !== uniqueUsers.size.toString()) {
+              totalUsersEl.textContent = uniqueUsers.size;
+              console.log('Fixed Total Users to:', uniqueUsers.size);
+            }
           }
-        }, 1000);
+        }
+        
+        // Sofort ausführen und dann alle 2 Sekunden überwachen
+        setTimeout(fixTotalUsers, 500);
+        setTimeout(fixTotalUsers, 1000);
+        setTimeout(fixTotalUsers, 2000);
+        setInterval(fixTotalUsers, 5000);
         
       } catch(error) {
         showError('Fehler beim Laden des Dashboards: ' + error.message);
