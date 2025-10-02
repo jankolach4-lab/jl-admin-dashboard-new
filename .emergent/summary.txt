@@ -1,79 +1,65 @@
 <analysis>
-The previous AI engineer's trajectory shows an extensive, iterative debugging process for a Capacitor-based Android app (Qualifizierungstool) integrated with Supabase. The primary objective was reliable data synchronization for contacts and status events. Initial work involved SQL function fixes, RLS policies, and client-side queuing. The core problem, missing events from Tablet 1, persisted despite numerous patches.
+The trajectory details an extensive and often challenging debugging process for a Capacitor/Supabase application, split into two main phases. The first phase focused on severe client-side UI issues within the Qualifizierungstool Android APK. The user reported empty pages and visible JavaScript code, which the AI initially struggled to fix, leading to regressions like rendering all sections on one page. This caused significant user frustration, culminating in the user providing a last-known-good APK (). The AI successfully used this APK to analyze the correct code structure, revert its faulty changes (primarily incorrect CSS and JavaScript navigation logic), and restore the app to a stable baseline.
 
-Debugging focused on two main areas: client-side logic (ensuring status changes are captured, persisted locally, and sent via RPCs) and server-side Supabase functions/RLS (ensuring correct processing and storage). Key issues identified included incorrect RPC parameter usage on the client, UI elements not reacting, and  errors, often stemming from script execution order/scope within the WebView and outdated APK builds. The AI engineer introduced a visible debug panel for better diagnostics. The most recent interaction involves the user providing the full  for review and requesting the final corrected file for copy-pasting, following persistent issues.
+The second phase shifted to the backend and the Admin Dashboard. The user reported that dashboard analytics were incorrect (e.g., showing 4 users instead of 3, aggregating data across all of a user's projects instead of filtering by the selected one). The root cause was identified: the dashboard's Supabase SQL functions were querying incomplete/outdated  tables instead of the source of truth, . The AI then undertook a complex, iterative process of rewriting numerous PL/pgSQL functions to query the  JSONB data directly. This involved fixing multiple SQL errors (syntax, type mismatches, ambiguity) and correctly implementing project-specific data filtering. The most recent work addresses lingering dashboard issues, including 404 errors for RPC calls and Invalid Date rendering in charts, indicating problems with function signatures and date formatting.
 </analysis>
 
 <product_requirements>
-The project involves transforming a web-based Qualifizierungstool into an Android APK using Capacitor, complemented by an Admin Dashboard. Key functionalities include native Android features (e.g., Excel export), multi-user authentication with Supabase (Postgres, Auth, RLS), and robust offline capabilities for the tablet app. The Admin Dashboard requires project/employee analytics with custom branding and project-isolated data views. Critical to both is reliable data synchronization from the Qualifizierungstool to Supabase for contact updates and status changes, with integrated offline handling. Export (PNG, CSV, PDF) and advanced filtering were also required. Development has progressed with Android APK conversion, partial Supabase user management (tables , , , ), and ongoing Admin Dashboard work. Excel import/export was a focus. Client-side offline queuing and Supabase RPCs were implemented but faced significant challenges with database functions, RLS, unique constraints, and client-side script execution/data persistence.
+The project is to build and maintain a Qualifizierungstool as a Capacitor-based Android application for field agents to manage contacts and their statuses, with robust offline capabilities. All data must synchronize with a Supabase backend.
+
+A key component is a web-based Admin Dashboard that provides analytics on user and project performance. Admins need to see metrics like the number of active projects, total users, and WE (Wohn-Einheiten) counts. The dashboard must allow drilling down into specific projects and users to see their individual statistics, such as status change history, completions, and performance over time.
+
+The core requirements that have been the focus of this trajectory are:
+1.  **Functional UI:** The Android app's UI must be stable, with all sections (Contacts, Import/Export, Add Address, etc.) rendering correctly as separate, functional pages.
+2.  **Accurate Dashboard Analytics:** The dashboard must display correct, real-time data. This includes accurate counts of unique users and projects, and ensuring that when a project is selected, all user metrics shown are filtered specifically for that project, not aggregated across all of a user's assignments.
+3.  **Data Synchronization:** Data entered in the app, such as WE-Korrekturen (unit corrections), must reliably sync to the Supabase database.
 </product_requirements>
 
 <key_technical_concepts>
-- **Frontend**: HTML (Vanilla JS, CSS), Capacitor (for Android APK), XLSX.js (Excel), localStorage (offline queueing).
-- **Backend/Database**: Supabase (Postgres, Auth, RLS, PL/pgSQL functions/RPCs, triggers, ).
-- **CI/CD**: GitHub Actions (Android APK builds).
-- **SQL Concepts**: , , .
+- **Frontend Framework:** Capacitor (for Android APK generation from a web app).
+- **Frontend Logic:** Vanilla JavaScript, HTML5, CSS for a single-page application (SPA) architecture.
+- **Backend-as-a-Service:** Supabase.
+- **Database:** PostgreSQL with extensive use of PL/pgSQL for Remote Procedure Calls (RPCs).
+- **Data Storage:**  data type in Postgres to store the entire list of contacts and their nested residents/statuses as a single document per user.
+- **Client-side Storage:**  for offline data queuing and session management.
 </key_technical_concepts>
 
 <code_architecture>
+The application consists of a Capacitor frontend and a Supabase backend, with a separate web dashboard.
 
 
-- :
-    - **Importance**: Main client-side logic for the Qualifizierungstool, including UI rendering, data input, local storage, Supabase integration, and sync mechanisms.
-    - **Changes Made**: Iterative changes were applied to:
-        - Implement initial auto-sync via , , , .
-        - Refine Supabase client initialization () and error logging ().
-        - Implement a  and .
-        - Add a debug overlay (initially hidden, later a visible sidebar icon leading to ) to diagnose sync issues.
-        - Corrected RPC calls in  to use  and  parameters.
-        - Explicitly bind event listeners to buttons (e.g., , ) to avoid delegation issues.
-        - Ensure  is globally accessible via .
-        - Add buttons Lokale Kontakte leeren () and Leeren + Sync () for local data management.
-        - Integrate a build tag () and a status line (, ) into the debug panel for better visibility of script execution and app version.
-        - Cleaned up script blocks, removing superfluous  and ensuring correct Supabase global defaults.
-- :
-    - **Importance**: Handles user authentication with Supabase.
-    - **Changes Made**: Initialized  to ensure a consistent Supabase client across the app.
-- Supabase SQL Functions/Triggers:
-    - **Importance**: Server-side logic for data persistence and event generation.
-    - **Changes Made**: Extensive refinement for , , and triggers like . This included fixing SQL syntax (dollar-quoting,  prefixes), RLS issues (,  user IDs), unique constraint violations (), and ensuring  for RPCs.
-- Supabase Tables (, , , ):
-    - **Importance**: Core data storage.
-    - **Changes Made**: RLS policies were adjusted, unique indexes (especially on ) refined, and general indexing for performance.
 
+-   ****
+    -   **Importance**: This is the single HTML file that constitutes the entire client-side Android application. It contains all the HTML structure, CSS, and vanilla JavaScript logic for UI rendering, navigation (, ), data management (), and communication with Supabase.
+    -   **Changes Made**: This file has been the subject of intense debugging. It was repeatedly broken by faulty AI edits (e.g., adding  to CSS, conflicting JS navigation scripts) which caused major UI regressions. The final stable state was achieved by completely overwriting it with the version extracted from a user-provided .
+
+-   ****
+    -   **Importance**: This file is the single-page application for the admin analytics dashboard. It handles fetching data from Supabase RPCs and rendering charts and KPIs.
+    -   **Changes Made**: The initial file was found to be an incomplete stub. It was completely replaced with the correct version from the  directory. Subsequent edits focused on fixing the JavaScript logic to call the correct RPCs and correctly calculate metrics (e.g., counting unique users instead of summing project assignments). A  was added as a robust fix to ensure the user count remains accurate.
+
+-   ** (e.g., , )**
+    -   **Importance**: These files contain the definitions for the Supabase tables and the PL/pgSQL functions (RPCs) that power the dashboard and data synchronization.
+    -   **Changes Made**: These files have been heavily modified. The core architectural change was rewriting almost all dashboard functions (e.g., , , ) to stop relying on incomplete  tables. The new versions query the  table and parse the  data directly, ensuring the dashboard reflects the true state of the application data. This involved fixing numerous SQL errors and adding project-specific filtering logic.
 </code_architecture>
 
 <pending_tasks>
-- **Client-side Status Persistence Patch**: The final  with corrected RPC parameters, explicit button bindings, build tag, and local clear/sync functionality needs to be deployed and verified on Tablet 1.
-- **Dashboard Tile Values**: Correct the values displayed in the Admin Dashboard tiles.
-- **Project List Filtering**: Implement functionality to filter the project list to show only active projects.
-- **PDF Export Button**: Make the PDF export button in the Admin Dashboard visible and functional.
-- **Excel Export Fix**: (Optional, user deferred) Fix the broken Excel export functionality.
+- **Fix WE-Korrekturen Sync**: The issue of WE-Korrekturen (unit corrections) not saving to Supabase was investigated but put on hold. The existing RPC functions need to be debugged to understand why the data isn't being processed correctly.
+- **Implement Excel Export**: The user initially requested implementing export functionality for addresses and WE-corrections. This task has not been started.
+- **Fix Remaining Dashboard Charts**: While some dashboard functions have been fixed, the charts for Abschlüsse (completions) and Änderungen (changes) still show incorrect (zero) values.
 </pending_tasks>
 
 <current_work>
-Immediately prior to this summary, the AI engineer was working on resolving persistent client-side data synchronization issues on Tablet 1, specifically the manualDirectSyncNow is not defined error and the  mismatch between the local app's perceived state (empty) and the debug panel/Supabase (showing 383 old contacts).
+The immediate focus is on fixing the Admin Dashboard UI and data rendering. The user reported that after making 3 status changes for a user (Birgit) in a new project (Saal a.d.Donau), several issues persisted:
+1.  **Empty Kacheln (Tiles):** The KPI tiles for completions, changes, status breakdown, and the status table remained empty or showed 0.
+2.  **Invalid Date in Charts:** The x-axis of the time-series charts displayed Invalid Date.
 
-The AI engineer's most recent actions were:
-1.  **Server-side Cleanup**: Suggested the user run SQL queries to explicitly empty the  table in Supabase for the affected user, to align server state with the desired empty client state. (User reported 0 rows affected).
-2.  **Client-side Code Refinement**: Analyzed the user-provided  to diagnose the  error. Identified root causes as:
-    *   An extraneous  at the end of a script block.
-    *   Incorrect function scope, preventing  from being globally accessible.
-    *   Potential issues with event delegation for button clicks.
-3.  **Comprehensive  Provision**: Created and provided a complete, corrected  to the user, intended for direct copy-pasting. This version includes:
-    *   Explicit global definition for  and .
-    *    explicitly defined as a global asynchronous function, containing the corrected RPC calls ( with ,  with  and ), along with table upsert as a fallback.
-    *   Explicit event listener bindings for all debug panel buttons (, , , , , , ) to ensure reliable click handling.
-    *   Added Lokale Kontakte leeren () and Leeren + Sync () buttons to the visible debug panel to manage local  contacts and synchronize the empty state to Supabase.
-    *   Integrated a visible build tag () and a live status line () within the debug panel to trace execution flow and verify the deployed code version.
-    *   Removed the problematic  and cleaned up script block structure.
-4.  **User Feedback**: The user complained about the formatting of the provided , requesting it in a grauen Block (grey block) and less Durcheinander (mess). The agent process is currently paused, awaiting a response to this formatting request.
+The AI's investigation, using screenshots of the browser's developer console provided by the user, revealed critical errors:
+-   **404 Not Found Errors:** The dashboard was attempting to call Supabase RPCs (like ) that either didn't exist or had mismatched signatures (number/type of arguments), causing the network requests to fail.
+-   **JavaScript State Issues:** The console showed , indicating that the dashboard's JavaScript state was not being correctly updated when a user was selected, preventing data calls from being made for that user.
+
+The AI's last action was to provide a block of SQL code to fix the RPC  errors by creating the missing functions with corrected signatures (). It also suggested modifying the date format in the SQL functions to  to fix the Invalid Date issue. The user confirmed the  errors are gone, but the charts still show Invalid Date and the KPI tiles are still empty.
 </current_work>
 
 <optional_next_step>
-Provide the complete, corrected  to the user in the requested grauen Block format for easy copy-pasting.
+Apply the suggested SQL changes to format dates as 'YYYY-MM-DD' to fix the Invalid Date chart error and provide JavaScript snippets for the user to run in the console to debug why user data isn't loading into the dashboard's state upon selection.
 </optional_next_step>
-
-<direct_quotes_from_conversation>
-bitte alles sauber in einem grauen Block und nicht so ein Durcheinander (Chat Message 182)
-</direct_quotes_from_conversation>
