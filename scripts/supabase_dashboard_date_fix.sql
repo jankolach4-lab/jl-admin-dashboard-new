@@ -120,9 +120,30 @@ BEGIN
   RETURN QUERY SELECT * FROM public.fn_dashboard_user_daily_changes_project(p_user_id, p_project, p_days); 
 END; $$;
 
+-- Zusätzlich: User daily changes (GLOBAL) - wird im Dashboard benutzt
+CREATE OR REPLACE FUNCTION public.fn_dashboard_user_daily_changes(p_user_id uuid, p_days int)
+RETURNS TABLE(day text, changes integer)
+LANGUAGE SQL SECURITY DEFINER SET search_path = public AS $$
+  SELECT to_char((coalesce(ase.occurred_at, ase.created_at) at time zone 'utc')::date, 'YYYY-MM-DD') as day,
+         count(*)::int as changes
+  FROM public.analytics_status_events ase
+  WHERE ase.user_id = p_user_id
+    AND coalesce(ase.occurred_at, ase.created_at) >= (now() - (p_days||' days')::interval)
+  GROUP BY 1
+  ORDER BY 1
+$$;
+
+CREATE OR REPLACE FUNCTION public.fn_dashboard_guarded_user_daily_changes(p_user_id uuid, p_days int)
+RETURNS SETOF public.fn_dashboard_user_daily_changes LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+BEGIN 
+  PERFORM public.fn_require_admin(); 
+  RETURN QUERY SELECT * FROM public.fn_dashboard_user_daily_changes(p_user_id, p_days); 
+END; $$;
+
 -- Grants
 GRANT EXECUTE ON FUNCTION public.fn_dashboard_guarded_project_daily_completions(text,int) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.fn_dashboard_guarded_project_daily_changes(text,int) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.fn_dashboard_guarded_user_daily_completions(uuid,int) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.fn_dashboard_guarded_user_daily_completions_project(uuid,text,int) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.fn_dashboard_guarded_user_daily_changes(uuid,int) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.fn_dashboard_guarded_user_daily_changes_project(uuid,text,int) TO authenticated;
