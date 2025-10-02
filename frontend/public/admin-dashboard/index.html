@@ -1000,8 +1000,8 @@
         const dateStr = q('#userHourlyDate').value || new Date().toISOString().slice(0,10);
         
         const [userCompl, userChanges, userStatus, userHourly, userSummary] = await Promise.all([
-          supabase.rpc('fn_dashboard_guarded_user_daily_completions', { p_user_id: userId, p_days: range }),
-          supabase.rpc('fn_dashboard_guarded_user_daily_changes', { p_user_id: userId, p_days: range }),
+          supabase.rpc('fn_dashboard_guarded_user_daily_completions_project', { p_user_id: userId, p_project: currentProject, p_days: range }),
+          supabase.rpc('fn_dashboard_guarded_user_daily_changes_project', { p_user_id: userId, p_project: currentProject, p_days: range }),
           supabase.rpc('fn_dashboard_guarded_user_status_table', { p_user_id: userId, p_project: currentProject }),
           supabase.rpc('fn_dashboard_guarded_user_hourly_changes', { p_user_id: userId, p_date: dateStr }),
           supabase.rpc('fn_dashboard_guarded_user_summary_metrics', { p_user_id: userId, p_project: currentProject })
