@@ -791,19 +791,26 @@
       
       // Total Users korrekt berechnen (unique users, nicht Summe)
       try {
+        console.log('Calling fn_dashboard_total_users...');
         const { data: totalUsersData, error } = await supabase.rpc('fn_dashboard_total_users');
+        console.log('RPC Result:', { data: totalUsersData, error });
+        
         if (!error && totalUsersData !== null) {
+          console.log('Using RPC result:', totalUsersData);
           q('#totalUsers').textContent = totalUsersData;
         } else {
+          console.log('RPC failed, using fallback. Error:', error);
           // Fallback: unique users aus allProjects berechnen
           const uniqueUsers = new Set();
           allProjects.forEach(p => p.users.forEach(u => uniqueUsers.add(u)));
+          console.log('Fallback calculation - Unique users:', uniqueUsers.size);
           q('#totalUsers').textContent = uniqueUsers.size;
         }
       } catch (err) {
-        console.warn('fn_dashboard_total_users failed, using fallback');
+        console.warn('fn_dashboard_total_users failed, using fallback. Error:', err);
         const uniqueUsers = new Set();
         allProjects.forEach(p => p.users.forEach(u => uniqueUsers.add(u)));
+        console.log('Exception fallback - Unique users:', uniqueUsers.size);
         q('#totalUsers').textContent = uniqueUsers.size;
       }
       
