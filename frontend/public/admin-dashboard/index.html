@@ -1349,6 +1349,22 @@
         await requireAuth(); 
         await loadProjects();
         showSuccess('Dashboard geladen!');
+        
+        // GARANTIERTER FIX für Total Users
+        setTimeout(() => {
+          const totalUsersEl = document.querySelector('#totalUsers');
+          if (totalUsersEl && allProjects) {
+            const uniqueUsers = new Set();
+            allProjects.forEach(p => {
+              if (p.users && Array.isArray(p.users)) {
+                p.users.forEach(u => uniqueUsers.add(u));
+              }
+            });
+            totalUsersEl.textContent = uniqueUsers.size;
+            console.log('Fixed Total Users:', uniqueUsers.size);
+          }
+        }, 1000);
+        
       } catch(error) {
         showError('Fehler beim Laden des Dashboards: ' + error.message);
       }
