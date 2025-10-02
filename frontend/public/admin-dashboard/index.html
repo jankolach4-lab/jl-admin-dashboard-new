@@ -789,29 +789,18 @@
       // Update KPIs
       q('#totalProjects').textContent = allProjects.length;
       
-      // Total Users korrekt berechnen (unique users, nicht Summe)
-      try {
-        console.log('Calling fn_dashboard_total_users...');
-        const { data: totalUsersData, error } = await supabase.rpc('fn_dashboard_total_users');
-        console.log('RPC Result:', { data: totalUsersData, error });
-        
-        if (!error && totalUsersData !== null) {
-          console.log('Using RPC result:', totalUsersData);
-          q('#totalUsers').textContent = totalUsersData;
-        } else {
-          console.log('RPC failed, using fallback. Error:', error);
-          // Fallback: unique users aus allProjects berechnen
-          const uniqueUsers = new Set();
-          allProjects.forEach(p => p.users.forEach(u => uniqueUsers.add(u)));
-          console.log('Fallback calculation - Unique users:', uniqueUsers.size);
-          q('#totalUsers').textContent = uniqueUsers.size;
+      // Total Users korrekt berechnen (unique users aus allProjects)
+      const uniqueUsers = new Set();
+      allProjects.forEach(p => {
+        if (p.users && Array.isArray(p.users)) {
+          p.users.forEach(u => uniqueUsers.add(u));
         }
-      } catch (err) {
-        console.warn('fn_dashboard_total_users failed, using fallback. Error:', err);
-        const uniqueUsers = new Set();
-        allProjects.forEach(p => p.users.forEach(u => uniqueUsers.add(u)));
-        console.log('Exception fallback - Unique users:', uniqueUsers.size);
-        q('#totalUsers').textContent = uniqueUsers.size;
+      });
+      
+      // Direkt setzen - robuster als RPC-Aufruf
+      const totalUsersElement = document.querySelector('#totalUsers');
+      if (totalUsersElement) {
+        totalUsersElement.textContent = uniqueUsers.size;
       }
       
       q('#totalWE').textContent = allProjects.reduce((sum, p) => sum + (p.total_we || 0), 0);
