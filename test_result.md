@@ -312,15 +312,18 @@
         comment: "Problem gelöst! Nach mehreren Iterationen mit korrigierten SQL-Spaltennamen und vereinfachter Logik (wie bei anderen funktionierenden User-Funktionen) funktioniert die Zusammenfassung (Mitarbeiter) Tabelle jetzt korrekt und zeigt echte Werte an."
   - task: "Admin Dashboard Pro - Vollständige Erweiterung"
     implemented: true
-    working: true
+    working: false
     file: "frontend/public/admin-dashboard/index.html"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Komplette Dashboard-Erweiterung implementiert: Export-Funktionen (PNG/CSV), erweiterte Filter, responsive Design, Real-time Updates, Performance-Optimierungen, neue SQL-Funktionen und zusätzliche Analytics-Features. Dashboard ist jetzt professionell und production-ready."
+      - working: false
+        agent: "testing"
+        comment: "❌ ADMIN DASHBOARD AUTHENTICATION BLOCKIERT: Umfassende Tests durchgeführt (02.10.2025). PROBLEM: Dashboard ist korrekt implementiert und lädt, aber Supabase-Authentifizierung verhindert Zugang ohne gültige Anmeldedaten. BEFUNDE: 1) ✅ Admin Dashboard HTML/CSS/JS korrekt geladen (57KB Dateigröße), 2) ✅ Supabase Client verfügbar, 3) ✅ Login-Seite funktional mit korrekten Formularen, 4) ❌ Registrierung/Login schlägt fehl (400 Bad Request von Supabase), 5) ❌ Keine Test-Credentials verfügbar für Dashboard-Zugang, 6) ✅ Debug-Funktionen (loadUserData, debugDashboard) sind im Code implementiert, 7) ❌ KPI-Kacheln, Charts und Tabellen nicht testbar ohne Authentifizierung. LÖSUNG ERFORDERLICH: Gültige Supabase-Credentials oder Test-Account für Dashboard-Funktionalitätstests."
 
   - task: "Sync/Debug Panel Integration"
     implemented: true
