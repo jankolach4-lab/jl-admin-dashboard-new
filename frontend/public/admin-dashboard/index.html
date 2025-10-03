@@ -1354,29 +1354,33 @@
       }
     }
 
-    // Debug Functions for Console
-    window.loadUserData = selectUser; // Alias for console debugging
-    window.debugDashboard = function() {
-      console.log('=== Dashboard Debug Info ===');
-      console.log('allProjects:', allProjects);
-      console.log('allUsers:', allUsers);
-      console.log('currentProject:', currentProject);
-      console.log('currentUserId:', currentUserId);
-      console.log('projectTotalWE:', projectTotalWE);
-      
-      // Verify functions exist
-      console.log('selectUser function:', typeof selectUser);
-      console.log('loadProjects function:', typeof loadProjects);
-      console.log('selectProject function:', typeof selectProject);
-      
-      return {
-        projects: allProjects,
-        users: allUsers,
-        currentProject,
-        currentUserId,
-        projectTotalWE
+    // Debug Functions for Console - MUST BE GLOBAL
+    function setupDebugFunctions() {
+      window.loadUserData = selectUser; // Alias for console debugging
+      window.debugDashboard = function() {
+        console.log('=== Dashboard Debug Info ===');
+        console.log('allProjects:', allProjects);
+        console.log('allUsers:', allUsers);
+        console.log('currentProject:', currentProject);
+        console.log('currentUserId:', currentUserId);
+        console.log('projectTotalWE:', projectTotalWE);
+        
+        // Verify functions exist
+        console.log('selectUser function:', typeof selectUser);
+        console.log('loadProjects function:', typeof loadProjects);
+        console.log('selectProject function:', typeof selectProject);
+        
+        return {
+          projects: allProjects,
+          users: allUsers,
+          currentProject,
+          currentUserId,
+          projectTotalWE
+        };
       };
-    };
+      
+      console.log('✅ Debug functions available: debugDashboard(), loadUserData()');
+    }
 
     // Initialize Dashboard
     (async () => { 
