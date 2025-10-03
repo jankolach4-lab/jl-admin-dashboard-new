@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard | Login</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      --accent: #2563eb;
+      --accent-600: #1d4ed8;
+      --bg: #f5f7fa; --surface: #ffffff; --text: #111827; --muted:#6b7280; --border:#e5e7eb;
+      --radius: 12px; --shadow: 0 10px 30px rgba(0,0,0,.08);
+    }
+    * { box-sizing: border-box; }
+    body { font-family: -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Ubuntu,sans-serif; background:var(--bg); margin:0; color:var(--text); }
+    .wrap { max-width: 420px; margin: 10vh auto; background:var(--surface); padding: 28px; border-radius: var(--radius); box-shadow: var(--shadow); }
+    h1 { font-size: 22px; margin: 0 0 16px 0; text-align:center; color:var(--text); }
+    .muted { color: var(--muted); font-size: 12px; text-align:center; }
+    .form { display:flex; flex-direction:column; gap:12px; margin-top: 8px; }
+    input { padding: 12px 14px; border:1px solid var(--border); border-radius:10px; font-size:14px; }
+    input:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 3px rgba(37,99,235,0.12); }
+    .row { display:flex; gap:10px; }
+    button { background:var(--accent); color:#fff; border:none; padding:12px 14px; border-radius:10px; cursor:pointer; font-weight:600; flex:1; }
+    button.secondary { background:#111827; }
+    button:disabled { opacity:.6; cursor:not-allowed; }
+    .error { color:#b91c1c; background:#fee2e2; border:1px solid #fecaca; padding:8px 10px; border-radius:10px; display:none; font-size:13px; }
+    .loading { display:none; color:var(--accent); text-align:center; font-size:13px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Admin Dashboard Login</h1>
+    <div class="error" id="errorBox"></div>
+    <div class="loading" id="loadingBox">Bitte warten…</div>
+    <div class="form">
+      <input type="email" id="email" placeholder="E‑Mail" autocomplete="username" />
+      <input type="password" id="password" placeholder="Passwort" autocomplete="current-password" />
+      <div class="row">
+        <button id="loginBtn">Einloggen</button>
+        <button id="signupBtn" class="secondary">Registrieren</button>
+      </div>
+      <p class="muted">Admin‑Zugang erforderlich. Nach Login werden aggregierte Analytics geladen.</p>
+    </div>
+  </div>
+
+  <script>
+    // Supabase Project (gleiches Projekt wie Tool)
+    const SUPABASE_URL = 'https://whigasnqcvjkilkmbfld.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndoaWdhc25xY3Zqa2lsa21iZmxkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQyNDE1OTIsImV4cCI6MjA2OTgxNzU5Mn0.tfUnIP_oWy3N9UM6Ws9mPiKqsGtj8_kIOMW42E298rc';
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false } });
+
+    const $ = (id) => document.getElementById(id);
+    function showError(msg){ const box = $('errorBox'); box.textContent = msg; box.style.display = 'block'; }
+    function clearError(){ const box = $('errorBox'); box.textContent = ''; box.style.display = 'none'; }
+    function setLoading(on){ $('loadingBox').style.display = on ? 'block' : 'none'; $('loginBtn').disabled = on; $('signupBtn').disabled = on; }
+
+    async function signIn(){
+      clearError(); setLoading(true);
+      try {
+        const email = $('email').value.trim(); const password = $('password').value;
+        if (!email || !password) { showError('Bitte E‑Mail und Passwort eingeben.'); return; }
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+        window.location.href = './index.html';
+      } catch(e){ showError(e.message || 'Login fehlgeschlagen'); }
+      finally { setLoading(false); }
+    }
+
+    async function signUp(){
+      clearError(); setLoading(true);
+      try {
+        const email = $('email').value.trim(); const password = $('password').value;
+        if (!email || !password) { showError('Bitte E‑Mail und Passwort eingeben.'); return; }
+        const { data, error } = await supabase.auth.signUp({ email, password });
+        if (error) throw error;
+        if (data.user && !data.session) alert('Registrierung erfolgreich. Bitte E‑Mail bestätigen und anschließend einloggen.');
+        else window.location.href = './index.html';
+      } catch(e){ showError(e.message || 'Registrierung fehlgeschlagen'); }
+      finally { setLoading(false); }
+    }
+
+    $('loginBtn').addEventListener('click', signIn);
+    $('signupBtn').addEventListener('click', signUp);
+    $('email').addEventListener('keydown', e => { if (e.key === 'Enter') signIn(); });
+    $('password').addEventListener('keydown', e => { if (e.key === 'Enter') signIn(); });
+
+    (async ()=>{
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) window.location.href = './index.html';
+    })();
+  </script>
+</body>
+</html>
