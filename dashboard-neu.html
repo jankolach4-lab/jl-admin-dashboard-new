@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    
+    <!-- External Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/date-fns@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--gray-50);
+            color: var(--gray-900);
+            line-height: 1.6;
+        }
+
+        .header {
+            background: white;
+            border-bottom: 1px solid var(--gray-200);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .controls {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.375rem;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background: var(--gray-200);
+            color: var(--gray-700);
+        }
+
+        .btn-secondary:hover {
+            background: var(--gray-300);
+        }
+
+        .select {
+            padding: 0.5rem;
+            border: 1px solid var(--gray-300);
+            border-radius: 0.375rem;
+            background: white;
+            font-size: 0.875rem;
+        }
+
+        .main {
+            padding: 2rem;
+            max-width: 7xl;
+            margin: 0 auto;
+        }
+
+        .grid {
+            display: grid;
+            gap: 2rem;
+        }
+
+        .grid-cols-1 {
+            grid-template-columns: 1fr;
+        }
+
+        .grid-cols-3 {
+            grid-template-columns: repeat(3, 1fr);
+        }
+
+        .grid-cols-4 {
+            grid-template-columns: repeat(4, 1fr);
+        }
+
+        @media (min-width: 1024px) {
+            .lg\\:grid-cols-4 {
+                grid-template-columns: 300px 1fr 1fr 1fr;
+            }
+        }
+
+        .card {
+            background: white;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--gray-200);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: between;
+            margin-bottom: 1rem;
+        }
+
+        .card-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--gray-900);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .kpi-card {
+            background: var(--gray-50);
+            padding: 1rem;
+            border-radius: 0.375rem;
+            text-align: center;
+        }
+
+        .kpi-value {
+            font-size: 1.875rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .kpi-label {
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--gray-500);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            border: 1px solid var(--gray-200);
+            border-radius: 0.375rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: var(--gray-50);
+            padding: 0.75rem;
+            text-align: left;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--gray-500);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        td {
+            padding: 0.75rem;
+            border-bottom: 1px solid var(--gray-100);
+            font-size: 0.875rem;
+        }
+
+        tr:hover {
+            background: var(--gray-50);
+            cursor: pointer;
+        }
+
+        tr.selected {
+            background: rgba(37, 99, 235, 0.05);
+            border-left: 3px solid var(--primary);
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.5rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .badge-success {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .badge-primary {
+            background: rgba(37, 99, 235, 0.1);
+            color: var(--primary);
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin: 1rem 0;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: var(--gray-500);
+        }
+
+        .loading::after {
+            content: '';
+            display: inline-block;
+            width: 1rem;
+            height: 1rem;
+            border: 2px solid var(--gray-200);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 0.5rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 0.375rem;
+            margin-bottom: 1rem;
+        }
+
+        .alert-success {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            color: var(--success);
+        }
+
+        .alert-error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            color: var(--danger);
+        }
+
+        .selection-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--primary);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin: 0.25rem;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .user-metrics {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .metric-item {
+            text-align: center;
+            padding: 1rem;
+            background: var(--gray-50);
+            border-radius: 0.375rem;
+        }
+
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--gray-900);
+        }
+
+        .metric-label {
+            font-size: 0.75rem;
+            color: var(--gray-500);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .status-breakdown {
+            background: var(--gray-50);
+            padding: 1rem;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="logo">
+            <i class="fas fa-chart-line"></i>
+            Admin Dashboard
+        </div>
+        <div class="controls">
+            <select class="select" id="timeRange">
+                <option value="7">7 Tage</option>
+                <option value="30" selected>30 Tage</option>
+                <option value="90">90 Tage</option>
+            </select>
+            <button class="btn btn-secondary" onclick="refreshData()">
+                <i class="fas fa-sync-alt"></i>
+                Aktualisieren
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+        <!-- Alerts -->
+        <div id="alertSuccess" class="alert alert-success hidden"></div>
+        <div id="alertError" class="alert alert-error hidden"></div>
+
+        <!-- Loading -->
+        <div id="loading" class="loading">Dashboard wird geladen...</div>
+
+        <!-- Main Grid -->
+        <div id="mainContent" class="grid grid-cols-1 lg:grid-cols-4 hidden">
+            
+            <!-- Sidebar: Projects -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <i class="fas fa-building"></i>
+                        Projekte
+                    </h2>
+                </div>
+
+                <!-- Global KPIs -->
+                <div class="kpi-grid">
+                    <div class="kpi-card">
+                        <div class="kpi-value" id="totalProjects">–</div>
+                        <div class="kpi-label">Projekte</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-value" id="totalUsers">–</div>
+                        <div class="kpi-label">Benutzer</div>
+                    </div>
+                </div>
+
+                <!-- Projects Table -->
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Projekt</th>
+                                <th>WE</th>
+                            </tr>
+                        </thead>
+                        <tbody id="projectsTableBody">
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Selection Display -->
+                <div id="selections" style="margin-top: 1rem;"></div>
+
+                <!-- Users Table -->
+                <div id="usersSection" class="hidden" style="margin-top: 1.5rem;">
+                    <h3 style="margin-bottom: 0.75rem; color: var(--gray-700);">Benutzer</h3>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Aufgaben</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTableBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Project Analytics -->
+            <div class="card" id="projectAnalytics">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <i class="fas fa-chart-bar"></i>
+                        Projekt Übersicht
+                    </h2>
+                </div>
+                
+                <div class="user-metrics" id="projectMetrics">
+                    <div class="metric-item">
+                        <div class="metric-value" id="projectCompletions">–</div>
+                        <div class="metric-label">Abschlüsse</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value" id="projectChanges">–</div>
+                        <div class="metric-label">Änderungen</div>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <canvas id="projectChart"></canvas>
+                </div>
+            </div>
+
+            <!-- User Analytics -->
+            <div class="card" id="userAnalytics" style="grid-column: span 2;">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <i class="fas fa-user"></i>
+                        Benutzer Analyse
+                    </h2>
+                </div>
+
+                <div class="user-metrics" id="userMetrics">
+                    <div class="metric-item">
+                        <div class="metric-value" id="userCompletions">–</div>
+                        <div class="metric-label">Abschlüsse</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value" id="userChanges">–</div>
+                        <div class="metric-label">Änderungen</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value" id="userWETotal">–</div>
+                        <div class="metric-label">WE Total</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value" id="userWEStatus">–</div>
+                        <div class="metric-label">WE mit Status</div>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <canvas id="userChart"></canvas>
+                </div>
+
+                <!-- Status Breakdown -->
+                <div class="status-breakdown" id="statusBreakdown">
+                    Bitte wählen Sie einen Benutzer aus.
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Supabase Configuration
+        const SUPABASE_URL = 'https://whigasnqcvjkilkmbfld.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndoaWdhc25xY3Zqa2lsa21iZmxkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjY3MzQ4MDEsImV4cCI6MjA0MjMxMDgwMX0.VUJmzHcPgimqSe1_sObmXvh7JdLw-J27tMEqycNqGJ8';
+        
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+            auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false }
+        });
+
+        // Global State
+        let allProjects = [];
+        let allUsers = [];
+        let currentProject = null;
+        let currentUserId = null;
+        let currentUserName = null;
+        let charts = {};
+
+        // Utility Functions
+        function showAlert(message, type = 'success') {
+            const alertEl = document.getElementById(type === 'success' ? 'alertSuccess' : 'alertError');
+            alertEl.textContent = message;
+            alertEl.classList.remove('hidden');
+            setTimeout(() => alertEl.classList.add('hidden'), 5000);
+        }
+
+        function showLoading(show = true) {
+            document.getElementById('loading').classList.toggle('hidden', !show);
+            document.getElementById('mainContent').classList.toggle('hidden', show);
+        }
+
+        // ROBUSTE Datumsformatierung - behebt "Invalid Date"
+        function formatDate(dateStr) {
+            if (!dateStr) return '–';
+            
+            try {
+                let date;
+                
+                if (typeof dateStr === 'string') {
+                    // PostgreSQL date format (YYYY-MM-DD) korrekt parsen
+                    if (dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                        date = new Date(dateStr + 'T00:00:00');
+                    } else {
+                        date = new Date(dateStr);
+                    }
+                } else {
+                    date = new Date(dateStr);
+                }
+                
+                if (isNaN(date.getTime())) {
+                    console.warn('Invalid date:', dateStr);
+                    return dateStr;
+                }
+                
+                return date.toLocaleDateString('de-DE', {
+                    day: '2-digit', month: '2-digit'
+                });
+            } catch (error) {
+                console.warn('Date formatting error:', error);
+                return dateStr || '–';
+            }
+        }
+
+        // Authentication
+        async function checkAuth() {
+            try {
+                const { data: { session }, error } = await supabase.auth.getSession();
+                if (error) throw error;
+                if (!session) {
+                    window.location.href = './login.html';
+                    return false;
+                }
+                return true;
+            } catch (error) {
+                showAlert('Authentifizierung fehlgeschlagen: ' + error.message, 'error');
+                return false;
+            }
+        }
+
+        // Load Projects
+        async function loadProjects() {
+            try {
+                const { data: projects, error } = await supabase.rpc('fn_dashboard_guarded_projects');
+                if (error) throw error;
+
+                allProjects = projects || [];
+                
+                // Update global KPIs
+                const totalUsers = new Set();
+                allProjects.forEach(project => {
+                    if (project.users && Array.isArray(project.users)) {
+                        project.users.forEach(user => totalUsers.add(user));
+                    }
+                });
+
+                document.getElementById('totalProjects').textContent = allProjects.length;
+                document.getElementById('totalUsers').textContent = totalUsers.size;
+
+                // Render projects table
+                const tbody = document.getElementById('projectsTableBody');
+                tbody.innerHTML = '';
+
+                allProjects.forEach((project, index) => {
+                    const row = tbody.insertRow();
+                    row.onclick = () => selectProject(project.project, project.total_we);
+                    row.innerHTML = `
+                        <td style="font-weight: 500;">${project.project || '–'}</td>
+                        <td><span class="badge badge-success">${project.total_we || 0}</span></td>
+                    `;
+                });
+
+                showAlert('Dashboard geladen!');
+                
+            } catch (error) {
+                showAlert('Fehler beim Laden der Projekte: ' + error.message, 'error');
+            }
+        }
+
+        // Select Project
+        async function selectProject(projectName, totalWE) {
+            currentProject = projectName;
+            
+            // Update selection display
+            updateSelections();
+            
+            // Clear user selection
+            currentUserId = null;
+            currentUserName = null;
+            document.getElementById('usersSection').classList.add('hidden');
+            
+            try {
+                // Load project users
+                const { data: users, error } = await supabase.rpc('fn_dashboard_guarded_project_users', { 
+                    p_project: projectName 
+                });
+                if (error) throw error;
+
+                allUsers = users || [];
+                
+                // Show users section
+                document.getElementById('usersSection').classList.remove('hidden');
+                const tbody = document.getElementById('usersTableBody');
+                tbody.innerHTML = '';
+
+                allUsers.forEach(user => {
+                    const row = tbody.insertRow();
+                    row.onclick = () => selectUser(user.user_id, user.display_name);
+                    row.innerHTML = `
+                        <td style="font-weight: 500;">${user.display_name || 'Unbekannt'}</td>
+                        <td><span class="badge badge-primary">${user.task_count || 0}</span></td>
+                    `;
+                });
+
+                // Load project data
+                await loadProjectData();
+
+            } catch (error) {
+                showAlert('Fehler beim Laden der Projektdaten: ' + error.message, 'error');
+            }
+        }
+
+        // Select User
+        async function selectUser(userId, userName) {
+            currentUserId = userId;
+            currentUserName = userName;
+            
+            updateSelections();
+            
+            try {
+                const days = parseInt(document.getElementById('timeRange').value);
+                
+                // Load user data with proper RPC calls
+                const [userCompl, userChanges, userSummary] = await Promise.all([
+                    supabase.rpc('fn_dashboard_guarded_user_daily_completions_project', { 
+                        p_user_id: userId, 
+                        p_project: currentProject, 
+                        p_days: days 
+                    }),
+                    supabase.rpc('fn_dashboard_guarded_user_daily_changes_project', { 
+                        p_user_id: userId, 
+                        p_project: currentProject, 
+                        p_days: days 
+                    }),
+                    supabase.rpc('fn_dashboard_guarded_user_summary_metrics', { 
+                        p_user_id: userId, 
+                        p_project: currentProject 
+                    })
+                ]);
+
+                // Update user metrics
+                if (userCompl.data) {
+                    const total = userCompl.data.reduce((sum, d) => sum + (d.completions || 0), 0);
+                    document.getElementById('userCompletions').textContent = total;
+                }
+
+                if (userChanges.data) {
+                    const total = userChanges.data.reduce((sum, d) => sum + (d.changes || 0), 0);
+                    document.getElementById('userChanges').textContent = total;
+                }
+
+                if (userSummary.data && userSummary.data.length > 0) {
+                    const summary = userSummary.data[0];
+                    document.getElementById('userWETotal').textContent = summary.we_total || 0;
+                    document.getElementById('userWEStatus').textContent = summary.we_with_status || 0;
+                    
+                    // Update status breakdown
+                    const breakdown = `
+                        <strong>Status Übersicht:</strong><br>
+                        WE Total: <strong>${summary.we_total || 0}</strong><br>
+                        WE mit Status: <strong>${summary.we_with_status || 0}</strong><br>
+                        Abgeschlossen: <strong>${summary.completions || 0}</strong><br>
+                        Prozent: <strong>${(summary.we_with_status_percent || 0).toFixed(1)}%</strong>
+                    `;
+                    document.getElementById('statusBreakdown').innerHTML = breakdown;
+                }
+
+                // Update user chart
+                updateUserChart(userCompl.data || [], userChanges.data || []);
+
+            } catch (error) {
+                showAlert('Fehler beim Laden der Benutzerdaten: ' + error.message, 'error');
+                console.error('User data error:', error);
+            }
+        }
+
+        // Update Selections Display
+        function updateSelections() {
+            const container = document.getElementById('selections');
+            container.innerHTML = '';
+            
+            if (currentProject) {
+                container.innerHTML += `
+                    <span class="selection-badge">
+                        <i class="fas fa-building"></i>
+                        ${currentProject}
+                    </span>
+                `;
+            }
+            
+            if (currentUserName) {
+                container.innerHTML += `
+                    <span class="selection-badge">
+                        <i class="fas fa-user"></i>
+                        ${currentUserName}
+                    </span>
+                `;
+            }
+        }
+
+        // Load Project Data
+        async function loadProjectData() {
+            if (!currentProject) return;
+            
+            try {
+                const days = parseInt(document.getElementById('timeRange').value);
+                
+                const [projCompl, projChanges] = await Promise.all([
+                    supabase.rpc('fn_dashboard_guarded_project_daily_completions', { 
+                        p_project: currentProject, 
+                        p_days: days 
+                    }),
+                    supabase.rpc('fn_dashboard_guarded_project_daily_changes', { 
+                        p_project: currentProject, 
+                        p_days: days 
+                    })
+                ]);
+
+                // Update project metrics
+                if (projCompl.data) {
+                    const total = projCompl.data.reduce((sum, d) => sum + (d.completions || 0), 0);
+                    document.getElementById('projectCompletions').textContent = total;
+                }
+
+                if (projChanges.data) {
+                    const total = projChanges.data.reduce((sum, d) => sum + (d.changes || 0), 0);
+                    document.getElementById('projectChanges').textContent = total;
+                }
+
+                // Update project chart
+                updateProjectChart(projCompl.data || [], projChanges.data || []);
+
+            } catch (error) {
+                showAlert('Fehler beim Laden der Projektdaten: ' + error.message, 'error');
+                console.error('Project data error:', error);
+            }
+        }
+
+        // Chart Functions
+        function updateProjectChart(completions, changes) {
+            const ctx = document.getElementById('projectChart').getContext('2d');
+            
+            if (charts.project) {
+                charts.project.destroy();
+            }
+
+            const labels = [...new Set([
+                ...completions.map(d => formatDate(d.day)),
+                ...changes.map(d => formatDate(d.day))
+            ])].sort();
+
+            charts.project = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Abschlüsse',
+                            data: completions.map(d => ({ x: formatDate(d.day), y: d.completions || 0 })),
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            tension: 0.1
+                        },
+                        {
+                            label: 'Änderungen', 
+                            data: changes.map(d => ({ x: formatDate(d.day), y: d.changes || 0 })),
+                            borderColor: '#f59e0b',
+                            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                            tension: 0.1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateUserChart(completions, changes) {
+            const ctx = document.getElementById('userChart').getContext('2d');
+            
+            if (charts.user) {
+                charts.user.destroy();
+            }
+
+            const labels = [...new Set([
+                ...completions.map(d => formatDate(d.day)),
+                ...changes.map(d => formatDate(d.day))
+            ])].sort();
+
+            charts.user = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Abschlüsse',
+                            data: completions.map(d => ({ x: formatDate(d.day), y: d.completions || 0 })),
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            tension: 0.1
+                        },
+                        {
+                            label: 'Änderungen',
+                            data: changes.map(d => ({ x: formatDate(d.day), y: d.changes || 0 })),
+                            borderColor: '#f59e0b', 
+                            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                            tension: 0.1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        // Refresh Data
+        async function refreshData() {
+            await loadProjects();
+            if (currentProject) {
+                await loadProjectData();
+            }
+            if (currentUserId) {
+                await selectUser(currentUserId, currentUserName);
+            }
+        }
+
+        // Event Listeners
+        document.getElementById('timeRange').addEventListener('change', () => {
+            if (currentProject) loadProjectData();
+            if (currentUserId) selectUser(currentUserId, currentUserName);
+        });
+
+        // Debug Functions - Global verfügbar
+        window.debugDashboard = function() {
+            console.log('=== Dashboard Debug Info ===');
+            console.log('allProjects:', allProjects);
+            console.log('allUsers:', allUsers);
+            console.log('currentProject:', currentProject);
+            console.log('currentUserId:', currentUserId);
+            console.log('currentUserName:', currentUserName);
+            
+            return {
+                projects: allProjects,
+                users: allUsers,
+                currentProject,
+                currentUserId,
+                currentUserName
+            };
+        };
+
+        window.loadUserData = function(userId, userName) {
+            console.log('loadUserData aufgerufen:', userId, userName);
+            if (userId && userName) {
+                return selectUser(userId, userName);
+            } else {
+                console.log('Fehlende Parameter für loadUserData');
+            }
+        };
+
+        // Initialize
+        (async () => {
+            showLoading(true);
+            
+            try {
+                const authenticated = await checkAuth();
+                if (!authenticated) return;
+                
+                await loadProjects();
+                
+                // Setup complete
+                showLoading(false);
+                
+                // Make debug functions available
+                console.log('✅ Dashboard initialisiert');
+                console.log('✅ Debug-Funktionen verfügbar: debugDashboard(), loadUserData()');
+                
+            } catch (error) {
+                showAlert('Fehler beim Initialisieren: ' + error.message, 'error');
+                showLoading(false);
+            }
+        })();
+    </script>
+</body>
+</html>
