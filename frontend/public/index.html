@@ -23,6 +23,11 @@
           (function(){
             try {
               var href = String(window.location.href || '');
+              // Check for admin dashboard parameter
+              if (href.indexOf('?admin') !== -1 || href.indexOf('#admin') !== -1) {
+                // Load Admin Dashboard
+                return; // Stay on this page for admin dashboard
+              }
               if (!/\/qualitool\//.test(href)) {
                 window.location.replace('./qualitool/index.html');
               }
