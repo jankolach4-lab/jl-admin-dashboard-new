@@ -1387,6 +1387,10 @@
       try {
         await requireAuth(); 
         await loadProjects();
+        
+        // Setup debug functions IMMEDIATELY after auth
+        setupDebugFunctions();
+        
         showSuccess('Dashboard geladen!');
         
         // GARANTIERTER FIX für Total Users
