@@ -1,1233 +1,1541 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Admin Dashboard Pro</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
-  <script src="https://cdn.jsdelivr.net/npm/date-fns@2"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-  <style>
-    :root { 
-      --bg:#f5f7fa; --surface:#fff; --text:#111827; --muted:#6b7280; --border:#e5e7eb; 
-      --accent:#2563eb; --accent-600:#1d4ed8; --teal:#14b8a6; --success:#10b981; --warning:#f59e0b; 
-      --danger:#ef4444; --radius:12px; --shadow:0 10px 30px rgba(0,0,0,.06);
-      --gradient:linear-gradient(135deg, var(--accent) 0%, var(--teal) 100%);
-    } 
-    *{box-sizing:border-box; margin:0; padding:0}
-    body{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Ubuntu,sans-serif; background:var(--bg); color:var(--text); overflow-x:hidden}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard Pro</title>
     
-    /* Header & Navigation */
-    header{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;background:var(--surface);box-shadow:var(--shadow);position:sticky;top:0;z-index:100}
-    .brand{display:flex;align-items:center;gap:10px;font-weight:800;background:var(--gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-    .brand img{height:32px;width:32px;border-radius:8px}
-    .controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    <!-- External Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/date-fns@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    /* Enhanced Controls */
-    .control-group{display:flex;gap:8px;align-items:center;background:var(--surface);padding:6px;border-radius:10px;border:1px solid var(--border)}
-    select,input,button{padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:#fff;font-size:13px;transition:all 0.2s}
-    select:focus,input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
-    button{background:var(--accent);color:#fff;border:none;box-shadow:0 4px 12px rgba(37,99,235,.25);cursor:pointer;font-weight:600}
-    button:hover{background:var(--accent-600);transform:translateY(-1px)}
-    button.secondary{background:var(--muted);color:white}
-    button.danger{background:var(--danger)}
-    
-    /* Live Status */
-    .live-status{display:flex;align-items:center;gap:6px;padding:4px 8px;background:rgba(16,185,129,.1);color:var(--success);border-radius:6px;font-size:12px;font-weight:600}
-    .live-dot{width:8px;height:8px;background:var(--success);border-radius:50%;animation:pulse 2s infinite}
-    @keyframes pulse{0%,100%{opacity:1} 50%{opacity:0.5}}
-    
-    /* Responsive Layout */
-    main{padding:16px;display:grid;grid-template-columns:minmax(300px,380px) 1fr;gap:16px;max-width:1600px;margin:0 auto}
-    @media (max-width: 1200px){main{grid-template-columns:1fr;gap:12px}}
-    @media (max-width: 768px){
-      .controls{flex-direction:column;gap:8px}
-      .control-group{flex-wrap:wrap}
-      main{padding:12px}
-    }
-    
-    /* Ensure PDF button is always visible */
-    #btnExportPDF{display:inline-flex !important;align-items:center;gap:4px}
-    
-    /* Header responsive fixes */
-    @media (max-width: 1400px){
-      header{flex-wrap:wrap;gap:8px}
-    }
-    @media (max-width: 900px){
-      .controls button{min-width:auto;padding:6px 8px}
-      .controls button:not(#btnRefresh):not(#btnLogout):not(#btnExportPDF) span, .controls button:not(#btnRefresh):not(#btnLogout) i + span{display:none}
-    }
-    
-    /* Panels & Cards */
-    .panel{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;transition:transform 0.2s}
-    .panel:hover{transform:translateY(-2px)}
-    .panel h3{margin:0 0 12px 0;color:var(--text);font-size:16px}
-    .list{max-height:70vh;overflow:auto;border:1px solid var(--border);border-radius:8px}
-    
-    /* Enhanced Tables */
-    table{width:100%;border-collapse:separate;border-spacing:0}
-    th,td{font-size:13px;padding:12px 14px;border-bottom:1px solid var(--border)}
-    th{position:sticky;top:0;background:linear-gradient(180deg,#fafafa 0%,#f3f4f6 100%);text-align:left;font-weight:700;color:var(--text)}
-    tr:hover td{background:#f8fafc;cursor:pointer}
-    tr.selected td{background:rgba(37,99,235,.05);border-left:3px solid var(--accent)}
-    
-    /* Grid & Cards */
-    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(400px,1fr));gap:16px}
-    @media (max-width: 768px){.grid{grid-template-columns:1fr}}
-    .card{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;position:relative;transition:all 0.2s}
-    .card:hover{transform:translateY(-2px);box-shadow:0 20px 40px rgba(0,0,0,.1)}
-    .card h4{margin:0 0 16px 0;color:var(--text);font-size:15px;display:flex;align-items:center;gap:8px}
-    
-    /* Chart Enhancements */
-    canvas{max-height:320px;border-radius:8px}
-    .chart-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
-    .chart-actions{display:flex;gap:6px}
-    .chart-btn{padding:4px 8px;font-size:11px;border-radius:6px;background:var(--border);color:var(--muted);border:none;cursor:pointer}
-    .chart-btn:hover{background:var(--accent);color:white}
-    
-    /* Export & Filter */
-    .export-menu{position:absolute;top:12px;right:12px;z-index:10}
-    .export-dropdown{position:relative;display:inline-block}
-    .export-content{display:none;position:absolute;right:0;background:white;box-shadow:var(--shadow);border-radius:8px;min-width:160px;z-index:20;border:1px solid var(--border)}
-    .export-content a{display:block;padding:10px 16px;text-decoration:none;color:var(--text);font-size:13px;border-bottom:1px solid var(--border)}
-    .export-content a:hover{background:var(--bg)}
-    .export-content a:last-child{border-bottom:none}
-    
-    /* Status Indicators */
-    .error{color:#b91c1c;background:#fee2e2;border:1px solid #fecaca;padding:12px 16px;border-radius:10px;margin:12px 0;display:none}
-    .success{color:#166534;background:#dcfce7;border:1px solid #bbf7d0;padding:12px 16px;border-radius:10px;margin:12px 0}
-    .warning{color:#b45309;background:#fef3c7;border:1px solid #fde68a;padding:12px 16px;border-radius:10px;margin:12px 0}
-    
-    /* Enhanced Pills & KPIs */
-    .pill{display:inline-flex;align-items:center;gap:4px;padding:6px 12px;border-radius:999px;font-size:12px;font-weight:600}
-    .pill-accent{background:rgba(37,99,235,.12); color:#1d4ed8}
-    .pill-teal{background:rgba(20,184,166,.12); color:#0d9488}
-    .pill-success{background:rgba(16,185,129,.12); color:#047857}
-    .pill-warning{background:rgba(245,158,11,.12); color:#b45309}
-    
-    /* KPI Cards */
-    .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:16px}
-    .kpi-card{background:white;padding:16px;border-radius:10px;border-left:4px solid var(--accent);box-shadow:0 2px 8px rgba(0,0,0,.04)}
-    .kpi-value{font-size:24px;font-weight:800;color:var(--accent);margin:4px 0}
-    .kpi-label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px}
-    .kpi-change{font-size:11px;margin-top:4px}
-    .kpi-change.positive{color:var(--success)} .kpi-change.negative{color:var(--danger)}
-    
-    /* Mobile Optimizations */
-    @media (max-width: 480px){
-      header{flex-direction:column;gap:12px;padding:12px}
-      .brand{font-size:18px}
-      .controls{width:100%;justify-content:center}
-      .panel{padding:12px}
-      .card{padding:12px}
-      .kpi-grid{grid-template-columns:1fr 1fr}
-    }
-    
-    /* Loading States */
-    .loading{opacity:0.6;pointer-events:none;position:relative}
-    .loading::after{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:24px;height:24px;border:2px solid var(--border);border-top:2px solid var(--accent);border-radius:50%;animation:spin 1s linear infinite}
-    @keyframes spin{0%{transform:translate(-50%,-50%) rotate(0deg)} 100%{transform:translate(-50%,-50%) rotate(360deg)}}
-    
-    /* Tooltips */
-    .tooltip{position:relative;cursor:help}
-    .tooltip:hover::after{content:attr(data-tooltip);position:absolute;bottom:100%;left:50%;transform:translateX(-50%);background:#333;color:white;padding:6px 10px;border-radius:6px;font-size:12px;white-space:nowrap;z-index:1000}
-    
-    /* PDF Export Modal */
-    .modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:1000;display:none;align-items:center;justify-content:center}
-    .modal-content{background:var(--surface);border-radius:var(--radius);padding:24px;max-width:500px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.3)}
-    .modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
-    .modal-title{font-size:20px;font-weight:700;color:var(--text)}
-    .modal-close{background:none;border:none;font-size:24px;cursor:pointer;color:var(--muted);padding:0;width:24px;height:24px}
-    .modal-close:hover{color:var(--text)}
-    .form-group{margin-bottom:16px}
-    .form-label{display:block;margin-bottom:6px;font-weight:600;color:var(--text)}
-    .form-select{width:100%;padding:12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);font-size:14px}
-    .form-select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
-    .modal-actions{display:flex;gap:12px;justify-content:flex-end;margin-top:24px}
-    .btn-modal{padding:10px 20px;border-radius:8px;font-weight:600;cursor:pointer;transition:all 0.2s}
-    .btn-cancel{background:var(--muted);color:white;border:none}
-    .btn-cancel:hover{background:#6b7280}
-    .btn-export{background:var(--accent);color:white;border:none}
-    .btn-export:hover{background:var(--accent-600)}
-    .btn-export:disabled{background:var(--muted);cursor:not-allowed}
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-500: #6b7280;
+            --gray-700: #374151;
+            --gray-900: #111827;
+        }
 
-    /* PDF Generation Overlay */
-    .pdf-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:2000;display:none;align-items:center;justify-content:center;flex-direction:column}
-    .pdf-progress{color:white;text-align:center}
-    .pdf-progress h3{margin-bottom:16px;font-size:24px}
-    .pdf-progress p{margin-bottom:8px;opacity:0.8}
-    .progress-bar{width:300px;height:4px;background:rgba(255,255,255,0.2);border-radius:2px;overflow:hidden}
-    .progress-fill{height:100%;background:var(--accent);width:0%;transition:width 0.3s;border-radius:2px}
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-    /* Hidden PDF Container */
-    .pdf-container{position:absolute;top:-10000px;left:-10000px;width:794px;background:white;color:#000;font-family:Arial,sans-serif;z-index:-1000}
-    .pdf-page{width:794px;min-height:1123px;padding:40px;box-sizing:border-box;background:white;page-break-after:always}
-    .pdf-header{text-align:center;margin-bottom:30px;border-bottom:2px solid #2563eb;padding-bottom:20px}
-    .pdf-title{font-size:28px;font-weight:bold;color:#2563eb;margin-bottom:8px}
-    .pdf-subtitle{font-size:16px;color:#666;margin-bottom:4px}
-    .pdf-date{font-size:14px;color:#888}
-    .pdf-section{margin-bottom:30px}
-    .pdf-section-title{font-size:18px;font-weight:bold;color:#2563eb;margin-bottom:15px;border-bottom:1px solid #e5e7eb;padding-bottom:5px}
-    .pdf-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px}
-    .pdf-chart{width:100%;height:250px;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:15px}
-    .pdf-table{width:100%;border-collapse:collapse;margin-bottom:20px}
-    .pdf-table th,.pdf-table td{padding:8px 12px;border:1px solid #e5e7eb;text-align:left;font-size:12px}
-    .pdf-table th{background:#f8fafc;font-weight:bold}
-    .pdf-kpi{display:flex;justify-content:space-between;margin-bottom:15px}
-    .pdf-kpi-item{text-align:center;flex:1}
-    .pdf-kpi-value{font-size:24px;font-weight:bold;color:#2563eb;margin-bottom:4px}
-    .pdf-kpi-label{font-size:12px;color:#666}
-    .pdf-footer{text-align:center;color:#888;font-size:12px;margin-top:30px;padding-top:20px;border-top:1px solid #e5e7eb}
-    
-    /* Dark mode support */
-    @media (prefers-color-scheme: dark){
-      :root{--bg:#0f172a;--surface:#1e293b;--text:#f1f5f9;--muted:#94a3b8;--border:#334155}
-      .live-status{background:rgba(16,185,129,.2)}
-    }
-  </style>
-</head>
-<body>
-  <header>
-    <div class="brand">
-      <img src="./qt-logo.png" alt="logo" onerror="this.style.display='none'"/> 
-      <span>Admin Dashboard Pro</span>
-    </div>
-    <div class="controls">
-      <div class="control-group">
-        <i class="fas fa-filter"></i>
-        <select id="projectFilter">
-          <option value="">Alle Projekte</option>
-        </select>
-      </div>
-      <div class="control-group">
-        <i class="fas fa-calendar"></i>
-        <input type="date" id="dateFrom" title="Von Datum">
-        <input type="date" id="dateTo" title="Bis Datum">
-      </div>
-      <div class="control-group">
-        <i class="fas fa-clock"></i>
-        <select id="range">
-          <option value="7">7 Tage</option>
-          <option value="30" selected>30 Tage</option>
-          <option value="90">90 Tage</option>
-          <option value="365">1 Jahr</option>
-        </select>
-      </div>
-      <div class="live-status">
-        <div class="live-dot"></div>
-        <span>Live</span>
-      </div>
-      <button id="btnRefresh" title="Aktualisieren">
-        <i class="fas fa-sync-alt"></i>
-      </button>
-      <button id="btnExportAll" class="secondary" title="Alles exportieren">
-        <i class="fas fa-download"></i>
-      </button>
-      <button id="btnLogout" class="danger" title="Abmelden">
-        <i class="fas fa-sign-out-alt"></i>
-      </button>
-    </div>
-  </header>
-  
-  <main>
-    <!-- Sidebar Panel -->
-    <section class="panel">
-      <h3><i class="fas fa-building"></i> Projekte</h3>
-      <div class="kpi-grid">
-        <div class="kpi-card">
-          <div class="kpi-value" id="totalProjects">0</div>
-          <div class="kpi-label">Projekte</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-value" id="totalUsers">0</div>
-          <div class="kpi-label">Mitarbeiter</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-value" id="totalWE">0</div>
-          <div class="kpi-label">WE Gesamt</div>
-        </div>
-      </div>
-      
-      <div class="list">
-        <table id="tblProjects">
-          <thead>
-            <tr>
-              <th><i class="fas fa-city"></i> Projekt (Stadt)</th>
-              <th><i class="fas fa-home"></i> WE</th>
-              <th><i class="fas fa-users"></i> MA</th>
-              <th><i class="fas fa-chart-line"></i> Status</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
-      
-      <h3 style="margin-top:16px">
-        <i class="fas fa-user"></i> Mitarbeiter: 
-        <span id="selProject" class="pill pill-accent">Projekt auswählen</span>
-      </h3>
-      <div class="list">
-        <table id="tblUsers">
-          <thead>
-            <tr>
-              <th><i class="fas fa-user"></i> Mitarbeiter</th>
-              <th><i class="fas fa-home"></i> WE</th>
-              <th><i class="fas fa-percentage"></i> Quote</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
-      
-      <div id="err" class="error"></div>
-      <div id="success" class="success" style="display:none"></div>
-    </section>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--gray-50);
+            color: var(--gray-900);
+            line-height: 1.5;
+        }
 
-    <!-- Main Charts Panel -->
-    <section class="panel">
-      <div class="grid" id="chartsGrid">
-        <!-- Project Charts -->
-        <div class="card" id="cardProjCompl">
-          <div class="chart-header">
-            <h4><i class="fas fa-check-circle"></i> Abschlüsse (Projekt)</h4>
-            <div class="export-dropdown">
-              <button class="chart-btn" onclick="toggleExport('projCompl')">
-                <i class="fas fa-download"></i>
-              </button>
-              <div class="export-content" id="export-projCompl">
-                <a href="#" onclick="exportChart('chartProjCompl', 'png')">PNG herunterladen</a>
-                <a href="#" onclick="exportChart('chartProjCompl', 'csv')">CSV herunterladen</a>
-              </div>
-            </div>
-          </div>
-          <canvas id="chartProjCompl"></canvas>
-        </div>
-        
-        <div class="card" id="cardProjChanges">
-          <div class="chart-header">
-            <h4><i class="fas fa-exchange-alt"></i> Änderungen (Projekt)</h4>
-            <div class="export-dropdown">
-              <button class="chart-btn" onclick="toggleExport('projChanges')">
-                <i class="fas fa-download"></i>
-              </button>
-              <div class="export-content" id="export-projChanges">
-                <a href="#" onclick="exportChart('chartProjChanges', 'png')">PNG herunterladen</a>
-                <a href="#" onclick="exportChart('chartProjChanges', 'csv')">CSV herunterladen</a>
-              </div>
-            </div>
-          </div>
-          <canvas id="chartProjChanges"></canvas>
-        </div>
-        
-        <div class="card" id="cardProjStatus">
-          <div class="chart-header">
-            <h4><i class="fas fa-chart-pie"></i> Status‑Breakdown (Projekt)</h4>
-            <div class="export-dropdown">
-              <button class="chart-btn" onclick="toggleExport('projStatus')">
-                <i class="fas fa-download"></i>
-              </button>
-              <div class="export-content" id="export-projStatus">
-                <a href="#" onclick="exportChart('chartProjStatus', 'png')">PNG herunterladen</a>
-                <a href="#" onclick="exportChart('chartProjStatus', 'csv')">CSV herunterladen</a>
-              </div>
-            </div>
-          </div>
-          <canvas id="chartProjStatus"></canvas>
-        </div>
-        
-        <div class="card" id="cardProjStatusTable">
-          <div class="chart-header">
-            <h4><i class="fas fa-table"></i> Status‑Tabelle (Projekt)</h4>
-            <div class="export-dropdown">
-              <button class="chart-btn" onclick="exportTable('tblProjStatus')">
-                <i class="fas fa-download"></i> CSV
-              </button>
-            </div>
-          </div>
-          <div class="table-wrap">
-            <table id="tblProjStatus">
-              <thead>
-                <tr>
-                  <th>Status</th>
-                  <th>Absolut</th>
-                  <th>% von WE</th>
-                </tr>
-              </thead>
-              <tbody></tbody>
-            </table>
-          </div>
-        </div>
+        .header {
+            background: white;
+            border-bottom: 2px solid var(--gray-200);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
 
-        <!-- User Charts -->
-        <div class="card" id="cardUserCompl" style="display:none">
-          <div class="chart-header">
-            <h4><i class="fas fa-user-check"></i> Abschlüsse (Mitarbeiter)</h4>
-            <div class="export-dropdown">
-              <button class="chart-btn" onclick="toggleExport('userCompl')">
-                <i class="fas fa-download"></i>
-              </button>
-              <div class="export-content" id="export-userCompl">
-                <a href="#" onclick="exportChart('chartUserCompl', 'png')">PNG herunterladen</a>
-                <a href="#" onclick="exportChart('chartUserCompl', 'csv')">CSV herunterladen</a>
-              </div>
-            </div>
-          </div>
-          <canvas id="chartUserCompl"></canvas>
-        </div>
-        
-        <div class="card" id="cardUserChanges" style="display:none">
-          <div class="chart-header">
-            <h4><i class="fas fa-user-edit"></i> Änderungen (Mitarbeiter)</h4>
-            <div class="export-dropdown">
-              <button class="chart-btn" onclick="toggleExport('userChanges')">
-                <i class="fas fa-download"></i>
-              </button>
-              <div class="export-content" id="export-userChanges">
-                <a href="#" onclick="exportChart('chartUserChanges', 'png')">PNG herunterladen</a>
-                <a href="#" onclick="exportChart('chartUserChanges', 'csv')">CSV herunterladen</a>
-              </div>
-            </div>
-          </div>
-          <canvas id="chartUserChanges"></canvas>
-        </div>
-        
-        <div class="card" id="cardUserStatus">
-          <div class="chart-header">
-            <h4>
-              <i class="fas fa-chart-donut"></i> Status‑Breakdown 
-              <span id="selUser" class="pill pill-teal" style="display:none"></span>
-            </h4>
-            <div class="export-dropdown">
-              <button class="chart-btn" onclick="toggleExport('userStatus')">
-                <i class="fas fa-download"></i>
-              </button>
-              <div class="export-content" id="export-userStatus">
-                <a href="#" onclick="exportChart('chartUserStatus', 'png')">PNG herunterladen</a>
-                <a href="#" onclick="exportChart('chartUserStatus', 'csv')">CSV herunterladen</a>
-              </div>
-            </div>
-          </div>
-          <canvas id="chartUserStatus"></canvas>
-        </div>
-        
-        <div class="card" id="cardUserStatusTable">
-          <div class="chart-header">
-            <h4><i class="fas fa-table"></i> Status‑Tabelle (Mitarbeiter)</h4>
-            <div class="export-dropdown">
-              <button class="chart-btn" onclick="exportTable('tblUserStatus')">
-                <i class="fas fa-download"></i> CSV
-              </button>
-            </div>
-          </div>
-          <div class="table-wrap">
-            <table id="tblUserStatus">
-              <thead>
-                <tr>
-                  <th>Status</th>
-                  <th>Absolut</th>
-                  <th>% von WE</th>
-                </tr>
-              </thead>
-              <tbody></tbody>
-            </table>
-          </div>
-        </div>
-        
-        <div class="card" id="cardUserHourly">
-          <div class="chart-header">
-            <h4>
-              <i class="fas fa-clock"></i> Stündliche Änderungen 
-              <input type="date" id="userHourlyDate" style="margin-left:8px;font-size:12px">
-            </h4>
-            <div class="export-dropdown">
-              <button class="chart-btn" onclick="toggleExport('userHourly')">
-                <i class="fas fa-download"></i>
-              </button>
-              <div class="export-content" id="export-userHourly">
-                <a href="#" onclick="exportChart('chartUserHourly', 'png')">PNG herunterladen</a>
-                <a href="#" onclick="exportChart('chartUserHourly', 'csv')">CSV herunterladen</a>
-              </div>
-            </div>
-          </div>
-          <canvas id="chartUserHourly"></canvas>
-        </div>
-        
-        <div class="card" id="cardUserSummary">
-          <div class="chart-header">
-            <h4><i class="fas fa-chart-bar"></i> Zusammenfassung (Mitarbeiter)</h4>
-            <div class="export-dropdown">
-              <button class="chart-btn" onclick="exportTable('tblUserSummary')">
-                <i class="fas fa-download"></i> CSV
-              </button>
-            </div>
-          </div>
-          <div class="table-wrap">
-            <table id="tblUserSummary">
-              <thead>
-                <tr>
-                  <th>Kennzahl</th>
-                  <th>Wert</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td class="muted" colspan="2">
-                    <i class="fas fa-info-circle"></i> Bitte Mitarbeiter wählen …
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </section>
-  </main>
+        .logo {
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
 
-  <script>
-    const SUPABASE_URL = 'https://whigasnqcvjkilkmbfld.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndoaWdhc25xY3Zqa2lsa21iZmxkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQyNDE1OTIsImV4cCI6MjA2OTgxNzU5Mn0.tfUnIP_oWy3N9UM6Ws9mPiKqsGtj8_kIOMW42E298rc';
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { 
-      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false } 
-    });
+        .controls {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
 
-    // Global Variables
-    const q = sel => document.querySelector(sel);
-    const errBox = q('#err');
-    const successBox = q('#success');
-    let charts = {}; // Store all chart instances
-    let currentUserId = null;
-    let currentProject = null; 
-    let projectTotalWE = 0;
-    let autoRefreshInterval = null;
-    let allProjects = [];
-    let allUsers = [];
+        .select, .input {
+            padding: 0.5rem 0.75rem;
+            border: 1px solid var(--gray-300);
+            border-radius: 0.5rem;
+            background: white;
+            font-size: 0.875rem;
+        }
 
-    // Utility Functions
-    async function requireAuth(){ 
-      const { data:{ session } } = await supabase.auth.getSession(); 
-      if (!session) { 
-        window.location.href='./login.html'; 
-        throw new Error('no_session'); 
-      } 
-      return session.user; 
-    }
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
 
-    function showError(msg){ 
-      errBox.textContent = 'Fehler: ' + msg; 
-      errBox.style.display='block'; 
-      setTimeout(() => errBox.style.display='none', 5000);
-    }
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
 
-    function showSuccess(msg){
-      successBox.textContent = msg;
-      successBox.style.display='block';
-      setTimeout(() => successBox.style.display='none', 3000);
-    }
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+        }
 
-    function formatDate(dateStr){
-      return new Date(dateStr).toLocaleDateString('de-DE', {
-        day: '2-digit', month: '2-digit', year: '2-digit'
-      });
-    }
+        .btn-secondary {
+            background: var(--gray-200);
+            color: var(--gray-700);
+        }
 
-    // Enhanced Chart Rendering
-    function destroyChart(name){
-      if(charts[name]){
-        charts[name].destroy();
-        delete charts[name];
-      }
-    }
+        .main {
+            padding: 2rem;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
 
-    function renderBarChart(ctxId, labels, datasets, options = {}){
-      const ctx = document.getElementById(ctxId);
-      destroyChart(ctxId);
-      
-      const defaultOptions = {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
-          x: { grid: { display: false } }
-        },
-        plugins: { 
-          legend: { display: datasets.length > 1, position: 'top' },
-          tooltip: { 
-            backgroundColor: 'rgba(0,0,0,0.8)',
-            titleColor: '#fff',
-            bodyColor: '#fff',
-            cornerRadius: 8
-          }
-        },
-        animation: { duration: 800, easing: 'easeInOutQuart' }
-      };
-      
-      charts[ctxId] = new Chart(ctx, { 
-        type: 'bar', 
-        data: { labels, datasets }, 
-        options: { ...defaultOptions, ...options }
-      });
-      return charts[ctxId];
-    }
+        .overview-row {
+            background: white;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            border: 1px solid var(--gray-200);
+        }
 
-    function renderLineChart(ctxId, labels, datasets, options = {}){
-      const ctx = document.getElementById(ctxId);
-      destroyChart(ctxId);
-      
-      const defaultOptions = {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
-          x: { grid: { display: false } }
-        },
-        plugins: { 
-          legend: { display: datasets.length > 1, position: 'top' },
-          tooltip: { 
-            backgroundColor: 'rgba(0,0,0,0.8)',
-            titleColor: '#fff',
-            bodyColor: '#fff',
-            cornerRadius: 8
-          }
-        },
-        elements: { line: { tension: 0.4 }, point: { radius: 4, hoverRadius: 6 } },
-        animation: { duration: 800, easing: 'easeInOutQuart' }
-      };
-      
-      charts[ctxId] = new Chart(ctx, { 
-        type: 'line', 
-        data: { labels, datasets }, 
-        options: { ...defaultOptions, ...options }
-      });
-      return charts[ctxId];
-    }
+        .overview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+        }
 
-    function renderDoughnutChart(ctxId, labels, values, options = {}){
-      const ctx = document.getElementById(ctxId);
-      destroyChart(ctxId);
-      
-      const colors = [
-        '#2563eb', '#14b8a6', '#f59e0b', '#ef4444', '#8b5cf6', 
-        '#06d6a0', '#f72585', '#4361ee', '#f77f00', '#fcbf49'
-      ];
-      
-      const defaultOptions = {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { 
-          legend: { position: 'bottom', labels: { padding: 20, usePointStyle: true } },
-          tooltip: { 
-            backgroundColor: 'rgba(0,0,0,0.8)',
-            titleColor: '#fff',
-            bodyColor: '#fff',
-            cornerRadius: 8,
-            callbacks: {
-              label: function(context) {
-                const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                const percentage = ((context.parsed / total) * 100).toFixed(1);
-                return `${context.label}: ${context.parsed} (${percentage}%)`;
-              }
+        .overview-item {
+            text-align: center;
+        }
+
+        .overview-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .overview-label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--gray-500);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .section {
+            background: white;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            border: 1px solid var(--gray-200);
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            border-radius: 0.5rem;
+            border: 1px solid var(--gray-200);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: var(--gray-50);
+            padding: 1rem;
+            text-align: left;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--gray-700);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 2px solid var(--gray-200);
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--gray-100);
+            font-size: 0.875rem;
+        }
+
+        tr:hover {
+            background: var(--gray-50);
+            cursor: pointer;
+        }
+
+        tr.selected {
+            background: rgba(37, 99, 235, 0.1);
+            border-left: 4px solid var(--primary);
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-success {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .badge-warning {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+        }
+
+        .badge-primary {
+            background: rgba(37, 99, 235, 0.1);
+            color: var(--primary);
+        }
+
+        .grid {
+            display: grid;
+            gap: 2rem;
+        }
+
+        .grid-2 {
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        }
+
+        .grid-3 {
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        }
+
+        .card {
+            background: white;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            border: 1px solid var(--gray-200);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .card-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--gray-900);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-top: 1rem;
+        }
+
+        .chart-container-small {
+            height: 250px;
+        }
+
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .metric-item {
+            text-align: center;
+            padding: 1rem;
+            background: var(--gray-50);
+            border-radius: 0.5rem;
+            border: 1px solid var(--gray-200);
+        }
+
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .metric-label {
+            font-size: 0.75rem;
+            color: var(--gray-500);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .status-table {
+            font-size: 0.875rem;
+        }
+
+        .status-table td {
+            padding: 0.5rem;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--gray-200);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--success);
+            transition: width 0.3s ease;
+        }
+
+        .project-config {
+            display: none;
+            background: var(--gray-50);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-top: 1rem;
+            border: 1px solid var(--gray-200);
+        }
+
+        .project-config.show {
+            display: block;
+        }
+
+        .config-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            align-items: end;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--gray-700);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: var(--gray-500);
+        }
+
+        .loading::after {
+            content: '';
+            display: inline-block;
+            width: 1.5rem;
+            height: 1.5rem;
+            border: 2px solid var(--gray-300);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 0.5rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .alert-success {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            color: var(--success);
+        }
+
+        .alert-error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            color: var(--danger);
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .main {
+                padding: 1rem;
             }
-          }
-        },
-        animation: { duration: 800, easing: 'easeInOutQuart' }
-      };
-      
-      charts[ctxId] = new Chart(ctx, { 
-        type: 'doughnut', 
-        data: { 
-          labels, 
-          datasets: [{ 
-            data: values, 
-            backgroundColor: colors.slice(0, labels.length),
-            borderWidth: 2,
-            borderColor: '#fff'
-          }] 
-        }, 
-        options: { ...defaultOptions, ...options }
-      });
-      return charts[ctxId];
-    }
-
-    // Enhanced Table Rendering
-    function renderTable(tableId, rows, columns = null){
-      const tbody = document.querySelector(`#${tableId} tbody`);
-      tbody.innerHTML = '';
-      
-      rows.forEach((row, index) => {
-        const tr = document.createElement('tr');
-        tr.className = index % 2 === 0 ? 'even' : 'odd';
-        
-        if(columns){
-          columns.forEach(col => {
-            const td = document.createElement('td');
-            td.innerHTML = row[col] || '–';
-            tr.appendChild(td);
-          });
-        } else {
-          Object.values(row).forEach(value => {
-            const td = document.createElement('td');
-            td.innerHTML = value || '–';
-            tr.appendChild(td);
-          });
+            
+            .overview-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .grid-2, .grid-3 {
+                grid-template-columns: 1fr;
+            }
+            
+            .controls {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
         }
+    </style>
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="logo">
+            <i class="fas fa-chart-line"></i>
+            Admin Dashboard Pro
+        </div>
+        <div class="controls">
+            <select class="select" id="timeRange">
+                <option value="7">7 Tage</option>
+                <option value="14">14 Tage</option>
+                <option value="30" selected>30 Tage</option>
+                <option value="90">90 Tage</option>
+                <option value="120">120 Tage</option>
+            </select>
+            <button class="btn btn-primary" onclick="refreshData()">
+                <i class="fas fa-sync-alt"></i>
+                Aktualisieren
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+        <!-- Alerts -->
+        <div id="alertSuccess" class="alert alert-success hidden"></div>
+        <div id="alertError" class="alert alert-error hidden"></div>
+
+        <!-- Loading -->
+        <div id="loading" class="loading">Dashboard wird geladen...</div>
+
+        <!-- Main Content -->
+        <div id="mainContent" class="hidden">
+            
+            <!-- Gesamt-Übersicht -->
+            <div class="overview-row">
+                <div class="overview-grid">
+                    <div class="overview-item">
+                        <div class="overview-value" id="totalProjects">–</div>
+                        <div class="overview-label">Projekte</div>
+                    </div>
+                    <div class="overview-item">
+                        <div class="overview-value" id="totalVPs">–</div>
+                        <div class="overview-label">VP (Vertriebspartner)</div>
+                    </div>
+                    <div class="overview-item">
+                        <div class="overview-value" id="totalWE">–</div>
+                        <div class="overview-label">WE (Wohneinheiten)</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Projekt-Tabelle -->
+            <div class="section">
+                <h2 class="section-title">
+                    <i class="fas fa-building"></i>
+                    Projekte Übersicht
+                </h2>
+                
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Projekt (Stadt)</th>
+                                <th>WE</th>
+                                <th>VP</th>
+                                <th>Abschlüsse</th>
+                                <th>Status %</th>
+                                <th>Fortschritt</th>
+                                <th>Aktionen</th>
+                            </tr>
+                        </thead>
+                        <tbody id="projectsTableBody">
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Projekt-Konfiguration -->
+                <div class="project-config" id="projectConfig">
+                    <h3 style="margin-bottom: 1rem;">Projekt-Zeitraum & Hochrechnung</h3>
+                    <div class="config-grid">
+                        <div class="form-group">
+                            <label class="form-label">Projekt-Beginn</label>
+                            <input type="date" class="input" id="projectStart">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Projekt-Ende</label>
+                            <input type="date" class="input" id="projectEnd">
+                        </div>
+                        <div class="form-group">
+                            <button class="btn btn-primary" onclick="calculateProjection()">
+                                <i class="fas fa-calculator"></i>
+                                Hochrechnung berechnen
+                            </button>
+                        </div>
+                    </div>
+                    <div id="projectionResult" class="hidden" style="margin-top: 1rem; padding: 1rem; background: white; border-radius: 0.5rem; border: 1px solid var(--gray-300);"></div>
+                </div>
+            </div>
+
+            <!-- Projekt-Kacheln -->
+            <div id="projectAnalytics" class="hidden">
+                <div class="grid grid-2">
+                    <!-- Abschlüsse pro Tag -->
+                    <div class="card">
+                        <h3 class="card-title">
+                            <i class="fas fa-trophy"></i>
+                            Abschlüsse pro Tag (alle VP)
+                        </h3>
+                        <div class="chart-container">
+                            <canvas id="projectCompletionsChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Statusänderungen pro Tag -->
+                    <div class="card">
+                        <h3 class="card-title">
+                            <i class="fas fa-edit"></i>
+                            Statusänderungen pro Tag (alle VP)
+                        </h3>
+                        <div class="chart-container">
+                            <canvas id="projectChangesChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Status-Breakdown -->
+                    <div class="card">
+                        <h3 class="card-title">
+                            <i class="fas fa-chart-pie"></i>
+                            Status-Verteilung (Projekt)
+                        </h3>
+                        <div class="chart-container chart-container-small">
+                            <canvas id="projectStatusPieChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Status-Tabelle -->
+                    <div class="card">
+                        <h3 class="card-title">
+                            <i class="fas fa-table"></i>
+                            Status-Übersicht (Projekt)
+                        </h3>
+                        <div class="table-container">
+                            <table class="status-table">
+                                <thead>
+                                    <tr>
+                                        <th>Status</th>
+                                        <th>Anzahl</th>
+                                        <th>% von WE</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="projectStatusTableBody">
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="projectStatusSummary" style="margin-top: 1rem; padding: 1rem; background: var(--gray-50); border-radius: 0.5rem;">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VP-Tabelle -->
+            <div id="vpSection" class="section hidden">
+                <h2 class="section-title">
+                    <i class="fas fa-users"></i>
+                    VP im Projekt: <span id="selectedProjectName">–</span>
+                </h2>
+                
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>VP Name</th>
+                                <th>WE</th>
+                                <th>Abschlüsse</th>
+                                <th>% eigene WE</th>
+                                <th>% Projekt WE</th>
+                            </tr>
+                        </thead>
+                        <tbody id="vpTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- VP-Kacheln -->
+            <div id="vpAnalytics" class="hidden">
+                <h2 class="section-title" style="margin-bottom: 2rem;">
+                    <i class="fas fa-user-chart"></i>
+                    VP Analyse: <span id="selectedVPName">–</span>
+                </h2>
+                
+                <div class="grid grid-3">
+                    <!-- VP Abschlüsse pro Tag -->
+                    <div class="card">
+                        <h3 class="card-title">
+                            <i class="fas fa-trophy"></i>
+                            Tägliche Abschlüsse
+                        </h3>
+                        <div class="chart-container chart-container-small">
+                            <canvas id="vpCompletionsChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- VP Statusänderungen pro Tag -->
+                    <div class="card">
+                        <h3 class="card-title">
+                            <i class="fas fa-edit"></i>
+                            Tägliche Statusänderungen
+                        </h3>
+                        <div class="chart-container chart-container-small">
+                            <canvas id="vpChangesChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- VP Status-Breakdown -->
+                    <div class="card">
+                        <h3 class="card-title">
+                            <i class="fas fa-chart-pie"></i>
+                            Status-Verteilung (VP)
+                        </h3>
+                        <div class="chart-container chart-container-small">
+                            <canvas id="vpStatusPieChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- VP Status-Tabelle -->
+                    <div class="card">
+                        <h3 class="card-title">
+                            <i class="fas fa-table"></i>
+                            Status-Tabelle (VP)
+                        </h3>
+                        <div class="table-container">
+                            <table class="status-table">
+                                <thead>
+                                    <tr>
+                                        <th>Status</th>
+                                        <th>Anzahl</th>
+                                        <th>% von VP WE</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="vpStatusTableBody">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Stündliche Aktivität -->
+                    <div class="card">
+                        <h3 class="card-title">
+                            <i class="fas fa-clock"></i>
+                            Stündliche Aktivität
+                        </h3>
+                        <div style="margin-bottom: 1rem;">
+                            <input type="date" class="input" id="hourlyDate" onchange="updateHourlyChart()">
+                        </div>
+                        <div class="chart-container chart-container-small">
+                            <canvas id="vpHourlyChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- VP Zusammenfassung -->
+                    <div class="card">
+                        <h3 class="card-title">
+                            <i class="fas fa-summary"></i>
+                            Zusammenfassung
+                        </h3>
+                        <div class="metric-grid">
+                            <div class="metric-item">
+                                <div class="metric-value" id="vpTotalChanges">–</div>
+                                <div class="metric-label">Statusänderungen</div>
+                            </div>
+                            <div class="metric-item">
+                                <div class="metric-value" id="vpTotalCompletions">–</div>
+                                <div class="metric-label">Abschlüsse</div>
+                            </div>
+                            <div class="metric-item">
+                                <div class="metric-value" id="vpChangeCompletionRatio">–</div>
+                                <div class="metric-label">Änderungen/Abschlüsse</div>
+                            </div>
+                            <div class="metric-item">
+                                <div class="metric-value" id="vpWEWithStatus">–</div>
+                                <div class="metric-label">WE mit Status</div>
+                            </div>
+                        </div>
+                        <div style="margin-top: 1rem; padding: 1rem; background: var(--gray-50); border-radius: 0.5rem;">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; font-size: 0.875rem;">
+                                <div><strong>WE mit Status:</strong> <span id="vpWEWithStatusAbs">–</span> (<span id="vpWEWithStatusPercent">–</span>%)</div>
+                                <div><strong>Gesamt WE:</strong> <span id="vpTotalWE">–</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Supabase Configuration
+        const SUPABASE_URL = 'https://whigasnqcvjkilkmbfld.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndoaWdhc25xY3Zqa2lsa21iZmxkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQyNDE1OTIsImV4cCI6MjA2OTgxNzU5Mn0.tfUnIP_oWy3N9UM6Ws9mPiKqsGtj8_kIOMW42E298rc';
         
-        tbody.appendChild(tr);
-      });
-    }
-
-    function renderStatusTable(tblId, rows){
-      const tbody = document.querySelector('#'+tblId+' tbody');
-      tbody.innerHTML='';
-      
-      rows.forEach((r, index) => {
-        const tr = document.createElement('tr');
-        tr.className = index % 2 === 0 ? 'even' : 'odd';
-        tr.innerHTML = `
-          <td><span class="pill pill-accent">${r.status||'–'}</span></td>
-          <td><strong>${r.absolute||0}</strong></td>
-          <td>${(r.percent||0).toFixed(1)}%</td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
-
-    // Export Functions
-    function toggleExport(chartId){
-      const dropdown = document.getElementById(`export-${chartId}`);
-      dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
-      
-      // Close other dropdowns
-      document.querySelectorAll('.export-content').forEach(el => {
-        if(el.id !== `export-${chartId}`) el.style.display = 'none';
-      });
-    }
-
-    function exportChart(canvasId, format){
-      const canvas = document.getElementById(canvasId);
-      if(!canvas) return;
-      
-      if(format === 'png'){
-        const link = document.createElement('a');
-        link.download = `${canvasId}_${new Date().toISOString().slice(0,10)}.png`;
-        link.href = canvas.toDataURL('image/png');
-        link.click();
-        showSuccess('Chart als PNG exportiert!');
-      } else if(format === 'csv'){
-        const chart = charts[canvasId];
-        if(!chart) return;
-        
-        let csv = 'Label,Wert\n';
-        chart.data.labels.forEach((label, i) => {
-          const value = chart.data.datasets[0].data[i];
-          csv += `"${label}","${value}"\n`;
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+            auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false }
         });
-        
-        const blob = new Blob([csv], { type: 'text/csv' });
-        const link = document.createElement('a');
-        link.download = `${canvasId}_${new Date().toISOString().slice(0,10)}.csv`;
-        link.href = URL.createObjectURL(blob);
-        link.click();
-        showSuccess('Chart-Daten als CSV exportiert!');
-      }
-      
-      // Close dropdown
-      document.querySelectorAll('.export-content').forEach(el => el.style.display = 'none');
-    }
 
-    function exportTable(tableId){
-      const table = document.getElementById(tableId);
-      if(!table) return;
-      
-      let csv = '';
-      const rows = table.querySelectorAll('tr');
-      
-      rows.forEach(row => {
-        const cols = row.querySelectorAll('th, td');
-        const rowData = Array.from(cols).map(col => `"${col.textContent.trim()}"`);
-        csv += rowData.join(',') + '\n';
-      });
-      
-      const blob = new Blob([csv], { type: 'text/csv' });
-      const link = document.createElement('a');
-      link.download = `${tableId}_${new Date().toISOString().slice(0,10)}.csv`;
-      link.href = URL.createObjectURL(blob);
-      link.click();
-      showSuccess('Tabelle als CSV exportiert!');
-    }
+        // Global State
+        let allContacts = [];
+        let projectsData = {};
+        let vpsData = {};
+        let selectedProject = null;
+        let selectedVP = null;
+        let charts = {};
 
-    // Data Loading Functions
-    async function loadProjects(){
-      errBox.style.display='none';
-      currentUserId=null;
-      
-      // Hide user cards
-      ['cardUserCompl', 'cardUserChanges', 'cardUserStatus'].forEach(id => {
-        q('#'+id).style.display='none';
-      });
-      
-      // Show project cards
-      ['cardProjCompl', 'cardProjChanges', 'cardProjStatus'].forEach(id => {
-        q('#'+id).style.display='block';
-      });
-      
-      const { data, error } = await supabase.rpc('fn_dashboard_guarded_projects');
-      if (error){ 
-        showError(error.message); 
-        return []; 
-      }
-      
-      allProjects = data || [];
-      
-      // Update KPIs
-      q('#totalProjects').textContent = allProjects.length;
-      q('#totalUsers').textContent = allProjects.reduce((sum, p) => sum + (p.user_count || 0), 0);
-      q('#totalWE').textContent = allProjects.reduce((sum, p) => sum + (p.total_we || 0), 0);
-      
-      // Update project filter
-      const projectFilter = q('#projectFilter');
-      projectFilter.innerHTML = '<option value="">Alle Projekte</option>';
-      allProjects.forEach(p => {
-        const option = document.createElement('option');
-        option.value = p.project;
-        option.textContent = p.project;
-        projectFilter.appendChild(option);
-      });
-      
-      // Render projects table
-      const tbody = q('#tblProjects tbody');
-      tbody.innerHTML='';
-      
-      allProjects.forEach((row, index) => {
-        const tr = document.createElement('tr');
-        tr.className = index % 2 === 0 ? 'even' : 'odd';
-        
-        const completionRate = row.total_we > 0 ? Math.round((row.user_count / row.total_we) * 100) : 0;
-        const statusColor = completionRate > 80 ? 'success' : completionRate > 50 ? 'warning' : 'danger';
-        
-        tr.innerHTML = `
-          <td><i class="fas fa-city"></i> ${row.project||'–'}</td>
-          <td><strong>${row.total_we||0}</strong></td>
-          <td>${row.user_count||0}</td>
-          <td><span class="pill pill-${statusColor}">${completionRate}%</span></td>
-        `;
-        
-        tr.addEventListener('click', () => {
-          // Remove previous selection
-          tbody.querySelectorAll('tr').forEach(r => r.classList.remove('selected'));
-          tr.classList.add('selected');
-          selectProject(row.project, Number(row.total_we||0));
+        // Utility Functions
+        function showAlert(message, type = 'success') {
+            const alertEl = document.getElementById(type === 'success' ? 'alertSuccess' : 'alertError');
+            alertEl.textContent = message;
+            alertEl.classList.remove('hidden');
+            setTimeout(() => alertEl.classList.add('hidden'), 5000);
+        }
+
+        function showLoading(show = true) {
+            document.getElementById('loading').classList.toggle('hidden', !show);
+            document.getElementById('mainContent').classList.toggle('hidden', show);
+        }
+
+        // German Holidays (simplified)
+        function getGermanHolidays(year) {
+            const holidays = [
+                new Date(year, 0, 1),   // Neujahr
+                new Date(year, 4, 1),   // Tag der Arbeit
+                new Date(year, 9, 3),   // Tag der deutschen Einheit
+                new Date(year, 11, 25), // 1. Weihnachtsfeiertag
+                new Date(year, 11, 26), // 2. Weihnachtsfeiertag
+            ];
+            
+            // Easter calculation (simplified)
+            const easter = getEaster(year);
+            holidays.push(
+                new Date(easter.getTime() - 2 * 24 * 60 * 60 * 1000), // Karfreitag
+                new Date(easter.getTime() + 1 * 24 * 60 * 60 * 1000),  // Ostermontag
+                new Date(easter.getTime() + 39 * 24 * 60 * 60 * 1000), // Christi Himmelfahrt
+                new Date(easter.getTime() + 50 * 24 * 60 * 60 * 1000)  // Pfingstmontag
+            );
+            
+            return holidays;
+        }
+
+        function getEaster(year) {
+            const a = year % 19;
+            const b = Math.floor(year / 100);
+            const c = year % 100;
+            const d = Math.floor(b / 4);
+            const e = b % 4;
+            const f = Math.floor((b + 8) / 25);
+            const g = Math.floor((b - f + 1) / 3);
+            const h = (19 * a + b - d - g + 15) % 30;
+            const i = Math.floor(c / 4);
+            const k = c % 4;
+            const l = (32 + 2 * e + 2 * i - h - k) % 7;
+            const m = Math.floor((a + 11 * h + 22 * l) / 451);
+            const month = Math.floor((h + l - 7 * m + 114) / 31);
+            const day = ((h + l - 7 * m + 114) % 31) + 1;
+            return new Date(year, month - 1, day);
+        }
+
+        function isWorkday(date) {
+            const day = date.getDay();
+            if (day === 0 || day === 6) return false; // Weekend
+            
+            const year = date.getFullYear();
+            const holidays = getGermanHolidays(year);
+            
+            return !holidays.some(holiday => 
+                holiday.getDate() === date.getDate() && 
+                holiday.getMonth() === date.getMonth() && 
+                holiday.getFullYear() === date.getFullYear()
+            );
+        }
+
+        function getWorkdaysBetween(startDate, endDate) {
+            let count = 0;
+            const current = new Date(startDate);
+            
+            while (current <= endDate) {
+                if (isWorkday(current)) {
+                    count++;
+                }
+                current.setDate(current.getDate() + 1);
+            }
+            
+            return count;
+        }
+
+        // Authentication
+        async function checkAuth() {
+            try {
+                const { data: { session }, error } = await supabase.auth.getSession();
+                if (error) throw error;
+                if (!session) {
+                    window.location.href = './login.html';
+                    return false;
+                }
+                return true;
+            } catch (error) {
+                showAlert('Authentifizierung fehlgeschlagen: ' + error.message, 'error');
+                return false;
+            }
+        }
+
+        // Load Data
+        async function loadData() {
+            try {
+                showLoading(true);
+                
+                const { data: contacts, error } = await supabase
+                    .from('user_contacts')
+                    .select('user_id, contacts, created_at, updated_at');
+                
+                if (error) throw error;
+                
+                allContacts = contacts || [];
+                console.log('Loaded contacts:', allContacts.length);
+                
+                processData();
+                renderOverview();
+                renderProjectsTable();
+                
+                showLoading(false);
+                showAlert('Dashboard erfolgreich geladen!');
+                
+            } catch (error) {
+                showLoading(false);
+                showAlert('Fehler beim Laden der Daten: ' + error.message, 'error');
+                console.error('Load error:', error);
+            }
+        }
+
+        // Process Data
+        function processData() {
+            projectsData = {};
+            vpsData = {};
+            
+            allContacts.forEach(contact => {
+                const data = contact.contacts;
+                const project = data?.ort || 'Unbekannt';
+                const vpId = contact.user_id;
+                const vpName = data?.display_name || data?.name || 'Unbekannt';
+                
+                // Initialize project
+                if (!projectsData[project]) {
+                    projectsData[project] = {
+                        name: project,
+                        totalWE: 0,
+                        vps: new Set(),
+                        completions: 0,
+                        statusCounts: {},
+                        dailyStats: {}
+                    };
+                }
+                
+                // Initialize VP
+                vpsData[vpId] = {
+                    id: vpId,
+                    name: vpName,
+                    project: project,
+                    totalWE: 0,
+                    completions: 0,
+                    totalChanges: 0,
+                    statusCounts: {},
+                    dailyStats: {},
+                    hourlyStats: {}
+                };
+                
+                projectsData[project].vps.add(vpId);
+                
+                const addresses = data?.addresses || {};
+                
+                Object.values(addresses).forEach(address => {
+                    const weCount = address.we || 0;
+                    projectsData[project].totalWE += weCount;
+                    vpsData[vpId].totalWE += weCount;
+                    
+                    const residents = address.residents || {};
+                    Object.values(residents).forEach(resident => {
+                        if (resident.status) {
+                            // Count for project
+                            projectsData[project].statusCounts[resident.status] = 
+                                (projectsData[project].statusCounts[resident.status] || 0) + 1;
+                            
+                            // Count for VP
+                            vpsData[vpId].statusCounts[resident.status] = 
+                                (vpsData[vpId].statusCounts[resident.status] || 0) + 1;
+                            vpsData[vpId].totalChanges++;
+                            
+                            if (resident.status === 'abschluss') {
+                                projectsData[project].completions++;
+                                vpsData[vpId].completions++;
+                            }
+                            
+                            // Daily stats (simplified - using created_at)
+                            const dateKey = contact.created_at ? contact.created_at.split('T')[0] : null;
+                            if (dateKey) {
+                                if (!projectsData[project].dailyStats[dateKey]) {
+                                    projectsData[project].dailyStats[dateKey] = { completions: 0, changes: 0 };
+                                }
+                                if (!vpsData[vpId].dailyStats[dateKey]) {
+                                    vpsData[vpId].dailyStats[dateKey] = { completions: 0, changes: 0 };
+                                }
+                                
+                                projectsData[project].dailyStats[dateKey].changes++;
+                                vpsData[vpId].dailyStats[dateKey].changes++;
+                                
+                                if (resident.status === 'abschluss') {
+                                    projectsData[project].dailyStats[dateKey].completions++;
+                                    vpsData[vpId].dailyStats[dateKey].completions++;
+                                }
+                            }
+                        }
+                    });
+                });
+            });
+            
+            console.log('Processed projects:', Object.keys(projectsData).length);
+            console.log('Processed VPs:', Object.keys(vpsData).length);
+        }
+
+        // Render Overview
+        function renderOverview() {
+            const totalProjects = Object.keys(projectsData).length;
+            const totalVPs = Object.keys(vpsData).length;
+            const totalWE = Object.values(projectsData).reduce((sum, project) => sum + project.totalWE, 0);
+            
+            document.getElementById('totalProjects').textContent = totalProjects;
+            document.getElementById('totalVPs').textContent = totalVPs;
+            document.getElementById('totalWE').textContent = totalWE.toLocaleString();
+        }
+
+        // Render Projects Table
+        function renderProjectsTable() {
+            const tbody = document.getElementById('projectsTableBody');
+            tbody.innerHTML = '';
+            
+            Object.values(projectsData).forEach(project => {
+                const vpCount = project.vps.size;
+                const statusPercent = project.totalWE > 0 ? 
+                    Math.round((project.completions / project.totalWE) * 100) : 0;
+                
+                const row = tbody.insertRow();
+                row.onclick = () => selectProject(project.name);
+                row.innerHTML = `
+                    <td style="font-weight: 600;">${project.name}</td>
+                    <td><span class="badge badge-primary">${project.totalWE.toLocaleString()}</span></td>
+                    <td><span class="badge badge-success">${vpCount}</span></td>
+                    <td><span class="badge badge-warning">${project.completions}</span></td>
+                    <td>
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span style="font-weight: 600;">${statusPercent}%</span>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${statusPercent}%;"></div>
+                        </div>
+                    </td>
+                    <td>
+                        <button class="btn btn-primary" onclick="event.stopPropagation(); toggleProjectConfig('${project.name}')" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">
+                            <i class="fas fa-cog"></i>
+                        </button>
+                    </td>
+                `;
+            });
+        }
+
+        // Select Project
+        function selectProject(projectName) {
+            selectedProject = projectName;
+            selectedVP = null;
+            
+            // Update UI
+            document.querySelectorAll('#projectsTableBody tr').forEach(row => row.classList.remove('selected'));
+            event.target.closest('tr').classList.add('selected');
+            
+            document.getElementById('selectedProjectName').textContent = projectName;
+            document.getElementById('projectAnalytics').classList.remove('hidden');
+            document.getElementById('vpSection').classList.remove('hidden');
+            document.getElementById('vpAnalytics').classList.add('hidden');
+            
+            renderProjectAnalytics(projectName);
+            renderVPTable(projectName);
+        }
+
+        // Render Project Analytics
+        function renderProjectAnalytics(projectName) {
+            const project = projectsData[projectName];
+            if (!project) return;
+            
+            // Render project charts
+            renderProjectCompletionsChart(project);
+            renderProjectChangesChart(project);
+            renderProjectStatusPieChart(project);
+            renderProjectStatusTable(project);
+        }
+
+        // Render VP Table
+        function renderVPTable(projectName) {
+            const tbody = document.getElementById('vpTableBody');
+            tbody.innerHTML = '';
+            
+            const project = projectsData[projectName];
+            const projectVPs = Array.from(project.vps).map(vpId => vpsData[vpId]);
+            
+            projectVPs.forEach(vp => {
+                const ownPercent = vp.totalWE > 0 ? Math.round((vp.completions / vp.totalWE) * 100) : 0;
+                const projectPercent = project.totalWE > 0 ? Math.round((vp.completions / project.totalWE) * 100) : 0;
+                
+                const row = tbody.insertRow();
+                row.onclick = () => selectVP(vp.id);
+                row.innerHTML = `
+                    <td style="font-weight: 600;">${vp.name}</td>
+                    <td><span class="badge badge-primary">${vp.totalWE}</span></td>
+                    <td><span class="badge badge-warning">${vp.completions}</span></td>
+                    <td><strong>${ownPercent}%</strong></td>
+                    <td><strong>${projectPercent}%</strong></td>
+                `;
+            });
+        }
+
+        // Select VP
+        function selectVP(vpId) {
+            selectedVP = vpId;
+            const vp = vpsData[vpId];
+            
+            // Update UI
+            document.querySelectorAll('#vpTableBody tr').forEach(row => row.classList.remove('selected'));
+            event.target.closest('tr').classList.add('selected');
+            
+            document.getElementById('selectedVPName').textContent = vp.name;
+            document.getElementById('vpAnalytics').classList.remove('hidden');
+            
+            // Set today's date for hourly chart
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('hourlyDate').value = today;
+            
+            renderVPAnalytics(vp);
+        }
+
+        // Render VP Analytics
+        function renderVPAnalytics(vp) {
+            renderVPCompletionsChart(vp);
+            renderVPChangesChart(vp);
+            renderVPStatusPieChart(vp);
+            renderVPStatusTable(vp);
+            renderVPSummary(vp);
+            updateHourlyChart();
+        }
+
+        // Chart rendering functions
+        function renderProjectCompletionsChart(project) {
+            const ctx = document.getElementById('projectCompletionsChart').getContext('2d');
+            
+            if (charts.projectCompletions) {
+                charts.projectCompletions.destroy();
+            }
+            
+            const days = parseInt(document.getElementById('timeRange').value);
+            const data = generateDailyData(project.dailyStats, 'completions', days);
+            
+            charts.projectCompletions = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: 'Abschlüsse',
+                        data: data.values,
+                        backgroundColor: '#10b981',
+                        borderColor: '#059669',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        function renderProjectChangesChart(project) {
+            const ctx = document.getElementById('projectChangesChart').getContext('2d');
+            
+            if (charts.projectChanges) {
+                charts.projectChanges.destroy();
+            }
+            
+            const days = parseInt(document.getElementById('timeRange').value);
+            const data = generateDailyData(project.dailyStats, 'changes', days);
+            
+            charts.projectChanges = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: 'Statusänderungen',
+                        data: data.values,
+                        backgroundColor: '#f59e0b',
+                        borderColor: '#d97706',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        function renderProjectStatusPieChart(project) {
+            const ctx = document.getElementById('projectStatusPieChart').getContext('2d');
+            
+            if (charts.projectStatusPie) {
+                charts.projectStatusPie.destroy();
+            }
+            
+            const labels = Object.keys(project.statusCounts);
+            const data = Object.values(project.statusCounts);
+            const colors = generateColors(labels.length);
+            
+            charts.projectStatusPie = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: colors,
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderProjectStatusTable(project) {
+            const tbody = document.getElementById('projectStatusTableBody');
+            tbody.innerHTML = '';
+            
+            Object.entries(project.statusCounts).forEach(([status, count]) => {
+                const percent = project.totalWE > 0 ? ((count / project.totalWE) * 100).toFixed(1) : '0.0';
+                
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td style="font-weight: 600;">${status}</td>
+                    <td>${count}</td>
+                    <td>${percent}%</td>
+                `;
+            });
+            
+            // Summary
+            const totalWithStatus = Object.values(project.statusCounts).reduce((sum, count) => sum + count, 0);
+            const percentWithStatus = project.totalWE > 0 ? ((totalWithStatus / project.totalWE) * 100).toFixed(1) : '0.0';
+            
+            document.getElementById('projectStatusSummary').innerHTML = `
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div><strong>WE mit Status:</strong> ${totalWithStatus} (${percentWithStatus}%)</div>
+                    <div><strong>WE ohne Status:</strong> ${project.totalWE - totalWithStatus} (${(100 - parseFloat(percentWithStatus)).toFixed(1)}%)</div>
+                </div>
+            `;
+        }
+
+        function renderVPCompletionsChart(vp) {
+            const ctx = document.getElementById('vpCompletionsChart').getContext('2d');
+            
+            if (charts.vpCompletions) {
+                charts.vpCompletions.destroy();
+            }
+            
+            const days = parseInt(document.getElementById('timeRange').value);
+            const data = generateDailyData(vp.dailyStats, 'completions', days);
+            
+            charts.vpCompletions = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: 'Abschlüsse',
+                        data: data.values,
+                        backgroundColor: '#10b981',
+                        borderColor: '#059669',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        function renderVPChangesChart(vp) {
+            const ctx = document.getElementById('vpChangesChart').getContext('2d');
+            
+            if (charts.vpChanges) {
+                charts.vpChanges.destroy();
+            }
+            
+            const days = parseInt(document.getElementById('timeRange').value);
+            const data = generateDailyData(vp.dailyStats, 'changes', days);
+            
+            charts.vpChanges = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: 'Statusänderungen',
+                        data: data.values,
+                        backgroundColor: '#f59e0b',
+                        borderColor: '#d97706',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        function renderVPStatusPieChart(vp) {
+            const ctx = document.getElementById('vpStatusPieChart').getContext('2d');
+            
+            if (charts.vpStatusPie) {
+                charts.vpStatusPie.destroy();
+            }
+            
+            const labels = Object.keys(vp.statusCounts);
+            const data = Object.values(vp.statusCounts);
+            const colors = generateColors(labels.length);
+            
+            charts.vpStatusPie = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: colors,
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderVPStatusTable(vp) {
+            const tbody = document.getElementById('vpStatusTableBody');
+            tbody.innerHTML = '';
+            
+            Object.entries(vp.statusCounts).forEach(([status, count]) => {
+                const percent = vp.totalWE > 0 ? ((count / vp.totalWE) * 100).toFixed(1) : '0.0';
+                
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td style="font-weight: 600;">${status}</td>
+                    <td>${count}</td>
+                    <td>${percent}%</td>
+                `;
+            });
+        }
+
+        function renderVPSummary(vp) {
+            const totalWithStatus = Object.values(vp.statusCounts).reduce((sum, count) => sum + count, 0);
+            const percentWithStatus = vp.totalWE > 0 ? ((totalWithStatus / vp.totalWE) * 100).toFixed(1) : '0.0';
+            const ratio = vp.completions > 0 ? (vp.totalChanges / vp.completions).toFixed(1) : '∞';
+            
+            document.getElementById('vpTotalChanges').textContent = vp.totalChanges;
+            document.getElementById('vpTotalCompletions').textContent = vp.completions;
+            document.getElementById('vpChangeCompletionRatio').textContent = ratio;
+            document.getElementById('vpWEWithStatus').textContent = `${totalWithStatus} (${percentWithStatus}%)`;
+            
+            document.getElementById('vpWEWithStatusAbs').textContent = totalWithStatus;
+            document.getElementById('vpWEWithStatusPercent').textContent = percentWithStatus;
+            document.getElementById('vpTotalWE').textContent = vp.totalWE;
+        }
+
+        // Helper functions
+        function generateDailyData(dailyStats, field, days) {
+            const labels = [];
+            const values = [];
+            const today = new Date();
+            
+            for (let i = days - 1; i >= 0; i--) {
+                const date = new Date(today);
+                date.setDate(date.getDate() - i);
+                const dateKey = date.toISOString().split('T')[0];
+                const value = dailyStats[dateKey] ? (dailyStats[dateKey][field] || 0) : 0;
+                
+                labels.push(date.toLocaleDateString('de-DE', { month: 'short', day: 'numeric' }));
+                values.push(value);
+            }
+            
+            return { labels, values };
+        }
+
+        function generateColors(count) {
+            const colors = [
+                '#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#8b5cf6',
+                '#06b6d4', '#84cc16', '#f97316', '#ec4899', '#6b7280'
+            ];
+            
+            return Array.from({ length: count }, (_, i) => colors[i % colors.length]);
+        }
+
+        function updateHourlyChart() {
+            if (!selectedVP) return;
+            
+            const vp = vpsData[selectedVP];
+            const selectedDate = document.getElementById('hourlyDate').value;
+            
+            // Generate hourly data (simplified - using random data for demo)
+            const hourlyData = Array.from({ length: 24 }, (_, hour) => ({
+                hour: hour.toString().padStart(2, '0') + ':00',
+                changes: Math.floor(Math.random() * 5) // Replace with real hourly data
+            }));
+            
+            const ctx = document.getElementById('vpHourlyChart').getContext('2d');
+            
+            if (charts.vpHourly) {
+                charts.vpHourly.destroy();
+            }
+            
+            charts.vpHourly = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: hourlyData.map(d => d.hour),
+                    datasets: [{
+                        label: 'Statusänderungen',
+                        data: hourlyData.map(d => d.changes),
+                        backgroundColor: '#3b82f6',
+                        borderColor: '#2563eb',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        // Project Configuration
+        function toggleProjectConfig(projectName) {
+            const config = document.getElementById('projectConfig');
+            const isVisible = !config.classList.contains('show');
+            
+            config.classList.toggle('show', isVisible);
+            
+            if (isVisible) {
+                selectedProject = projectName;
+                // Set default dates (example)
+                const today = new Date();
+                const start = new Date(today);
+                start.setMonth(start.getMonth() - 1);
+                
+                document.getElementById('projectStart').value = start.toISOString().split('T')[0];
+                document.getElementById('projectEnd').value = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+            }
+        }
+
+        function calculateProjection() {
+            if (!selectedProject) return;
+            
+            const startDate = new Date(document.getElementById('projectStart').value);
+            const endDate = new Date(document.getElementById('projectEnd').value);
+            const project = projectsData[selectedProject];
+            
+            if (!startDate || !endDate || startDate >= endDate) {
+                showAlert('Bitte gültige Start- und Enddaten eingeben', 'error');
+                return;
+            }
+            
+            const totalWorkdays = getWorkdaysBetween(startDate, endDate);
+            const elapsedWorkdays = getWorkdaysBetween(startDate, new Date());
+            const remainingWorkdays = totalWorkdays - elapsedWorkdays;
+            
+            const currentCompletions = project.completions;
+            const dailyRate = elapsedWorkdays > 0 ? currentCompletions / elapsedWorkdays : 0;
+            const projectedCompletions = Math.round(currentCompletions + (dailyRate * remainingWorkdays));
+            
+            const completionPercent = project.totalWE > 0 ? ((projectedCompletions / project.totalWE) * 100).toFixed(1) : '0.0';
+            
+            const resultDiv = document.getElementById('projectionResult');
+            resultDiv.classList.remove('hidden');
+            resultDiv.innerHTML = `
+                <h4 style="margin-bottom: 1rem; color: var(--primary);">📊 Hochrechnung für ${selectedProject}</h4>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                    <div>
+                        <strong>Gesamte Arbeitstage:</strong><br>
+                        <span style="font-size: 1.25rem; color: var(--primary);">${totalWorkdays}</span>
+                    </div>
+                    <div>
+                        <strong>Vergangene Arbeitstage:</strong><br>
+                        <span style="font-size: 1.25rem; color: var(--warning);">${elapsedWorkdays}</span>
+                    </div>
+                    <div>
+                        <strong>Verbleibende Arbeitstage:</strong><br>
+                        <span style="font-size: 1.25rem; color: var(--success);">${remainingWorkdays}</span>
+                    </div>
+                    <div>
+                        <strong>Aktuelle Abschlüsse:</strong><br>
+                        <span style="font-size: 1.25rem; color: var(--primary);">${currentCompletions}</span>
+                    </div>
+                    <div>
+                        <strong>Tägliche Rate:</strong><br>
+                        <span style="font-size: 1.25rem; color: var(--warning);">${dailyRate.toFixed(2)}</span>
+                    </div>
+                    <div>
+                        <strong>Projizierte Abschlüsse:</strong><br>
+                        <span style="font-size: 1.25rem; color: var(--success);">${projectedCompletions}</span>
+                    </div>
+                </div>
+                <div style="margin-top: 1rem; padding: 1rem; background: var(--gray-50); border-radius: 0.5rem; border-left: 4px solid var(--primary);">
+                    <strong>Erwartete Abschlussquote bis Projektende: ${completionPercent}%</strong>
+                    <div style="margin-top: 0.5rem;">
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${Math.min(parseFloat(completionPercent), 100)}%;"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Event Handlers
+        document.getElementById('timeRange').addEventListener('change', () => {
+            if (selectedProject) {
+                renderProjectAnalytics(selectedProject);
+            }
+            if (selectedVP) {
+                renderVPAnalytics(vpsData[selectedVP]);
+            }
         });
-        
-        tbody.appendChild(tr);
-      });
-      
-      return allProjects;
-    }
 
-    async function selectProject(project, totalWE){
-      currentProject = project; 
-      projectTotalWE = totalWE||0; 
-      q('#selProject').textContent = project || '–';
-      
-      // Load users for this project
-      const { data, error } = await supabase.rpc('fn_dashboard_guarded_project_users', { p_project: project });
-      if (error){ 
-        showError(error.message); 
-        return; 
-      }
-      
-      allUsers = data || [];
-      
-      // Render users table
-      const tbody = q('#tblUsers tbody');
-      tbody.innerHTML='';
-      
-      allUsers.forEach((u, index) => {
-        const tr = document.createElement('tr');
-        tr.className = index % 2 === 0 ? 'even' : 'odd';
-        
-        const name = u.display_name || u.email || u.user_id;
-        const completionRate = totalWE > 0 ? Math.round((u.we_count / totalWE) * 100) : 0;
-        
-        tr.innerHTML = `
-          <td><i class="fas fa-user"></i> ${name}</td>
-          <td><strong>${u.we_count||0}</strong></td>
-          <td><span class="pill pill-teal">${completionRate}%</span></td>
-        `;
-        
-        tr.addEventListener('click', () => {
-          tbody.querySelectorAll('tr').forEach(r => r.classList.remove('selected'));
-          tr.classList.add('selected');
-          selectUser(u.user_id, name);
-        });
-        
-        tbody.appendChild(tr);
-      });
-      
-      // Visual project highlight
-      q('#selProject').classList.add('pill-accent');
-      
-      // Load project charts
-      await refreshProjectCharts();
-    }
-
-    async function refreshProjectCharts(){
-      if(!currentProject) return;
-      
-      const range = Number(q('#range').value||30);
-      
-      // Show loading states
-      ['cardProjCompl', 'cardProjChanges', 'cardProjStatus'].forEach(id => {
-        q('#'+id).classList.add('loading');
-      });
-      
-      try {
-        const [completions, changes, statusTable] = await Promise.all([
-          supabase.rpc('fn_dashboard_guarded_project_daily_completions', { p_project: currentProject, p_days: range }),
-          supabase.rpc('fn_dashboard_guarded_project_daily_changes', { p_project: currentProject, p_days: range }),
-          supabase.rpc('fn_dashboard_guarded_project_status_table', { p_project: currentProject })
-        ]);
-        
-        // Render completions chart
-        if (completions.error) {
-          showError(completions.error.message);
-        } else {
-          const labels = (completions.data||[]).map(r => formatDate(r.day));
-          const values = (completions.data||[]).map(r => Number(r.completions||0));
-          
-          renderBarChart('chartProjCompl', labels, [{
-            label: 'Abschlüsse',
-            data: values,
-            backgroundColor: 'rgba(37, 99, 235, 0.6)',
-            borderColor: '#2563eb',
-            borderWidth: 2
-          }]);
+        async function refreshData() {
+            await loadData();
+            if (selectedProject) {
+                renderProjectAnalytics(selectedProject);
+                renderVPTable(selectedProject);
+            }
+            if (selectedVP) {
+                renderVPAnalytics(vpsData[selectedVP]);
+            }
         }
-        
-        // Render changes chart
-        if (changes.error) {
-          showError(changes.error.message);
-        } else {
-          const labels = (changes.data||[]).map(r => formatDate(r.day));
-          const values = (changes.data||[]).map(r => Number(r.changes||0));
-          
-          renderBarChart('chartProjChanges', labels, [{
-            label: 'Änderungen',
-            data: values,
-            backgroundColor: 'rgba(20, 184, 166, 0.6)',
-            borderColor: '#14b8a6',
-            borderWidth: 2
-          }]);
-        }
-        
-        // Render status breakdown
-        if (statusTable.error) {
-          showError(statusTable.error.message);
-        } else {
-          const breakdown = statusTable.data?.breakdown || {};
-          const entries = Object.entries(breakdown).sort((a,b) => b[1]-a[1]);
-          const labels = entries.map(([k]) => k);
-          const values = entries.map(([,v]) => v);
-          
-          if(labels.length > 0){
-            renderDoughnutChart('chartProjStatus', labels, values);
-          }
-          
-          const tableData = (statusTable.data?.table||[]).map(r => ({
-            status: r.status,
-            absolute: Number(r.absolute||0),
-            percent: Number(r.percent||0)
-          }));
-          
-          renderStatusTable('tblProjStatus', tableData);
-          
-          // Show status cards
-          q('#cardProjStatus').style.display='block';
-          q('#cardProjStatusTable').style.display='block';
-        }
-        
-      } finally {
-        // Remove loading states
-        ['cardProjCompl', 'cardProjChanges', 'cardProjStatus'].forEach(id => {
-          q('#'+id).classList.remove('loading');
-        });
-      }
-    }
 
-    async function selectUser(userId, name){
-      currentUserId = userId;
-      const range = Number(q('#range').value||30);
-      
-      // Show user cards
-      ['cardUserCompl', 'cardUserChanges', 'cardUserStatus'].forEach(id => {
-        q('#'+id).style.display='block';
-      });
-      
-      // Update user badge
-      const selU = q('#selUser');
-      selU.style.display='inline-block';
-      selU.textContent = name || '–';
-      
-      // Show loading states
-      ['cardUserCompl', 'cardUserChanges', 'cardUserStatus', 'cardUserHourly', 'cardUserSummary'].forEach(id => {
-        q('#'+id).classList.add('loading');
-      });
-      
-      try {
-        const dateStr = q('#userHourlyDate').value || new Date().toISOString().slice(0,10);
-        
-        const [userCompl, userChanges, userStatus, userHourly, userSummary] = await Promise.all([
-          supabase.rpc('fn_dashboard_guarded_user_daily_completions', { p_user_id: userId, p_days: range }),
-          supabase.rpc('fn_dashboard_guarded_user_daily_changes', { p_user_id: userId, p_days: range }),
-          supabase.rpc('fn_dashboard_guarded_user_status_table', { p_user_id: userId, p_project: currentProject }),
-          supabase.rpc('fn_dashboard_guarded_user_hourly_changes', { p_user_id: userId, p_date: dateStr }),
-          supabase.rpc('fn_dashboard_guarded_user_summary_metrics', { p_user_id: userId, p_project: currentProject })
-        ]);
-        
-        // Render user completions
-        if (userCompl.error) {
-          showError(userCompl.error.message);
-        } else {
-          const labels = (userCompl.data||[]).map(r => formatDate(r.day));
-          const values = (userCompl.data||[]).map(r => Number(r.completions||0));
-          
-          renderBarChart('chartUserCompl', labels, [{
-            label: 'Abschlüsse',
-            data: values,
-            backgroundColor: 'rgba(37, 99, 235, 0.6)',
-            borderColor: '#2563eb',
-            borderWidth: 2
-          }]);
-        }
-        
-        // Render user changes
-        if (userChanges.error) {
-          showError(userChanges.error.message);
-        } else {
-          const labels = (userChanges.data||[]).map(r => formatDate(r.day));
-          const values = (userChanges.data||[]).map(r => Number(r.changes||0));
-          
-          renderLineChart('chartUserChanges', labels, [{
-            label: 'Änderungen',
-            data: values,
-            backgroundColor: 'rgba(20, 184, 166, 0.1)',
-            borderColor: '#14b8a6',
-            borderWidth: 3,
-            fill: true
-          }]);
-        }
-        
-        // Render user status breakdown
-        if (userStatus.error) {
-          showError(userStatus.error.message);
-        } else {
-          const breakdown = userStatus.data?.breakdown || {};
-          const entries = Object.entries(breakdown).sort((a,b) => b[1]-a[1]);
-          const labels = entries.map(([k]) => k);
-          const values = entries.map(([,v]) => v);
-          
-          if(labels.length > 0){
-            renderDoughnutChart('chartUserStatus', labels, values);
-          }
-          
-          const tableData = (userStatus.data?.table||[]).map(r => ({
-            status: r.status,
-            absolute: Number(r.absolute||0),
-            percent: Number(r.percent||0)
-          }));
-          
-          renderStatusTable('tblUserStatus', tableData);
-          
-          q('#cardUserStatus').style.display='block';
-          q('#cardUserStatusTable').style.display='block';
-        }
-        
-        // Render hourly changes
-        if (userHourly.error) {
-          showError(userHourly.error.message);
-        } else {
-          const hours = Array.from({length:24}, (_,i) => i);
-          const dataMap = new Map((userHourly.data||[]).map(r => [Number(r.hour), Number(r.changes)]));
-          const values = hours.map(h => dataMap.get(h)||0);
-          const labels = hours.map(h => String(h).padStart(2,'0')+':00');
-          
-          renderBarChart('chartUserHourly', labels, [{
-            label: 'Änderungen',
-            data: values,
-            backgroundColor: 'rgba(245, 158, 11, 0.6)',
-            borderColor: '#f59e0b',
-            borderWidth: 2
-          }]);
-        }
-        
-        // Render user summary
-        if (userSummary.error) {
-          showError(userSummary.error.message);
-        } else {
-          const t = q('#tblUserSummary tbody');
-          const d = userSummary.data || {};
-          
-          t.innerHTML = `
-            <tr>
-              <td><i class="fas fa-exchange-alt"></i> Gesamt Statusänderungen</td>
-              <td><strong>${d.total_changes??0}</strong></td>
-            </tr>
-            <tr>
-              <td><i class="fas fa-check-circle"></i> Abschlüsse (nicht Online)</td>
-              <td><strong>${d.completions??0}</strong></td>
-            </tr>
-            <tr>
-              <td><i class="fas fa-calculator"></i> Ø Änderungen bis Abschluss</td>
-              <td><strong>${(d.avg_changes_per_completion??0)}</strong></td>
-            </tr>
-            <tr>
-              <td><i class="fas fa-home"></i> WE mit Status</td>
-              <td>
-                <strong>${d.we_with_status??0}</strong> 
-                <span class="pill pill-success">${(d.we_with_status_percent??0).toFixed(1)}%</span>
-              </td>
-            </tr>
-            <tr>
-              <td><i class="fas fa-building"></i> WE gesamt (Projekt)</td>
-              <td><strong>${d.we_total??0}</strong></td>
-            </tr>
-          `;
-        }
-        
-      } finally {
-        // Remove loading states
-        ['cardUserCompl', 'cardUserChanges', 'cardUserStatus', 'cardUserHourly', 'cardUserSummary'].forEach(id => {
-          q('#'+id).classList.remove('loading');
-        });
-      }
-    }
+        // Debug Functions
+        window.debugDashboard = function() {
+            console.log('=== Dashboard Debug ===');
+            console.log('Projects:', Object.keys(projectsData));
+            console.log('VPs:', Object.keys(vpsData));
+            console.log('Selected Project:', selectedProject);
+            console.log('Selected VP:', selectedVP);
+            return { projectsData, vpsData, selectedProject, selectedVP };
+        };
 
-    // Auto-refresh functionality
-    function startAutoRefresh(){
-      if(autoRefreshInterval) clearInterval(autoRefreshInterval);
-      
-      autoRefreshInterval = setInterval(async () => {
-        try {
-          if(currentProject) await refreshProjectCharts();
-          if(currentUserId && currentProject) await selectUser(currentUserId, q('#selUser').textContent);
-          
-          // Update live indicator
-          const liveDot = q('.live-dot');
-          liveDot.style.background = '#10b981';
-          setTimeout(() => liveDot.style.background = 'var(--success)', 200);
-          
-        } catch(error) {
-          console.error('Auto-refresh error:', error);
-        }
-      }, 300000); // 5 minutes
-    }
+        window.loadUserData = function(userId, userName) {
+            console.log('loadUserData called:', userId, userName);
+            if (vpsData[userId]) {
+                selectVP(userId);
+            } else {
+                console.log('VP not found:', userId);
+            }
+        };
 
-    // Event Listeners
-    document.addEventListener('DOMContentLoaded', () => {
-      // Initialize date inputs
-      const today = new Date().toISOString().slice(0,10);
-      const weekAgo = new Date(Date.now() - 7*24*60*60*1000).toISOString().slice(0,10);
-      
-      q('#dateTo').value = today;
-      q('#dateFrom').value = weekAgo;
-      q('#userHourlyDate').value = today;
-      
-      // Auto-refresh toggle
-      startAutoRefresh();
-    });
-
-    q('#btnRefresh').addEventListener('click', async () => {
-      q('#btnRefresh').classList.add('loading');
-      try {
-        await loadProjects();
-        if (currentProject) await refreshProjectCharts();
-        if (currentUserId && currentProject) await selectUser(currentUserId, q('#selUser').textContent);
-        showSuccess('Dashboard aktualisiert!');
-      } finally {
-        q('#btnRefresh').classList.remove('loading');
-      }
-    });
-
-    q('#btnExportAll').addEventListener('click', () => {
-      // Export all visible charts and tables
-      Object.keys(charts).forEach(chartId => {
-        if(q('#' + chartId).closest('.card').style.display !== 'none'){
-          setTimeout(() => exportChart(chartId, 'png'), 100);
-        }
-      });
-      showSuccess('Alle Charts werden exportiert...');
-    });
-
-    q('#btnLogout').addEventListener('click', async () => { 
-      if(autoRefreshInterval) clearInterval(autoRefreshInterval);
-      await supabase.auth.signOut(); 
-      window.location.href='./login.html'; 
-    });
-
-    q('#range').addEventListener('change', async () => {
-      if (currentProject) await refreshProjectCharts();
-      if (currentUserId && currentProject) await selectUser(currentUserId, q('#selUser').textContent);
-    });
-
-    q('#userHourlyDate').addEventListener('change', async () => {
-      if (currentUserId) {
-        const dateStr = q('#userHourlyDate').value;
-        const hourly = await supabase.rpc('fn_dashboard_guarded_user_hourly_changes', { 
-          p_user_id: currentUserId, 
-          p_date: dateStr 
-        });
-        
-        if (!hourly.error) {
-          const hours = Array.from({length:24}, (_,i) => i);
-          const dataMap = new Map((hourly.data||[]).map(r => [Number(r.hour), Number(r.changes)]));
-          const values = hours.map(h => dataMap.get(h)||0);
-          const labels = hours.map(h => String(h).padStart(2,'0')+':00');
-          
-          renderBarChart('chartUserHourly', labels, [{
-            label: 'Änderungen',
-            data: values,
-            backgroundColor: 'rgba(245, 158, 11, 0.6)',
-            borderColor: '#f59e0b',
-            borderWidth: 2
-          }]);
-        }
-      }
-    });
-
-    q('#projectFilter').addEventListener('change', (e) => {
-      const selectedProject = e.target.value;
-      if(selectedProject && selectedProject !== currentProject){
-        const project = allProjects.find(p => p.project === selectedProject);
-        if(project){
-          selectProject(project.project, project.total_we);
-        }
-      }
-    });
-
-    // Close export dropdowns when clicking outside
-    document.addEventListener('click', (e) => {
-      if(!e.target.closest('.export-dropdown')){
-        document.querySelectorAll('.export-content').forEach(el => {
-          el.style.display = 'none';
-        });
-      }
-    });
-
-    // Initialize Dashboard
-    (async () => { 
-      try {
-        await requireAuth(); 
-        await loadProjects();
-        showSuccess('Dashboard geladen!');
-      } catch(error) {
-        showError('Fehler beim Laden des Dashboards: ' + error.message);
-      }
-    })();
-
-  </script>
+        // Initialize
+        (async () => {
+            try {
+                const authenticated = await checkAuth();
+                if (!authenticated) return;
+                
+                await loadData();
+                
+                console.log('✅ Dashboard initialized');
+                console.log('✅ Debug functions: debugDashboard(), loadUserData()');
+                
+            } catch (error) {
+                showAlert('Dashboard-Initialisierung fehlgeschlagen: ' + error.message, 'error');
+                showLoading(false);
+            }
+        })();
+    </script>
 </body>
 </html>
