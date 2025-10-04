@@ -1608,6 +1608,71 @@
             return { projectsData, vpsData, selectedProject, selectedVP };
         };
 
+        window.showDebug = function() {
+            let debugInfo = '🐛 Debug Information\n';
+            
+            // Show all cities in raw data
+            const allCities = new Set();
+            allContacts.forEach(contactRecord => {
+                const contacts = contactRecord.contacts;
+                if (Array.isArray(contacts)) {
+                    contacts.forEach(contact => {
+                        if (contact.ort) allCities.add(contact.ort);
+                    });
+                }
+            });
+            
+            debugInfo += `🏢 Alle Städte in Rohdaten:\n${Array.from(allCities).join(', ')}\n\n`;
+            
+            // Show VP breakdown
+            debugInfo += '👥 VP Breakdown:\n';
+            allContacts.forEach(contactRecord => {
+                const vpId = contactRecord.user_id;
+                const userInfo = userDirectory[vpId];
+                const vpName = userInfo?.display_name || userInfo?.email || `VP-${vpId}`;
+                const contacts = contactRecord.contacts;
+                
+                const cities = new Set();
+                let totalContacts = 0;
+                
+                if (Array.isArray(contacts)) {
+                    totalContacts = contacts.length;
+                    contacts.forEach(contact => {
+                        if (contact.ort) cities.add(contact.ort);
+                    });
+                }
+                
+                debugInfo += `${vpName}: ${totalContacts} Kontakte in [${Array.from(cities).join(', ')}]\n`;
+            });
+            
+            debugInfo += '\n📊 Verarbeitete Projekte:\n';
+            Object.keys(projectsData).forEach(project => {
+                debugInfo += `${project}\n`;
+            });
+            
+            debugInfo += `\n🔢 Statistiken:\n`;
+            debugInfo += `- Kontakt-Einträge: ${allContacts.length}\n`;
+            debugInfo += `- Unique VPs: ${Object.keys(userDirectory).length}\n`;
+            debugInfo += `- Unique Cities: ${allCities.size}\n`;
+            debugInfo += `- Verarbeitete Projekte: ${Object.keys(projectsData).length}\n`;
+            debugInfo += `- Verarbeitete VPs: ${Object.keys(vpsData).length}\n\n`;
+            
+            debugInfo += '📋 Projekt Details:\n';
+            Object.values(projectsData).forEach(project => {
+                debugInfo += `${project.name}: ${project.totalWE} WE, ${project.vps.size} VPs\n`;
+            });
+            
+            debugInfo += `\n👤 Erste 3 User Directory Einträge:\n`;
+            const firstThreeUsers = Object.values(userDirectory).slice(0, 3);
+            debugInfo += JSON.stringify(Object.fromEntries(
+                firstThreeUsers.map(user => [user.user_id, user])
+            ), null, 2);
+            
+            alert(debugInfo);
+            console.log(debugInfo);
+            return debugInfo;
+        };
+
         window.loadUserData = function(userId, userName) {
             console.log('loadUserData called:', userId, userName);
             if (vpsData[userId]) {
