@@ -1,0 +1,13 @@
+Test-Datei erstellt am 4. Oktober 2024
+Repository-Verifizierung für Dashboard-Deployment
+
+Diese Datei wurde erstellt, um zu überprüfen, ob wir im richtigen Repository arbeiten.
+
+Wenn Sie diese Datei in Ihrem GitHub Repository sehen, arbeiten wir korrekt zusammen.
+
+Verzeichnisinhalt sollte enthalten:
+- Next.js Dashboard-Dateien im Root
+- Qualitool im /frontend/ Ordner  
+- Backend im /backend/ Ordner
+
+Zeit: $(date)
