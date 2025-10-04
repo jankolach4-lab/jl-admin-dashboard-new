@@ -19,7 +19,7 @@ export default function DashboardHeader({ onRefresh, onDebug, onLogout }: Dashbo
         <select className="select" id="timeRange">
           <option value="7">7 Tage</option>
           <option value="14">14 Tage</option>
-          <option value="30" defaultValue>30 Tage</option>
+          <option value="30" defaultChecked>30 Tage</option>
           <option value="90">90 Tage</option>
           <option value="120">120 Tage</option>
         </select>
