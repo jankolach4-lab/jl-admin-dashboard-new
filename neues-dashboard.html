@@ -1149,10 +1149,13 @@
                 const ownPercent = vp.totalWE > 0 ? Math.round((vp.completions / vp.totalWE) * 100) : 0;
                 const projectPercent = project.totalWE > 0 ? Math.round((vp.completions / project.totalWE) * 100) : 0;
                 
+                const displayName = vp.name;
+                const emailDisplay = vp.email ? `<br><small style="color: var(--gray-500);">${vp.email}</small>` : '';
+                
                 const row = tbody.insertRow();
                 row.onclick = () => selectVP(vp.id);
                 row.innerHTML = `
-                    <td style="font-weight: 600;">${vp.name}</td>
+                    <td style="font-weight: 600;">${displayName}${emailDisplay}</td>
                     <td><span class="badge badge-primary">${vp.totalWE}</span></td>
                     <td><span class="badge badge-warning">${vp.completions}</span></td>
                     <td><strong>${ownPercent}%</strong></td>
