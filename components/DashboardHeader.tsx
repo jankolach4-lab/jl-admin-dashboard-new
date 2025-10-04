@@ -16,10 +16,10 @@ export default function DashboardHeader({ onRefresh, onDebug, onLogout }: Dashbo
         Admin Dashboard Pro
       </div>
       <div className="controls">
-        <select className="select" id="timeRange">
+        <select className="select" id="timeRange" defaultValue="30">
           <option value="7">7 Tage</option>
           <option value="14">14 Tage</option>
-          <option value="30" defaultChecked>30 Tage</option>
+          <option value="30">30 Tage</option>
           <option value="90">90 Tage</option>
           <option value="120">120 Tage</option>
         </select>
