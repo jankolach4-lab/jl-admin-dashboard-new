@@ -409,7 +409,7 @@ export default function Dashboard() {
       debugInfo += `${project.name}: ${project.totalWE} WE, ${project.vps.size} VPs\n`
     })
     
-    debugInfo += `\n👤 Erste 3 User Directory Einträge:\n`
+    debugInfo += `\n👤 User Directory Einträge:\n`
     const firstThreeUsers = Object.values(userDirectory).slice(0, 3)
     debugInfo += JSON.stringify(Object.fromEntries(
       firstThreeUsers.map(user => [user.user_id, user])
