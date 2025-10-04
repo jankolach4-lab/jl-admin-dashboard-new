@@ -829,10 +829,35 @@
             }
         }
 
+        // Load User Directory
+        async function loadUserDirectory() {
+            try {
+                const { data: users, error } = await supabase
+                    .from('user_directory')
+                    .select('user_id, email, display_name');
+                
+                if (error) throw error;
+                
+                userDirectory = {};
+                (users || []).forEach(user => {
+                    userDirectory[user.user_id] = user;
+                });
+                
+                console.log('Loaded user directory:', Object.keys(userDirectory).length);
+                
+            } catch (error) {
+                console.error('Error loading user directory:', error);
+                userDirectory = {};
+            }
+        }
+
         // Load Data
         async function loadData() {
             try {
                 showLoading(true);
+                
+                // Load user directory first
+                await loadUserDirectory();
                 
                 const { data: contacts, error } = await supabase
                     .from('user_contacts')
