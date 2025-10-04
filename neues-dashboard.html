@@ -837,6 +837,16 @@
             }
         }
 
+        async function logout() {
+            try {
+                const { error } = await supabase.auth.signOut();
+                if (error) throw error;
+                window.location.href = './login.html';
+            } catch (error) {
+                showAlert('Fehler beim Abmelden: ' + error.message, 'error');
+            }
+        }
+
         // Load User Directory
         async function loadUserDirectory() {
             try {
