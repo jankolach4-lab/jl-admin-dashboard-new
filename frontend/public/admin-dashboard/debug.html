@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard Pro - Debug Version</title>
+    
+    <!-- External Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/date-fns@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-500: #6b7280;
+            --gray-700: #374151;
+            --gray-900: #111827;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--gray-50);
+            color: var(--gray-900);
+            line-height: 1.5;
+        }
+
+        .header {
+            background: white;
+            border-bottom: 2px solid var(--gray-200);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .controls {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: var(--gray-200);
+            color: var(--gray-700);
+        }
+
+        .main {
+            padding: 2rem;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .overview-row {
+            background: white;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            border: 1px solid var(--gray-200);
+        }
+
+        .overview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+        }
+
+        .overview-item {
+            text-align: center;
+        }
+
+        .overview-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .overview-label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--gray-500);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .alert-success {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            color: var(--success);
+        }
+
+        .alert-error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            color: var(--danger);
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .section {
+            background: white;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            border: 1px solid var(--gray-200);
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .debug-output {
+            background: #1f2937;
+            color: #f9fafb;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+            font-size: 0.875rem;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="logo">
+            <i class="fas fa-chart-line"></i>
+            Admin Dashboard Pro - Debug Version
+        </div>
+        <div class="controls">
+            <button class="btn btn-primary" onclick="loadDebugData()">
+                <i class="fas fa-sync-alt"></i>
+                Daten laden
+            </button>
+            <button class="btn btn-secondary" onclick="showDebugInfo()">
+                <i class="fas fa-bug"></i>
+                Debug Info
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+        <!-- Alerts -->
+        <div id="alertSuccess" class="alert alert-success hidden"></div>
+        <div id="alertError" class="alert alert-error hidden"></div>
+
+        <!-- Gesamt-Übersicht -->
+        <div class="overview-row">
+            <div class="overview-grid">
+                <div class="overview-item">
+                    <div class="overview-value" id="totalProjects">–</div>
+                    <div class="overview-label">Projekte</div>
+                </div>
+                <div class="overview-item">
+                    <div class="overview-value" id="totalVPs">–</div>
+                    <div class="overview-label">VP (Vertriebspartner)</div>
+                </div>
+                <div class="overview-item">
+                    <div class="overview-value" id="totalWE">–</div>
+                    <div class="overview-label">WE (Wohneinheiten)</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Debug Output -->
+        <div class="section">
+            <h2 class="section-title">
+                <i class="fas fa-terminal"></i>
+                Debug Output
+            </h2>
+            <div id="debugOutput" class="debug-output">Klicke auf "Daten laden" um zu beginnen...</div>
+        </div>
+    </main>
+
+    <script>
+        // Supabase Configuration
+        const SUPABASE_URL = 'https://whigasnqcvjkilkmbfld.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndoaWdhc25xY3Zqa2lsa21iZmxkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQyNDE1OTIsImV4cCI6MjA2OTgxNzU5Mn0.tfUnIP_oWy3N9UM6Ws9mPiKqsGtj8_kIOMW42E298rc';
+        
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Global State
+        let allContacts = [];
+        let userDirectory = {};
+        let projectsData = {};
+        let vpsData = {};
+
+        // Utility Functions
+        function showAlert(message, type = 'success') {
+            const alertEl = document.getElementById(type === 'success' ? 'alertSuccess' : 'alertError');
+            alertEl.textContent = message;
+            alertEl.classList.remove('hidden');
+            setTimeout(() => alertEl.classList.add('hidden'), 5000);
+        }
+
+        function logDebug(message) {
+            const debugOutput = document.getElementById('debugOutput');
+            debugOutput.textContent += message + '\n';
+            debugOutput.scrollTop = debugOutput.scrollHeight;
+            console.log(message);
+        }
+
+        // Load User Directory
+        async function loadUserDirectory() {
+            try {
+                logDebug('🔍 Loading user directory...');
+                const { data: users, error } = await supabase
+                    .from('user_directory')
+                    .select('user_id, email, display_name');
+                
+                if (error) throw error;
+                
+                userDirectory = {};
+                (users || []).forEach(user => {
+                    userDirectory[user.user_id] = user;
+                });
+                
+                logDebug(`✅ Loaded user directory: ${Object.keys(userDirectory).length} users`);
+                
+                // Log first few users
+                const firstThree = Object.values(userDirectory).slice(0, 3);
+                firstThree.forEach(user => {
+                    logDebug(`   - ${user.display_name} (${user.email})`);
+                });
+                
+            } catch (error) {
+                logDebug(`❌ Error loading user directory: ${error.message}`);
+                userDirectory = {};
+            }
+        }
+
+        // Load Contacts
+        async function loadContacts() {
+            try {
+                logDebug('🔍 Loading user contacts...');
+                const { data: contacts, error } = await supabase
+                    .from('user_contacts')
+                    .select('user_id, contacts, created_at, updated_at');
+                
+                if (error) throw error;
+                
+                allContacts = contacts || [];
+                logDebug(`✅ Loaded ${allContacts.length} contact records`);
+                
+                // Log sample data structure
+                if (allContacts.length > 0) {
+                    const sample = allContacts[0];
+                    logDebug(`📋 Sample contact structure:`);
+                    logDebug(`   user_id: ${sample.user_id}`);
+                    logDebug(`   contacts type: ${Array.isArray(sample.contacts) ? 'array' : typeof sample.contacts}`);
+                    if (Array.isArray(sample.contacts) && sample.contacts.length > 0) {
+                        const firstContact = sample.contacts[0];
+                        logDebug(`   First contact keys: ${Object.keys(firstContact).join(', ')}`);
+                        if (firstContact.ort) logDebug(`   First contact city: ${firstContact.ort}`);
+                        if (firstContact.we) logDebug(`   First contact WE: ${firstContact.we}`);
+                    }
+                }
+                
+            } catch (error) {
+                logDebug(`❌ Error loading contacts: ${error.message}`);
+                allContacts = [];
+            }
+        }
+
+        // Process Data
+        function processData() {
+            logDebug('🔄 Processing data...');
+            projectsData = {};
+            vpsData = {};
+            
+            let totalContactsProcessed = 0;
+            const allCities = new Set();
+            
+            allContacts.forEach((contactRecord, index) => {
+                const vpId = contactRecord.user_id;
+                const contacts = contactRecord.contacts;
+                
+                // Get VP name from user directory
+                const userInfo = userDirectory[vpId];
+                const vpName = userInfo?.display_name || userInfo?.email || `VP-${vpId}`;
+                
+                logDebug(`📝 Processing VP ${index + 1}: ${vpName}`);
+                
+                // Ensure contacts is an array
+                const contactsArray = Array.isArray(contacts) ? contacts : [];
+                
+                if (contactsArray.length === 0) {
+                    logDebug(`   ⚠️ No contacts array found`);
+                    return;
+                }
+                
+                logDebug(`   📞 Processing ${contactsArray.length} contacts`);
+                
+                contactsArray.forEach(contactItem => {
+                    const project = contactItem.ort || 'Unbekannt';
+                    const weCount = contactItem.we || 0;
+                    
+                    allCities.add(project);
+                    totalContactsProcessed++;
+                    
+                    // Initialize project
+                    if (!projectsData[project]) {
+                        projectsData[project] = {
+                            name: project,
+                            totalWE: 0,
+                            vps: new Set(),
+                            completions: 0,
+                            statusCounts: {}
+                        };
+                        logDebug(`   🏢 New project: ${project}`);
+                    }
+                    
+                    // Initialize VP if not exists
+                    if (!vpsData[vpId]) {
+                        vpsData[vpId] = {
+                            id: vpId,
+                            name: vpName,
+                            email: userInfo?.email || '',
+                            totalWE: 0,
+                            completions: 0,
+                            projects: new Set()
+                        };
+                        logDebug(`   👤 New VP: ${vpName}`);
+                    }
+                    
+                    // Add associations
+                    vpsData[vpId].projects.add(project);
+                    projectsData[project].vps.add(vpId);
+                    
+                    // Add WE counts
+                    projectsData[project].totalWE += weCount;
+                    vpsData[vpId].totalWE += weCount;
+                    
+                    logDebug(`   ➕ Added ${weCount} WE to ${project} for ${vpName}`);
+                });
+            });
+            
+            logDebug(`\n📊 Processing Results:`);
+            logDebug(`   Total contact items processed: ${totalContactsProcessed}`);
+            logDebug(`   Unique cities found: ${Array.from(allCities).join(', ')}`);
+            logDebug(`   Projects created: ${Object.keys(projectsData).length}`);
+            logDebug(`   VPs created: ${Object.keys(vpsData).length}`);
+            
+            // Show project details
+            Object.values(projectsData).forEach(project => {
+                logDebug(`   🏢 ${project.name}: ${project.totalWE} WE, ${project.vps.size} VPs`);
+            });
+            
+            // Show VP details
+            Object.values(vpsData).forEach(vp => {
+                logDebug(`   👤 ${vp.name}: ${vp.totalWE} WE in ${vp.projects.size} project(s)`);
+            });
+        }
+
+        // Update Overview
+        function updateOverview() {
+            const totalProjects = Object.keys(projectsData).length;
+            const totalVPs = Object.keys(vpsData).length;
+            const totalWE = Object.values(projectsData).reduce((sum, project) => sum + project.totalWE, 0);
+            
+            document.getElementById('totalProjects').textContent = totalProjects;
+            document.getElementById('totalVPs').textContent = totalVPs;
+            document.getElementById('totalWE').textContent = totalWE.toLocaleString();
+            
+            logDebug(`\n📈 Overview Updated:`);
+            logDebug(`   Total Projekte: ${totalProjects}`);
+            logDebug(`   Total VPs: ${totalVPs}`);
+            logDebug(`   Total WE: ${totalWE}`);
+        }
+
+        // Main load function
+        async function loadDebugData() {
+            document.getElementById('debugOutput').textContent = '';
+            logDebug('🚀 Starting debug data load...\n');
+            
+            try {
+                await loadUserDirectory();
+                logDebug('');
+                await loadContacts();
+                logDebug('');
+                processData();
+                logDebug('');
+                updateOverview();
+                logDebug('\n✅ Debug data load completed!');
+                showAlert('Debug data successfully loaded!');
+                
+            } catch (error) {
+                logDebug(`\n❌ Error in debug data load: ${error.message}`);
+                showAlert('Error loading debug data: ' + error.message, 'error');
+            }
+        }
+
+        function showDebugInfo() {
+            const info = {
+                userDirectory: Object.keys(userDirectory).length,
+                allContacts: allContacts.length,
+                projectsData: Object.keys(projectsData).length,
+                vpsData: Object.keys(vpsData).length,
+                sampleProjects: Object.keys(projectsData).slice(0, 5),
+                sampleVPs: Object.values(vpsData).slice(0, 3).map(vp => ({ name: vp.name, totalWE: vp.totalWE }))
+            };
+            
+            logDebug('\n🐛 Current Debug State:');
+            logDebug(JSON.stringify(info, null, 2));
+        }
+
+        // Initialize
+        logDebug('Debug dashboard loaded. Click "Daten laden" to start.');
+    </script>
+</body>
+</html>
