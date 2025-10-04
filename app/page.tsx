@@ -307,10 +307,58 @@ export default function Dashboard() {
   }, [allContacts, userDirectory])
 
   // Debug function
-  const showDebug = () => {
-    let debugInfo = '🐛 Debug Information\n'
+  const showDebug = async () => {
+    let debugInfo = '🐛 Extended Debug Information\n\n'
     
-    // Show all cities in raw data
+    // Test direct Supabase queries
+    try {
+      // Test 1: All user_contacts without filters
+      const { data: allUserContacts, error: contactsError } = await supabase
+        .from('user_contacts')
+        .select('*')
+      
+      debugInfo += `📊 Direct Supabase Query Results:\n`
+      debugInfo += `- Total user_contacts records: ${allUserContacts?.length || 0}\n`
+      if (contactsError) {
+        debugInfo += `- Error: ${contactsError.message}\n`
+      }
+      
+      // Test 2: All user_directory without filters  
+      const { data: allUserDirectory, error: directoryError } = await supabase
+        .from('user_directory')
+        .select('*')
+      
+      debugInfo += `- Total user_directory records: ${allUserDirectory?.length || 0}\n`
+      if (directoryError) {
+        debugInfo += `- Error: ${directoryError.message}\n`
+      }
+      
+      // Show raw data samples
+      debugInfo += `\n🔍 Raw user_contacts samples:\n`
+      if (allUserContacts && allUserContacts.length > 0) {
+        allUserContacts.slice(0, 3).forEach((record, index) => {
+          debugInfo += `${index + 1}. User: ${record.user_id}\n`
+          debugInfo += `   Contacts type: ${Array.isArray(record.contacts) ? 'array' : typeof record.contacts}\n`
+          debugInfo += `   Contacts length: ${Array.isArray(record.contacts) ? record.contacts.length : 'N/A'}\n`
+          if (Array.isArray(record.contacts) && record.contacts.length > 0) {
+            const cities = record.contacts.map(c => c.ort).filter(Boolean)
+            debugInfo += `   Cities: ${cities.join(', ')}\n`
+          }
+          debugInfo += '\n'
+        })
+      }
+      
+      // Check authentication
+      const { data: { user } } = await supabase.auth.getUser()
+      debugInfo += `👤 Current User:\n`
+      debugInfo += `- ID: ${user?.id || 'None'}\n`
+      debugInfo += `- Email: ${user?.email || 'None'}\n\n`
+      
+    } catch (error) {
+      debugInfo += `❌ Debug query error: ${(error as Error).message}\n\n`
+    }
+    
+    // Show processed data
     const allCities = new Set<string>()
     allContacts.forEach(contactRecord => {
       const contacts = contactRecord.contacts
@@ -321,7 +369,7 @@ export default function Dashboard() {
       }
     })
     
-    debugInfo += `🏢 Alle Städte in Rohdaten:\n${Array.from(allCities).join(', ')}\n\n`
+    debugInfo += `🏢 Processed Cities:\n${Array.from(allCities).join(', ')}\n\n`
     
     // Show VP breakdown
     debugInfo += '👥 VP Breakdown:\n'
