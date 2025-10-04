@@ -1,0 +1,1541 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Qualitool Admin Dashboard</title>
+    
+    <!-- External Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/date-fns@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-500: #6b7280;
+            --gray-700: #374151;
+            --gray-900: #111827;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--gray-50);
+            color: var(--gray-900);
+            line-height: 1.5;
+        }
+
+        .header {
+            background: white;
+            border-bottom: 2px solid var(--gray-200);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .controls {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .select, .input {
+            padding: 0.5rem 0.75rem;
+            border: 1px solid var(--gray-300);
+            border-radius: 0.5rem;
+            background: white;
+            font-size: 0.875rem;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: var(--gray-200);
+            color: var(--gray-700);
+        }
+
+        .main {
+            padding: 2rem;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .overview-row {
+            background: white;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            border: 1px solid var(--gray-200);
+        }
+
+        .overview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+        }
+
+        .overview-item {
+            text-align: center;
+        }
+
+        .overview-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .overview-label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--gray-500);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .section {
+            background: white;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            border: 1px solid var(--gray-200);
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            border-radius: 0.5rem;
+            border: 1px solid var(--gray-200);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: var(--gray-50);
+            padding: 1rem;
+            text-align: left;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--gray-700);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 2px solid var(--gray-200);
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--gray-100);
+            font-size: 0.875rem;
+        }
+
+        tr:hover {
+            background: var(--gray-50);
+            cursor: pointer;
+        }
+
+        tr.selected {
+            background: rgba(37, 99, 235, 0.1);
+            border-left: 4px solid var(--primary);
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-success {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .badge-warning {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+        }
+
+        .badge-primary {
+            background: rgba(37, 99, 235, 0.1);
+            color: var(--primary);
+        }
+
+        .grid {
+            display: grid;
+            gap: 2rem;
+        }
+
+        .grid-2 {
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        }
+
+        .grid-3 {
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        }
+
+        .card {
+            background: white;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            border: 1px solid var(--gray-200);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .card-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--gray-900);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-top: 1rem;
+        }
+
+        .chart-container-small {
+            height: 250px;
+        }
+
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .metric-item {
+            text-align: center;
+            padding: 1rem;
+            background: var(--gray-50);
+            border-radius: 0.5rem;
+            border: 1px solid var(--gray-200);
+        }
+
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .metric-label {
+            font-size: 0.75rem;
+            color: var(--gray-500);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .status-table {
+            font-size: 0.875rem;
+        }
+
+        .status-table td {
+            padding: 0.5rem;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--gray-200);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--success);
+            transition: width 0.3s ease;
+        }
+
+        .project-config {
+            display: none;
+            background: var(--gray-50);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-top: 1rem;
+            border: 1px solid var(--gray-200);
+        }
+
+        .project-config.show {
+            display: block;
+        }
+
+        .config-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            align-items: end;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--gray-700);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: var(--gray-500);
+        }
+
+        .loading::after {
+            content: '';
+            display: inline-block;
+            width: 1.5rem;
+            height: 1.5rem;
+            border: 2px solid var(--gray-300);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 0.5rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .alert-success {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            color: var(--success);
+        }
+
+        .alert-error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            color: var(--danger);
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .main {
+                padding: 1rem;
+            }
+            
+            .overview-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .grid-2, .grid-3 {
+                grid-template-columns: 1fr;
+            }
+            
+            .controls {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="logo">
+            <i class="fas fa-chart-line"></i>
+            Qualitool Admin Dashboard
+        </div>
+        <div class="controls">
+            <select class="select" id="timeRange">
+                <option value="7">7 Tage</option>
+                <option value="14">14 Tage</option>
+                <option value="30" selected>30 Tage</option>
+                <option value="90">90 Tage</option>
+                <option value="120">120 Tage</option>
+            </select>
+            <button class="btn btn-primary" onclick="refreshData()">
+                <i class="fas fa-sync-alt"></i>
+                Aktualisieren
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+        <!-- Alerts -->
+        <div id="alertSuccess" class="alert alert-success hidden"></div>
+        <div id="alertError" class="alert alert-error hidden"></div>
+
+        <!-- Loading -->
+        <div id="loading" class="loading">Dashboard wird geladen...</div>
+
+        <!-- Main Content -->
+        <div id="mainContent" class="hidden">
+            
+            <!-- Gesamt-Übersicht -->
+            <div class="overview-row">
+                <div class="overview-grid">
+                    <div class="overview-item">
+                        <div class="overview-value" id="totalProjects">–</div>
+                        <div class="overview-label">Projekte</div>
+                    </div>
+                    <div class="overview-item">
+                        <div class="overview-value" id="totalVPs">–</div>
+                        <div class="overview-label">VP (Vertriebspartner)</div>
+                    </div>
+                    <div class="overview-item">
+                        <div class="overview-value" id="totalWE">–</div>
+                        <div class="overview-label">WE (Wohneinheiten)</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Projekt-Tabelle -->
+            <div class="section">
+                <h2 class="section-title">
+                    <i class="fas fa-building"></i>
+                    Projekte Übersicht
+                </h2>
+                
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Projekt (Stadt)</th>
+                                <th>WE</th>
+                                <th>VP</th>
+                                <th>Abschlüsse</th>
+                                <th>Status %</th>
+                                <th>Fortschritt</th>
+                                <th>Aktionen</th>
+                            </tr>
+                        </thead>
+                        <tbody id="projectsTableBody">
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Projekt-Konfiguration -->
+                <div class="project-config" id="projectConfig">
+                    <h3 style="margin-bottom: 1rem;">Projekt-Zeitraum & Hochrechnung</h3>
+                    <div class="config-grid">
+                        <div class="form-group">
+                            <label class="form-label">Projekt-Beginn</label>
+                            <input type="date" class="input" id="projectStart">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Projekt-Ende</label>
+                            <input type="date" class="input" id="projectEnd">
+                        </div>
+                        <div class="form-group">
+                            <button class="btn btn-primary" onclick="calculateProjection()">
+                                <i class="fas fa-calculator"></i>
+                                Hochrechnung berechnen
+                            </button>
+                        </div>
+                    </div>
+                    <div id="projectionResult" class="hidden" style="margin-top: 1rem; padding: 1rem; background: white; border-radius: 0.5rem; border: 1px solid var(--gray-300);"></div>
+                </div>
+            </div>
+
+            <!-- Projekt-Kacheln -->
+            <div id="projectAnalytics" class="hidden">
+                <div class="grid grid-2">
+                    <!-- Abschlüsse pro Tag -->
+                    <div class="card">
+                        <h3 class="card-title">
+                            <i class="fas fa-trophy"></i>
+                            Abschlüsse pro Tag (alle VP)
+                        </h3>
+                        <div class="chart-container">
+                            <canvas id="projectCompletionsChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Statusänderungen pro Tag -->
+                    <div class="card">
+                        <h3 class="card-title">
+                            <i class="fas fa-edit"></i>
+                            Statusänderungen pro Tag (alle VP)
+                        </h3>
+                        <div class="chart-container">
+                            <canvas id="projectChangesChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Status-Breakdown -->
+                    <div class="card">
+                        <h3 class="card-title">
+                            <i class="fas fa-chart-pie"></i>
+                            Status-Verteilung (Projekt)
+                        </h3>
+                        <div class="chart-container chart-container-small">
+                            <canvas id="projectStatusPieChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Status-Tabelle -->
+                    <div class="card">
+                        <h3 class="card-title">
+                            <i class="fas fa-table"></i>
+                            Status-Übersicht (Projekt)
+                        </h3>
+                        <div class="table-container">
+                            <table class="status-table">
+                                <thead>
+                                    <tr>
+                                        <th>Status</th>
+                                        <th>Anzahl</th>
+                                        <th>% von WE</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="projectStatusTableBody">
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="projectStatusSummary" style="margin-top: 1rem; padding: 1rem; background: var(--gray-50); border-radius: 0.5rem;">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VP-Tabelle -->
+            <div id="vpSection" class="section hidden">
+                <h2 class="section-title">
+                    <i class="fas fa-users"></i>
+                    VP im Projekt: <span id="selectedProjectName">–</span>
+                </h2>
+                
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>VP Name</th>
+                                <th>WE</th>
+                                <th>Abschlüsse</th>
+                                <th>% eigene WE</th>
+                                <th>% Projekt WE</th>
+                            </tr>
+                        </thead>
+                        <tbody id="vpTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- VP-Kacheln -->
+            <div id="vpAnalytics" class="hidden">
+                <h2 class="section-title" style="margin-bottom: 2rem;">
+                    <i class="fas fa-user-chart"></i>
+                    VP Analyse: <span id="selectedVPName">–</span>
+                </h2>
+                
+                <div class="grid grid-3">
+                    <!-- VP Abschlüsse pro Tag -->
+                    <div class="card">
+                        <h3 class="card-title">
+                            <i class="fas fa-trophy"></i>
+                            Tägliche Abschlüsse
+                        </h3>
+                        <div class="chart-container chart-container-small">
+                            <canvas id="vpCompletionsChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- VP Statusänderungen pro Tag -->
+                    <div class="card">
+                        <h3 class="card-title">
+                            <i class="fas fa-edit"></i>
+                            Tägliche Statusänderungen
+                        </h3>
+                        <div class="chart-container chart-container-small">
+                            <canvas id="vpChangesChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- VP Status-Breakdown -->
+                    <div class="card">
+                        <h3 class="card-title">
+                            <i class="fas fa-chart-pie"></i>
+                            Status-Verteilung (VP)
+                        </h3>
+                        <div class="chart-container chart-container-small">
+                            <canvas id="vpStatusPieChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- VP Status-Tabelle -->
+                    <div class="card">
+                        <h3 class="card-title">
+                            <i class="fas fa-table"></i>
+                            Status-Tabelle (VP)
+                        </h3>
+                        <div class="table-container">
+                            <table class="status-table">
+                                <thead>
+                                    <tr>
+                                        <th>Status</th>
+                                        <th>Anzahl</th>
+                                        <th>% von VP WE</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="vpStatusTableBody">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Stündliche Aktivität -->
+                    <div class="card">
+                        <h3 class="card-title">
+                            <i class="fas fa-clock"></i>
+                            Stündliche Aktivität
+                        </h3>
+                        <div style="margin-bottom: 1rem;">
+                            <input type="date" class="input" id="hourlyDate" onchange="updateHourlyChart()">
+                        </div>
+                        <div class="chart-container chart-container-small">
+                            <canvas id="vpHourlyChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- VP Zusammenfassung -->
+                    <div class="card">
+                        <h3 class="card-title">
+                            <i class="fas fa-summary"></i>
+                            Zusammenfassung
+                        </h3>
+                        <div class="metric-grid">
+                            <div class="metric-item">
+                                <div class="metric-value" id="vpTotalChanges">–</div>
+                                <div class="metric-label">Statusänderungen</div>
+                            </div>
+                            <div class="metric-item">
+                                <div class="metric-value" id="vpTotalCompletions">–</div>
+                                <div class="metric-label">Abschlüsse</div>
+                            </div>
+                            <div class="metric-item">
+                                <div class="metric-value" id="vpChangeCompletionRatio">–</div>
+                                <div class="metric-label">Änderungen/Abschlüsse</div>
+                            </div>
+                            <div class="metric-item">
+                                <div class="metric-value" id="vpWEWithStatus">–</div>
+                                <div class="metric-label">WE mit Status</div>
+                            </div>
+                        </div>
+                        <div style="margin-top: 1rem; padding: 1rem; background: var(--gray-50); border-radius: 0.5rem;">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; font-size: 0.875rem;">
+                                <div><strong>WE mit Status:</strong> <span id="vpWEWithStatusAbs">–</span> (<span id="vpWEWithStatusPercent">–</span>%)</div>
+                                <div><strong>Gesamt WE:</strong> <span id="vpTotalWE">–</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Supabase Configuration
+        const SUPABASE_URL = 'https://whigasnqcvjkilkmbfld.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndoaWdhc25xY3Zqa2lsa21iZmxkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQyNDE1OTIsImV4cCI6MjA2OTgxNzU5Mn0.tfUnIP_oWy3N9UM6Ws9mPiKqsGtj8_kIOMW42E298rc';
+        
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+            auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false }
+        });
+
+        // Global State
+        let allContacts = [];
+        let projectsData = {};
+        let vpsData = {};
+        let selectedProject = null;
+        let selectedVP = null;
+        let charts = {};
+
+        // Utility Functions
+        function showAlert(message, type = 'success') {
+            const alertEl = document.getElementById(type === 'success' ? 'alertSuccess' : 'alertError');
+            alertEl.textContent = message;
+            alertEl.classList.remove('hidden');
+            setTimeout(() => alertEl.classList.add('hidden'), 5000);
+        }
+
+        function showLoading(show = true) {
+            document.getElementById('loading').classList.toggle('hidden', !show);
+            document.getElementById('mainContent').classList.toggle('hidden', show);
+        }
+
+        // German Holidays (simplified)
+        function getGermanHolidays(year) {
+            const holidays = [
+                new Date(year, 0, 1),   // Neujahr
+                new Date(year, 4, 1),   // Tag der Arbeit
+                new Date(year, 9, 3),   // Tag der deutschen Einheit
+                new Date(year, 11, 25), // 1. Weihnachtsfeiertag
+                new Date(year, 11, 26), // 2. Weihnachtsfeiertag
+            ];
+            
+            // Easter calculation (simplified)
+            const easter = getEaster(year);
+            holidays.push(
+                new Date(easter.getTime() - 2 * 24 * 60 * 60 * 1000), // Karfreitag
+                new Date(easter.getTime() + 1 * 24 * 60 * 60 * 1000),  // Ostermontag
+                new Date(easter.getTime() + 39 * 24 * 60 * 60 * 1000), // Christi Himmelfahrt
+                new Date(easter.getTime() + 50 * 24 * 60 * 60 * 1000)  // Pfingstmontag
+            );
+            
+            return holidays;
+        }
+
+        function getEaster(year) {
+            const a = year % 19;
+            const b = Math.floor(year / 100);
+            const c = year % 100;
+            const d = Math.floor(b / 4);
+            const e = b % 4;
+            const f = Math.floor((b + 8) / 25);
+            const g = Math.floor((b - f + 1) / 3);
+            const h = (19 * a + b - d - g + 15) % 30;
+            const i = Math.floor(c / 4);
+            const k = c % 4;
+            const l = (32 + 2 * e + 2 * i - h - k) % 7;
+            const m = Math.floor((a + 11 * h + 22 * l) / 451);
+            const month = Math.floor((h + l - 7 * m + 114) / 31);
+            const day = ((h + l - 7 * m + 114) % 31) + 1;
+            return new Date(year, month - 1, day);
+        }
+
+        function isWorkday(date) {
+            const day = date.getDay();
+            if (day === 0 || day === 6) return false; // Weekend
+            
+            const year = date.getFullYear();
+            const holidays = getGermanHolidays(year);
+            
+            return !holidays.some(holiday => 
+                holiday.getDate() === date.getDate() && 
+                holiday.getMonth() === date.getMonth() && 
+                holiday.getFullYear() === date.getFullYear()
+            );
+        }
+
+        function getWorkdaysBetween(startDate, endDate) {
+            let count = 0;
+            const current = new Date(startDate);
+            
+            while (current <= endDate) {
+                if (isWorkday(current)) {
+                    count++;
+                }
+                current.setDate(current.getDate() + 1);
+            }
+            
+            return count;
+        }
+
+        // Authentication
+        async function checkAuth() {
+            try {
+                const { data: { session }, error } = await supabase.auth.getSession();
+                if (error) throw error;
+                if (!session) {
+                    window.location.href = './login.html';
+                    return false;
+                }
+                return true;
+            } catch (error) {
+                showAlert('Authentifizierung fehlgeschlagen: ' + error.message, 'error');
+                return false;
+            }
+        }
+
+        // Load Data
+        async function loadData() {
+            try {
+                showLoading(true);
+                
+                const { data: contacts, error } = await supabase
+                    .from('user_contacts')
+                    .select('user_id, contacts, created_at, updated_at');
+                
+                if (error) throw error;
+                
+                allContacts = contacts || [];
+                console.log('Loaded contacts:', allContacts.length);
+                
+                processData();
+                renderOverview();
+                renderProjectsTable();
+                
+                showLoading(false);
+                showAlert('Dashboard erfolgreich geladen!');
+                
+            } catch (error) {
+                showLoading(false);
+                showAlert('Fehler beim Laden der Daten: ' + error.message, 'error');
+                console.error('Load error:', error);
+            }
+        }
+
+        // Process Data
+        function processData() {
+            projectsData = {};
+            vpsData = {};
+            
+            allContacts.forEach(contact => {
+                const data = contact.contacts;
+                const project = data?.ort || 'Unbekannt';
+                const vpId = contact.user_id;
+                const vpName = data?.display_name || data?.name || 'Unbekannt';
+                
+                // Initialize project
+                if (!projectsData[project]) {
+                    projectsData[project] = {
+                        name: project,
+                        totalWE: 0,
+                        vps: new Set(),
+                        completions: 0,
+                        statusCounts: {},
+                        dailyStats: {}
+                    };
+                }
+                
+                // Initialize VP
+                vpsData[vpId] = {
+                    id: vpId,
+                    name: vpName,
+                    project: project,
+                    totalWE: 0,
+                    completions: 0,
+                    totalChanges: 0,
+                    statusCounts: {},
+                    dailyStats: {},
+                    hourlyStats: {}
+                };
+                
+                projectsData[project].vps.add(vpId);
+                
+                const addresses = data?.addresses || {};
+                
+                Object.values(addresses).forEach(address => {
+                    const weCount = address.we || 0;
+                    projectsData[project].totalWE += weCount;
+                    vpsData[vpId].totalWE += weCount;
+                    
+                    const residents = address.residents || {};
+                    Object.values(residents).forEach(resident => {
+                        if (resident.status) {
+                            // Count for project
+                            projectsData[project].statusCounts[resident.status] = 
+                                (projectsData[project].statusCounts[resident.status] || 0) + 1;
+                            
+                            // Count for VP
+                            vpsData[vpId].statusCounts[resident.status] = 
+                                (vpsData[vpId].statusCounts[resident.status] || 0) + 1;
+                            vpsData[vpId].totalChanges++;
+                            
+                            if (resident.status === 'abschluss') {
+                                projectsData[project].completions++;
+                                vpsData[vpId].completions++;
+                            }
+                            
+                            // Daily stats (simplified - using created_at)
+                            const dateKey = contact.created_at ? contact.created_at.split('T')[0] : null;
+                            if (dateKey) {
+                                if (!projectsData[project].dailyStats[dateKey]) {
+                                    projectsData[project].dailyStats[dateKey] = { completions: 0, changes: 0 };
+                                }
+                                if (!vpsData[vpId].dailyStats[dateKey]) {
+                                    vpsData[vpId].dailyStats[dateKey] = { completions: 0, changes: 0 };
+                                }
+                                
+                                projectsData[project].dailyStats[dateKey].changes++;
+                                vpsData[vpId].dailyStats[dateKey].changes++;
+                                
+                                if (resident.status === 'abschluss') {
+                                    projectsData[project].dailyStats[dateKey].completions++;
+                                    vpsData[vpId].dailyStats[dateKey].completions++;
+                                }
+                            }
+                        }
+                    });
+                });
+            });
+            
+            console.log('Processed projects:', Object.keys(projectsData).length);
+            console.log('Processed VPs:', Object.keys(vpsData).length);
+        }
+
+        // Render Overview
+        function renderOverview() {
+            const totalProjects = Object.keys(projectsData).length;
+            const totalVPs = Object.keys(vpsData).length;
+            const totalWE = Object.values(projectsData).reduce((sum, project) => sum + project.totalWE, 0);
+            
+            document.getElementById('totalProjects').textContent = totalProjects;
+            document.getElementById('totalVPs').textContent = totalVPs;
+            document.getElementById('totalWE').textContent = totalWE.toLocaleString();
+        }
+
+        // Render Projects Table
+        function renderProjectsTable() {
+            const tbody = document.getElementById('projectsTableBody');
+            tbody.innerHTML = '';
+            
+            Object.values(projectsData).forEach(project => {
+                const vpCount = project.vps.size;
+                const statusPercent = project.totalWE > 0 ? 
+                    Math.round((project.completions / project.totalWE) * 100) : 0;
+                
+                const row = tbody.insertRow();
+                row.onclick = () => selectProject(project.name);
+                row.innerHTML = `
+                    <td style="font-weight: 600;">${project.name}</td>
+                    <td><span class="badge badge-primary">${project.totalWE.toLocaleString()}</span></td>
+                    <td><span class="badge badge-success">${vpCount}</span></td>
+                    <td><span class="badge badge-warning">${project.completions}</span></td>
+                    <td>
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span style="font-weight: 600;">${statusPercent}%</span>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${statusPercent}%;"></div>
+                        </div>
+                    </td>
+                    <td>
+                        <button class="btn btn-primary" onclick="event.stopPropagation(); toggleProjectConfig('${project.name}')" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">
+                            <i class="fas fa-cog"></i>
+                        </button>
+                    </td>
+                `;
+            });
+        }
+
+        // Select Project
+        function selectProject(projectName) {
+            selectedProject = projectName;
+            selectedVP = null;
+            
+            // Update UI
+            document.querySelectorAll('#projectsTableBody tr').forEach(row => row.classList.remove('selected'));
+            event.target.closest('tr').classList.add('selected');
+            
+            document.getElementById('selectedProjectName').textContent = projectName;
+            document.getElementById('projectAnalytics').classList.remove('hidden');
+            document.getElementById('vpSection').classList.remove('hidden');
+            document.getElementById('vpAnalytics').classList.add('hidden');
+            
+            renderProjectAnalytics(projectName);
+            renderVPTable(projectName);
+        }
+
+        // Render Project Analytics
+        function renderProjectAnalytics(projectName) {
+            const project = projectsData[projectName];
+            if (!project) return;
+            
+            // Render project charts
+            renderProjectCompletionsChart(project);
+            renderProjectChangesChart(project);
+            renderProjectStatusPieChart(project);
+            renderProjectStatusTable(project);
+        }
+
+        // Render VP Table
+        function renderVPTable(projectName) {
+            const tbody = document.getElementById('vpTableBody');
+            tbody.innerHTML = '';
+            
+            const project = projectsData[projectName];
+            const projectVPs = Array.from(project.vps).map(vpId => vpsData[vpId]);
+            
+            projectVPs.forEach(vp => {
+                const ownPercent = vp.totalWE > 0 ? Math.round((vp.completions / vp.totalWE) * 100) : 0;
+                const projectPercent = project.totalWE > 0 ? Math.round((vp.completions / project.totalWE) * 100) : 0;
+                
+                const row = tbody.insertRow();
+                row.onclick = () => selectVP(vp.id);
+                row.innerHTML = `
+                    <td style="font-weight: 600;">${vp.name}</td>
+                    <td><span class="badge badge-primary">${vp.totalWE}</span></td>
+                    <td><span class="badge badge-warning">${vp.completions}</span></td>
+                    <td><strong>${ownPercent}%</strong></td>
+                    <td><strong>${projectPercent}%</strong></td>
+                `;
+            });
+        }
+
+        // Select VP
+        function selectVP(vpId) {
+            selectedVP = vpId;
+            const vp = vpsData[vpId];
+            
+            // Update UI
+            document.querySelectorAll('#vpTableBody tr').forEach(row => row.classList.remove('selected'));
+            event.target.closest('tr').classList.add('selected');
+            
+            document.getElementById('selectedVPName').textContent = vp.name;
+            document.getElementById('vpAnalytics').classList.remove('hidden');
+            
+            // Set today's date for hourly chart
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('hourlyDate').value = today;
+            
+            renderVPAnalytics(vp);
+        }
+
+        // Render VP Analytics
+        function renderVPAnalytics(vp) {
+            renderVPCompletionsChart(vp);
+            renderVPChangesChart(vp);
+            renderVPStatusPieChart(vp);
+            renderVPStatusTable(vp);
+            renderVPSummary(vp);
+            updateHourlyChart();
+        }
+
+        // Chart rendering functions
+        function renderProjectCompletionsChart(project) {
+            const ctx = document.getElementById('projectCompletionsChart').getContext('2d');
+            
+            if (charts.projectCompletions) {
+                charts.projectCompletions.destroy();
+            }
+            
+            const days = parseInt(document.getElementById('timeRange').value);
+            const data = generateDailyData(project.dailyStats, 'completions', days);
+            
+            charts.projectCompletions = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: 'Abschlüsse',
+                        data: data.values,
+                        backgroundColor: '#10b981',
+                        borderColor: '#059669',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        function renderProjectChangesChart(project) {
+            const ctx = document.getElementById('projectChangesChart').getContext('2d');
+            
+            if (charts.projectChanges) {
+                charts.projectChanges.destroy();
+            }
+            
+            const days = parseInt(document.getElementById('timeRange').value);
+            const data = generateDailyData(project.dailyStats, 'changes', days);
+            
+            charts.projectChanges = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: 'Statusänderungen',
+                        data: data.values,
+                        backgroundColor: '#f59e0b',
+                        borderColor: '#d97706',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        function renderProjectStatusPieChart(project) {
+            const ctx = document.getElementById('projectStatusPieChart').getContext('2d');
+            
+            if (charts.projectStatusPie) {
+                charts.projectStatusPie.destroy();
+            }
+            
+            const labels = Object.keys(project.statusCounts);
+            const data = Object.values(project.statusCounts);
+            const colors = generateColors(labels.length);
+            
+            charts.projectStatusPie = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: colors,
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderProjectStatusTable(project) {
+            const tbody = document.getElementById('projectStatusTableBody');
+            tbody.innerHTML = '';
+            
+            Object.entries(project.statusCounts).forEach(([status, count]) => {
+                const percent = project.totalWE > 0 ? ((count / project.totalWE) * 100).toFixed(1) : '0.0';
+                
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td style="font-weight: 600;">${status}</td>
+                    <td>${count}</td>
+                    <td>${percent}%</td>
+                `;
+            });
+            
+            // Summary
+            const totalWithStatus = Object.values(project.statusCounts).reduce((sum, count) => sum + count, 0);
+            const percentWithStatus = project.totalWE > 0 ? ((totalWithStatus / project.totalWE) * 100).toFixed(1) : '0.0';
+            
+            document.getElementById('projectStatusSummary').innerHTML = `
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div><strong>WE mit Status:</strong> ${totalWithStatus} (${percentWithStatus}%)</div>
+                    <div><strong>WE ohne Status:</strong> ${project.totalWE - totalWithStatus} (${(100 - parseFloat(percentWithStatus)).toFixed(1)}%)</div>
+                </div>
+            `;
+        }
+
+        function renderVPCompletionsChart(vp) {
+            const ctx = document.getElementById('vpCompletionsChart').getContext('2d');
+            
+            if (charts.vpCompletions) {
+                charts.vpCompletions.destroy();
+            }
+            
+            const days = parseInt(document.getElementById('timeRange').value);
+            const data = generateDailyData(vp.dailyStats, 'completions', days);
+            
+            charts.vpCompletions = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: 'Abschlüsse',
+                        data: data.values,
+                        backgroundColor: '#10b981',
+                        borderColor: '#059669',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        function renderVPChangesChart(vp) {
+            const ctx = document.getElementById('vpChangesChart').getContext('2d');
+            
+            if (charts.vpChanges) {
+                charts.vpChanges.destroy();
+            }
+            
+            const days = parseInt(document.getElementById('timeRange').value);
+            const data = generateDailyData(vp.dailyStats, 'changes', days);
+            
+            charts.vpChanges = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: 'Statusänderungen',
+                        data: data.values,
+                        backgroundColor: '#f59e0b',
+                        borderColor: '#d97706',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        function renderVPStatusPieChart(vp) {
+            const ctx = document.getElementById('vpStatusPieChart').getContext('2d');
+            
+            if (charts.vpStatusPie) {
+                charts.vpStatusPie.destroy();
+            }
+            
+            const labels = Object.keys(vp.statusCounts);
+            const data = Object.values(vp.statusCounts);
+            const colors = generateColors(labels.length);
+            
+            charts.vpStatusPie = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: colors,
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderVPStatusTable(vp) {
+            const tbody = document.getElementById('vpStatusTableBody');
+            tbody.innerHTML = '';
+            
+            Object.entries(vp.statusCounts).forEach(([status, count]) => {
+                const percent = vp.totalWE > 0 ? ((count / vp.totalWE) * 100).toFixed(1) : '0.0';
+                
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td style="font-weight: 600;">${status}</td>
+                    <td>${count}</td>
+                    <td>${percent}%</td>
+                `;
+            });
+        }
+
+        function renderVPSummary(vp) {
+            const totalWithStatus = Object.values(vp.statusCounts).reduce((sum, count) => sum + count, 0);
+            const percentWithStatus = vp.totalWE > 0 ? ((totalWithStatus / vp.totalWE) * 100).toFixed(1) : '0.0';
+            const ratio = vp.completions > 0 ? (vp.totalChanges / vp.completions).toFixed(1) : '∞';
+            
+            document.getElementById('vpTotalChanges').textContent = vp.totalChanges;
+            document.getElementById('vpTotalCompletions').textContent = vp.completions;
+            document.getElementById('vpChangeCompletionRatio').textContent = ratio;
+            document.getElementById('vpWEWithStatus').textContent = `${totalWithStatus} (${percentWithStatus}%)`;
+            
+            document.getElementById('vpWEWithStatusAbs').textContent = totalWithStatus;
+            document.getElementById('vpWEWithStatusPercent').textContent = percentWithStatus;
+            document.getElementById('vpTotalWE').textContent = vp.totalWE;
+        }
+
+        // Helper functions
+        function generateDailyData(dailyStats, field, days) {
+            const labels = [];
+            const values = [];
+            const today = new Date();
+            
+            for (let i = days - 1; i >= 0; i--) {
+                const date = new Date(today);
+                date.setDate(date.getDate() - i);
+                const dateKey = date.toISOString().split('T')[0];
+                const value = dailyStats[dateKey] ? (dailyStats[dateKey][field] || 0) : 0;
+                
+                labels.push(date.toLocaleDateString('de-DE', { month: 'short', day: 'numeric' }));
+                values.push(value);
+            }
+            
+            return { labels, values };
+        }
+
+        function generateColors(count) {
+            const colors = [
+                '#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#8b5cf6',
+                '#06b6d4', '#84cc16', '#f97316', '#ec4899', '#6b7280'
+            ];
+            
+            return Array.from({ length: count }, (_, i) => colors[i % colors.length]);
+        }
+
+        function updateHourlyChart() {
+            if (!selectedVP) return;
+            
+            const vp = vpsData[selectedVP];
+            const selectedDate = document.getElementById('hourlyDate').value;
+            
+            // Generate hourly data (simplified - using random data for demo)
+            const hourlyData = Array.from({ length: 24 }, (_, hour) => ({
+                hour: hour.toString().padStart(2, '0') + ':00',
+                changes: Math.floor(Math.random() * 5) // Replace with real hourly data
+            }));
+            
+            const ctx = document.getElementById('vpHourlyChart').getContext('2d');
+            
+            if (charts.vpHourly) {
+                charts.vpHourly.destroy();
+            }
+            
+            charts.vpHourly = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: hourlyData.map(d => d.hour),
+                    datasets: [{
+                        label: 'Statusänderungen',
+                        data: hourlyData.map(d => d.changes),
+                        backgroundColor: '#3b82f6',
+                        borderColor: '#2563eb',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        // Project Configuration
+        function toggleProjectConfig(projectName) {
+            const config = document.getElementById('projectConfig');
+            const isVisible = !config.classList.contains('show');
+            
+            config.classList.toggle('show', isVisible);
+            
+            if (isVisible) {
+                selectedProject = projectName;
+                // Set default dates (example)
+                const today = new Date();
+                const start = new Date(today);
+                start.setMonth(start.getMonth() - 1);
+                
+                document.getElementById('projectStart').value = start.toISOString().split('T')[0];
+                document.getElementById('projectEnd').value = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+            }
+        }
+
+        function calculateProjection() {
+            if (!selectedProject) return;
+            
+            const startDate = new Date(document.getElementById('projectStart').value);
+            const endDate = new Date(document.getElementById('projectEnd').value);
+            const project = projectsData[selectedProject];
+            
+            if (!startDate || !endDate || startDate >= endDate) {
+                showAlert('Bitte gültige Start- und Enddaten eingeben', 'error');
+                return;
+            }
+            
+            const totalWorkdays = getWorkdaysBetween(startDate, endDate);
+            const elapsedWorkdays = getWorkdaysBetween(startDate, new Date());
+            const remainingWorkdays = totalWorkdays - elapsedWorkdays;
+            
+            const currentCompletions = project.completions;
+            const dailyRate = elapsedWorkdays > 0 ? currentCompletions / elapsedWorkdays : 0;
+            const projectedCompletions = Math.round(currentCompletions + (dailyRate * remainingWorkdays));
+            
+            const completionPercent = project.totalWE > 0 ? ((projectedCompletions / project.totalWE) * 100).toFixed(1) : '0.0';
+            
+            const resultDiv = document.getElementById('projectionResult');
+            resultDiv.classList.remove('hidden');
+            resultDiv.innerHTML = `
+                <h4 style="margin-bottom: 1rem; color: var(--primary);">📊 Hochrechnung für ${selectedProject}</h4>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                    <div>
+                        <strong>Gesamte Arbeitstage:</strong><br>
+                        <span style="font-size: 1.25rem; color: var(--primary);">${totalWorkdays}</span>
+                    </div>
+                    <div>
+                        <strong>Vergangene Arbeitstage:</strong><br>
+                        <span style="font-size: 1.25rem; color: var(--warning);">${elapsedWorkdays}</span>
+                    </div>
+                    <div>
+                        <strong>Verbleibende Arbeitstage:</strong><br>
+                        <span style="font-size: 1.25rem; color: var(--success);">${remainingWorkdays}</span>
+                    </div>
+                    <div>
+                        <strong>Aktuelle Abschlüsse:</strong><br>
+                        <span style="font-size: 1.25rem; color: var(--primary);">${currentCompletions}</span>
+                    </div>
+                    <div>
+                        <strong>Tägliche Rate:</strong><br>
+                        <span style="font-size: 1.25rem; color: var(--warning);">${dailyRate.toFixed(2)}</span>
+                    </div>
+                    <div>
+                        <strong>Projizierte Abschlüsse:</strong><br>
+                        <span style="font-size: 1.25rem; color: var(--success);">${projectedCompletions}</span>
+                    </div>
+                </div>
+                <div style="margin-top: 1rem; padding: 1rem; background: var(--gray-50); border-radius: 0.5rem; border-left: 4px solid var(--primary);">
+                    <strong>Erwartete Abschlussquote bis Projektende: ${completionPercent}%</strong>
+                    <div style="margin-top: 0.5rem;">
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${Math.min(parseFloat(completionPercent), 100)}%;"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Event Handlers
+        document.getElementById('timeRange').addEventListener('change', () => {
+            if (selectedProject) {
+                renderProjectAnalytics(selectedProject);
+            }
+            if (selectedVP) {
+                renderVPAnalytics(vpsData[selectedVP]);
+            }
+        });
+
+        async function refreshData() {
+            await loadData();
+            if (selectedProject) {
+                renderProjectAnalytics(selectedProject);
+                renderVPTable(selectedProject);
+            }
+            if (selectedVP) {
+                renderVPAnalytics(vpsData[selectedVP]);
+            }
+        }
+
+        // Debug Functions
+        window.debugDashboard = function() {
+            console.log('=== Dashboard Debug ===');
+            console.log('Projects:', Object.keys(projectsData));
+            console.log('VPs:', Object.keys(vpsData));
+            console.log('Selected Project:', selectedProject);
+            console.log('Selected VP:', selectedVP);
+            return { projectsData, vpsData, selectedProject, selectedVP };
+        };
+
+        window.loadUserData = function(userId, userName) {
+            console.log('loadUserData called:', userId, userName);
+            if (vpsData[userId]) {
+                selectVP(userId);
+            } else {
+                console.log('VP not found:', userId);
+            }
+        };
+
+        // Initialize
+        (async () => {
+            try {
+                const authenticated = await checkAuth();
+                if (!authenticated) return;
+                
+                await loadData();
+                
+                console.log('✅ Dashboard initialized');
+                console.log('✅ Debug functions: debugDashboard(), loadUserData()');
+                
+            } catch (error) {
+                showAlert('Dashboard-Initialisierung fehlgeschlagen: ' + error.message, 'error');
+                showLoading(false);
+            }
+        })();
+    </script>
+</body>
+</html>
