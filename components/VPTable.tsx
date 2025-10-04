@@ -17,7 +17,7 @@ export default function VPTable({ project, vps, onSelectVP, selectedVP }: VPTabl
     <div className="section">
       <h2 className="section-title">
         <i className="fas fa-users"></i>
-        VP im Projekt: <span>{project.name}</span>
+        VP im Projekt: {project.name}
       </h2>
       
       <div className="table-container">
