@@ -93,7 +93,7 @@ export default function LoginPage() {
           textAlign: 'center',
           color: 'var(--gray-900)'
         }}>
-          Admin Dashboard Login
+          🔐 Admin Dashboard Login
         </h1>
         
         {error && (
